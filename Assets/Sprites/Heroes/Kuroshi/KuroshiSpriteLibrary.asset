@@ -1,0 +1,161 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5bf7c34a0dc4e6348bea04faa70406ee, type: 3}
+  m_Name: KuroshiSpriteLibrary
+  m_EditorClassIdentifier: Unity.2D.Animation.Runtime::UnityEngine.U2D.Animation.SpriteLibraryAsset
+  m_Labels:
+  - m_Name: Front
+    m_Hash: 1060785650
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: 6678547941572117625, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: -2195786587240806226, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: -3638132688663244344, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame3
+      m_Hash: 253676956
+      m_Sprite: {fileID: -6752032728292839262, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+  - m_Name: FrontLeft
+    m_Hash: 498564013
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: 462053869640876705, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: -1874302690335844030, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: -6142506012637819370, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame3
+      m_Hash: 253676956
+      m_Sprite: {fileID: -4401268226378681912, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+  - m_Name: FrontRight
+    m_Hash: 530813879
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: 5726913697390227298, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: 2931170270380381881, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: 2196201544224360049, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame3
+      m_Hash: 253676956
+      m_Sprite: {fileID: -5682653957233756018, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+  - m_Name: Back
+    m_Hash: 234647049
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: 2861110554528200768, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: -4940385384623978660, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: -5870202453500571828, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame3
+      m_Hash: 253676956
+      m_Sprite: {fileID: 4788188233613477854, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+  - m_Name: BackLeft
+    m_Hash: 952693066
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: 1345540294224937158, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: 1579877852788377436, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: 7195976420814810701, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame3
+      m_Hash: 253676956
+      m_Sprite: {fileID: -858509372737841553, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+  - m_Name: BackRight
+    m_Hash: 560503782
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: 1665021764616240494, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: -8888529603736387949, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: 7678365455670797382, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame3
+      m_Hash: 253676956
+      m_Sprite: {fileID: -86840909788162584, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+  - m_Name: Left
+    m_Hash: 441796694
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: 2774314986048112051, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: 1204657995057039600, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: 5568403665477036555, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame3
+      m_Hash: 253676956
+      m_Sprite: {fileID: 3465716440329351931, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+  - m_Name: Right
+    m_Hash: 889936400
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: 1626362924006454452, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: 1849003216246788070, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: -1808914321950735972, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    - m_Name: Frame3
+      m_Hash: 253676956
+      m_Sprite: {fileID: 1855412952519270261, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+  - m_Name: BasicAttack
+    m_Hash: 385672666
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: 4753684740611100010, guid: 0d983a34c6d300d43b9126f78b99fc71, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: 1551260715, guid: 0d983a34c6d300d43b9126f78b99fc71, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: 1932202538, guid: 0d983a34c6d300d43b9126f78b99fc71, type: 3}
+  - m_Name: SpecialAttack
+    m_Hash: 353640741
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: -1940789901363853419, guid: 11ed6ab734f1ef042a4c113084e7ca29, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: -1386867224, guid: 11ed6ab734f1ef042a4c113084e7ca29, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: 1674213232, guid: 11ed6ab734f1ef042a4c113084e7ca29, type: 3}
+  m_ModificationHash: 0
+  m_Version: 1
