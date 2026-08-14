@@ -11,6 +11,69 @@ public class ProjectileNetwork : NetworkBehaviour
     private bool dataResolved;
     private bool lifeTimeScheduled;
 
+    [SerializeField] private TrailRenderer trail;
+
+    private NetworkVariable<bool> networkTrailEnabled =
+    new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public void SetTrail(bool enabled)
+    {
+        if (!IsServer)
+            return;
+
+        networkTrailEnabled.Value = enabled;
+    }
+
+    private void UpdateTrail(bool enabled)
+    {
+        if (trail == null)
+            return;
+
+        trail.emitting = enabled;
+    }
+
+    private void OnTrailChanged(bool oldValue, bool newValue)
+    {
+        UpdateTrail(newValue);
+    }
+
+    private NetworkVariable<bool> networkBehindPlayer =
+    new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public void SetBehindPlayer(bool behind)
+    {
+        if (!IsServer)
+            return;
+
+        networkBehindPlayer.Value = behind;
+    }
+
+    private void ApplySortingLayer(bool behind)
+    {
+        SpriteRenderer renderer = GetComponent<SpriteRenderer>();
+
+        if (renderer == null)
+            return;
+
+        renderer.sortingLayerName =
+            behind ? "ProjectileBehind" : "Projectile";
+    }
+
+    private void OnBehindPlayerChanged(
+        bool oldValue,
+        bool newValue)
+    {
+        ApplySortingLayer(newValue);
+    }
+
     public void SetDirection(Vector2 newDirection)
     {
         direction = newDirection.normalized;
@@ -64,6 +127,14 @@ public class ProjectileNetwork : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
+
+        networkTrailEnabled.OnValueChanged += OnTrailChanged;
+        UpdateTrail(networkTrailEnabled.Value);
+
+        networkBehindPlayer.OnValueChanged += OnBehindPlayerChanged;
+        ApplySortingLayer(networkBehindPlayer.Value);
+
         if (IsServer)
         {
             ResolveAttackData();

@@ -55,6 +55,8 @@ public class GuitaristAbility2 : AbilityBase
         active = true;
         timer = heroData.ability2.duration;
 
+        player.SetProjectileTrail(true);
+
         player.SetAttackCooldownMultiplier(
             heroData.ability2.multiplier
         );
@@ -83,6 +85,8 @@ public class GuitaristAbility2 : AbilityBase
         if (timer <= 0f)
         {
             active = false;
+
+            player.SetProjectileTrail(false);
 
             player.SetAttackCooldownMultiplier(1f);
             player.SetProjectileSpeedMultiplier(1f);

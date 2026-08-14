@@ -41,6 +41,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Trail
+    uniqueID: 1265377093
+    locked: 0
   - name: ProjectileBehind
     uniqueID: 2666650749
     locked: 0

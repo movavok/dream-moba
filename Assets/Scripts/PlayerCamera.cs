@@ -7,9 +7,16 @@ public class PlayerCamera : MonoBehaviour
 
     [SerializeField] private CinemachineCamera virtualCamera;
 
+    public bool IsReady => virtualCamera != null;
+
     private void Awake()
     {
         Instance = this;
+
+        Debug.Log(
+            $"PlayerCamera Awake: {gameObject.name}, " +
+            $"VirtualCamera = {virtualCamera}"
+        );
     }
 
     private void OnDestroy()
@@ -28,14 +35,16 @@ public class PlayerCamera : MonoBehaviour
 
         if (virtualCamera == null)
         {
-            Debug.LogError("PlayerCamera: CinemachineCamera is not assigned!");
+            Debug.LogError(
+                "PlayerCamera: CinemachineCamera is not assigned!"
+            );
             return;
         }
 
         virtualCamera.Follow = target;
 
         Debug.Log(
-            "Camera attached to: " + target.name
+            $"Camera attached to: {target.name}"
         );
     }
 
@@ -43,18 +52,22 @@ public class PlayerCamera : MonoBehaviour
     {
         if (virtualCamera == null)
         {
-            Debug.LogError("PlayerCamera: CinemachineCamera is not assigned!");
+            Debug.LogError(
+                "PlayerCamera: CinemachineCamera is not assigned!"
+            );
             return;
         }
 
         virtualCamera.Follow = null;
 
-        Vector3 currentPosition = virtualCamera.transform.position;
+        Vector3 currentPosition =
+            virtualCamera.transform.position;
 
-        virtualCamera.transform.position = new Vector3(
-            position.x,
-            position.y,
-            currentPosition.z
-        );
+        virtualCamera.transform.position =
+            new Vector3(
+                position.x,
+                position.y,
+                currentPosition.z
+            );
     }
 }

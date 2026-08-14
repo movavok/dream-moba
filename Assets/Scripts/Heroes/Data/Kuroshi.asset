@@ -31,7 +31,7 @@ MonoBehaviour:
     damage: 20
     cooldown: 0.5
     range: 15
-    projectileSpeed: 10
+    projectileSpeed: 8
   passive:
     name: 
     description: 

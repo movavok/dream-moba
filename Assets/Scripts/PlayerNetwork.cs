@@ -87,6 +87,31 @@ public class PlayerNetwork : NetworkBehaviour
         SetAimDirectionServerRpc(GetAimDirection());
     }
 
+    private NetworkVariable<bool> projectileTrailActive =
+        new NetworkVariable<bool>(
+            false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    public void SetProjectileTrail(bool active)
+    {
+        if (IsServer)
+        {
+            projectileTrailActive.Value = active;
+        }
+        else
+        {
+            SetProjectileTrailServerRpc(active);
+        }
+    }
+
+    [ServerRpc]
+    private void SetProjectileTrailServerRpc(bool active)
+    {
+        projectileTrailActive.Value = active;
+    }
+
     private Camera GetMainCamera()
     {
         if (mainCamera == null)
@@ -196,15 +221,6 @@ public class PlayerNetwork : NetworkBehaviour
             Quaternion.identity
         );
 
-        SpriteRenderer projectileRenderer =
-            projectile.GetComponent<SpriteRenderer>();
-
-        if (projectileRenderer != null)
-        {
-            projectileRenderer.sortingLayerName = 
-                moveDirection.y > 0 ? "ProjectileBehind" : "Projectile";
-        }
-
         ProjectileNetwork projectileNetwork =
             projectile.GetComponent<ProjectileNetwork>();
 
@@ -234,6 +250,14 @@ public class PlayerNetwork : NetworkBehaviour
         projectileNetwork.SetDirection(direction);
 
         projectile.GetComponent<NetworkObject>().Spawn();
+
+        projectileNetwork.SetTrail(
+            projectileTrailActive.Value
+        );
+
+        projectileNetwork.SetBehindPlayer(
+            moveDirection.y > 0
+        );
     }
 
     private void Awake()
@@ -308,29 +332,21 @@ public class PlayerNetwork : NetworkBehaviour
 
     private System.Collections.IEnumerator SetupCamera()
     {
-        Debug.Log(
-            $"[{OwnerClientId}] SetupCamera started. IsOwner: {IsOwner}"
-        );
-
         if (!IsOwner)
             yield break;
 
-        yield return null;
-        yield return null;
-        yield return null;
+        Debug.Log($"[{OwnerClientId}] SetupCamera started.");
 
-        Debug.Log(
-            $"[{OwnerClientId}] PlayerCamera.Instance = " +
-            (PlayerCamera.Instance != null)
-        );
-
-        if (PlayerCamera.Instance == null)
+        // Wait until PlayerCamera instance is available
+        while (PlayerCamera.Instance == null)
         {
-            Debug.LogError(
-                $"[{OwnerClientId}] PlayerCamera NOT FOUND!"
-            );
+            yield return null;
+        }
 
-            yield break;
+        // Wait until PlayerCamera is ready
+        while (!PlayerCamera.Instance.IsReady)
+        {
+            yield return null;
         }
 
         PlayerCamera.Instance.FollowPlayer(transform);

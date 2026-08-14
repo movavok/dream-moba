@@ -21,7 +21,6 @@ public class AttackDefinition
 
     public int damage = 10;
     public float cooldown = 0.5f;
-
     public float range = 50f;
     public float projectileSpeed = 10f;
 }
