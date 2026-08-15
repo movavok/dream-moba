@@ -16,6 +16,8 @@ public class PlayerNetwork : NetworkBehaviour
 
     private Vector2 moveInput;
 
+    private Vector2 lastMoveDirection = Vector2.down;
+
     private NetworkVariable<Vector2> networkMoveDirection =
     new NetworkVariable<Vector2>(
         Vector2.zero,
@@ -256,14 +258,14 @@ public class PlayerNetwork : NetworkBehaviour
         );
 
         projectileNetwork.SetBehindPlayer(
-            moveDirection.y > 0
+            lastMoveDirection.y > 0
         );
     }
 
     private void Awake()
     {
         if (animator == null)
-            animator = GetComponentInChildren<Animator>();
+        animator = GetComponentInChildren<Animator>();
     }
 
     private void UpdateAnimator()
@@ -273,9 +275,10 @@ public class PlayerNetwork : NetworkBehaviour
 
         Vector2 direction = networkMoveDirection.Value;
 
+        animator.SetBool("IsMoving", networkIsMoving.Value);
+
         animator.SetFloat("MoveX", direction.x);
         animator.SetFloat("MoveY", direction.y);
-        animator.SetBool("IsMoving", networkIsMoving.Value);
     }
 
     // Server simulation
@@ -295,9 +298,15 @@ public class PlayerNetwork : NetworkBehaviour
             transform.position +=
                 (Vector3)moveDirection * speed * Time.deltaTime;
 
-            // Update network variables for clients
-            networkMoveDirection.Value = moveDirection;
-            networkIsMoving.Value = moveDirection.sqrMagnitude > 0.01f;
+            bool isMoving = moveDirection.sqrMagnitude > 0.01f;
+
+            if (isMoving)
+            {
+                lastMoveDirection = moveDirection;
+            }
+
+            networkMoveDirection.Value = lastMoveDirection;
+            networkIsMoving.Value = isMoving;
 
             if (isAttacking && Time.time >= nextAttackTime)
             {

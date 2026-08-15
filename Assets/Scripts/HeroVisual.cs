@@ -49,8 +49,5 @@ public class HeroVisual : MonoBehaviour
 
         spriteLibrary.spriteLibraryAsset =
             heroData.visual.spriteLibrary;
-
-        spriteRenderer.sprite =
-            heroData.visual.idleFront;
     }
 }

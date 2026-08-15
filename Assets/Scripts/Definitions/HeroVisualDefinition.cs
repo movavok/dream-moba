@@ -9,14 +9,14 @@ public class HeroVisualDefinition
     public SpriteLibraryAsset spriteLibrary;
 
     [Header("Idle")]
-    public Sprite idleFront;
-    public Sprite idleFrontLeft;
-    public Sprite idleFrontRight;
-    public Sprite idleBack;
-    public Sprite idleBackLeft;
-    public Sprite idleBackRight;
-    public Sprite idleLeft;
-    public Sprite idleRight;
+    public Sprite[] idleFront;
+    public Sprite[] idleFrontRight;
+    public Sprite[] idleRight;
+    public Sprite[] idleBackRight;
+    public Sprite[] idleBack;
+    public Sprite[] idleBackLeft;
+    public Sprite[] idleLeft;
+    public Sprite[] idleFrontLeft;
 
     [Header("Walk")]
     public Sprite[] walkFront;
@@ -29,5 +29,6 @@ public class HeroVisualDefinition
     public Sprite[] walkRight;
 
     [Header("Animation")]
+    public float idleAnimationSpeed = 8f;
     public float walkAnimationSpeed = 8f;
 }

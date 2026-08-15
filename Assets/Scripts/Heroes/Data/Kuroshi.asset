@@ -53,14 +53,46 @@ MonoBehaviour:
     abilityId: guitaristAb2
   visual:
     spriteLibrary: {fileID: 11400000, guid: af67be8311142dc46af5951da9ef2f56, type: 2}
-    idleFront: {fileID: 6678547941572117625, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
-    idleFrontLeft: {fileID: 462053869640876705, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
-    idleFrontRight: {fileID: 5726913697390227298, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
-    idleBack: {fileID: 2861110554528200768, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
-    idleBackLeft: {fileID: 1345540294224937158, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
-    idleBackRight: {fileID: 1665021764616240494, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
-    idleLeft: {fileID: 2774314986048112051, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
-    idleRight: {fileID: 1626362924006454452, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    idleFront:
+    - {fileID: -3048184384510238455, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: 2460095251055542389, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -2173216579281289738, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -2464349194006669334, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    idleFrontRight:
+    - {fileID: 5781504341463230304, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -1719714205737178020, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -4063480982523484131, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -7919480351403763795, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    idleRight:
+    - {fileID: -1346679903484373758, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: 6470507539161531767, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -5371772619793260149, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -3212425844542680656, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    idleBackRight:
+    - {fileID: 597632679727924164, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: 9019824969118340260, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -8752813466900180837, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: 216939000511782767, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    idleBack:
+    - {fileID: 4315197198490657665, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -9183939946443781738, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: 773739159080398757, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -5513245833147643570, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    idleBackLeft:
+    - {fileID: 6567880757057296745, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -718316731889259120, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -3550148206279273100, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -2643752010168153925, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    idleLeft:
+    - {fileID: 8380058296005009265, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: 7121915523998480620, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: 4272653289449463299, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: 1625807222622875872, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    idleFrontLeft:
+    - {fileID: 4222527456125683575, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: 852643630098478251, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: 6965798672358089646, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+    - {fileID: -1654502282803633015, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
     walkFront:
     - {fileID: 6678547941572117625, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
     - {fileID: -2195786587240806226, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
@@ -101,4 +133,5 @@ MonoBehaviour:
     - {fileID: 1849003216246788070, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
     - {fileID: -1808914321950735972, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
     - {fileID: 1855412952519270261, guid: 0878fba1d99cb154497665dce9c2cf4c, type: 3}
+    idleAnimationSpeed: 8
     walkAnimationSpeed: 8
