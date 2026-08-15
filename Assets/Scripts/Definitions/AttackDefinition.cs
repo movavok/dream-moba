@@ -10,6 +10,9 @@ public enum ProjectileSpawnMode
 [Serializable]
 public class AttackDefinition
 {
+    public Sprite icon;
+    public string name;
+    public string description;
     public GameObject projectilePrefab;
 
     public ProjectileSpawnMode spawnMode;

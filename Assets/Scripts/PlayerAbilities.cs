@@ -11,11 +11,57 @@ public class PlayerAbilities : NetworkBehaviour
     private IAbility ability1;
     private IAbility ability2;
 
-    private float ability1CooldownTimer;
-    private float ability2CooldownTimer;
+    public event System.Action Ability1Used;
+    public event System.Action Ability2Used;
 
-    private bool ability1OnCooldown;
-    private bool ability2OnCooldown;
+    private NetworkVariable<float> ability1CooldownTimer =
+        new NetworkVariable<float>(
+            0f,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    private NetworkVariable<float> ability2CooldownTimer =
+        new NetworkVariable<float>(
+            0f,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    private NetworkVariable<bool> ability1OnCooldown =
+        new NetworkVariable<bool>(
+            false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    private NetworkVariable<bool> ability2OnCooldown =
+        new NetworkVariable<bool>(
+            false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    private NetworkVariable<float> ability1ActiveTimer =
+        new NetworkVariable<float>(
+            0f,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    private NetworkVariable<float> ability2ActiveTimer =
+        new NetworkVariable<float>(
+            0f,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    private NetworkVariable<int> ability2Charge =
+        new NetworkVariable<int>(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
 
     private bool ability1WasActive;
     private bool ability2WasActive;
@@ -84,10 +130,15 @@ public class PlayerAbilities : NetworkBehaviour
         if (ability1 == null)
             return;
 
-        if (ability1OnCooldown)
+        if (ability1OnCooldown.Value)
             return;
 
-        ability1.Use();
+        bool used = ability1.Use();
+
+        if (used)
+        {
+            Ability1UsedClientRpc();
+        }
     }
 
     [ServerRpc]
@@ -96,10 +147,27 @@ public class PlayerAbilities : NetworkBehaviour
         if (ability2 == null)
             return;
 
-        if (ability2OnCooldown)
+        if (ability2OnCooldown.Value)
             return;
 
-        ability2.Use();
+        bool used = ability2.Use();
+
+        if (used)
+        {
+            Ability2UsedClientRpc();
+        }
+    }
+
+    [ClientRpc]
+    private void Ability1UsedClientRpc()
+    {
+        Ability1Used?.Invoke();
+    }
+
+    [ClientRpc]
+    private void Ability2UsedClientRpc()
+    {
+        Ability2Used?.Invoke();
     }
 
     private void UpdateAbilityCooldowns()
@@ -115,8 +183,8 @@ public class PlayerAbilities : NetworkBehaviour
             // Ability just finished
             if (ability1WasActive && !isActive)
             {
-                ability1OnCooldown = true;
-                ability1CooldownTimer = heroData.ability1.cooldown;
+                ability1OnCooldown.Value = true;
+                ability1CooldownTimer.Value = heroData.ability1.cooldown;
 
                 Debug.Log(
                     "Ab1 cooldown started: " +
@@ -126,14 +194,14 @@ public class PlayerAbilities : NetworkBehaviour
 
             ability1WasActive = isActive;
 
-            if (ability1OnCooldown)
+            if (ability1OnCooldown.Value)
             {
-                ability1CooldownTimer -= Time.deltaTime;
+                ability1CooldownTimer.Value -= Time.deltaTime;
 
-                if (ability1CooldownTimer <= 0f)
+                if (ability1CooldownTimer.Value <= 0f)
                 {
-                    ability1CooldownTimer = 0f;
-                    ability1OnCooldown = false;
+                    ability1CooldownTimer.Value = 0f;
+                    ability1OnCooldown.Value = false;
 
                     Debug.Log("Ab1 cooldown finished!");
                 }
@@ -151,8 +219,8 @@ public class PlayerAbilities : NetworkBehaviour
             // Ability just finished
             if (ability2WasActive && !isActive)
             {
-                ability2OnCooldown = true;
-                ability2CooldownTimer = heroData.ability2.cooldown;
+                ability2OnCooldown.Value = true;
+                ability2CooldownTimer.Value = heroData.ability2.cooldown;
 
                 Debug.Log(
                     "Ab2 cooldown started: " +
@@ -162,20 +230,50 @@ public class PlayerAbilities : NetworkBehaviour
 
             ability2WasActive = isActive;
 
-            if (ability2OnCooldown)
+            if (ability2OnCooldown.Value)
             {
-                ability2CooldownTimer -= Time.deltaTime;
+                ability2CooldownTimer.Value -= Time.deltaTime;
 
-                if (ability2CooldownTimer <= 0f)
+                if (ability2CooldownTimer.Value <= 0f)
                 {
-                    ability2CooldownTimer = 0f;
-                    ability2OnCooldown = false;
+                    ability2CooldownTimer.Value = 0f;
+                    ability2OnCooldown.Value = false;
 
                     Debug.Log("Ab2 cooldown finished!");
                 }
             }
         }
     }
+
+    public float Ability1CooldownRemaining =>
+        ability1OnCooldown.Value ? ability1CooldownTimer.Value : 0f;
+
+    public float Ability2CooldownRemaining =>
+        ability2OnCooldown.Value ? ability2CooldownTimer.Value : 0f;
+
+    public float Ability1CooldownDuration =>
+        heroData != null ? heroData.ability1.cooldown : 0f;
+
+    public float Ability2CooldownDuration =>
+        heroData != null ? heroData.ability2.cooldown : 0f;
+
+    public float Ability1ActiveRemaining =>
+        ability1ActiveTimer.Value;
+
+    public float Ability2ActiveRemaining =>
+        ability2ActiveTimer.Value;
+
+    public int Ability2MaxCharge =>
+        ability2 != null ? ability2.MaxCharge() : 0;
+
+    public int Ability2CurrentCharge =>
+        ability2Charge.Value;
+
+    public bool Ability1IsUsable =>
+        ability1 != null && ability1.IsUsable();
+
+    public bool Ability2IsUsable =>
+        ability2 != null && ability2.IsUsable();
 
     private void Update()
     {
@@ -185,6 +283,35 @@ public class PlayerAbilities : NetworkBehaviour
         ability1?.Update();
         ability2?.Update();
 
+        if (ability1 != null)
+        {
+            if (ability1.IsActive())
+            {
+                ability1ActiveTimer.Value = ability1.RemainingTime;
+            }
+            else
+            {
+                ability1ActiveTimer.Value = 0f;
+            }
+        }
+
+        if (ability2 != null)
+        {
+            if (ability2.IsActive())
+            {
+                ability2ActiveTimer.Value = ability2.RemainingTime;
+            }
+            else
+            {
+                ability2ActiveTimer.Value = 0f;
+            }
+        }
+
         UpdateAbilityCooldowns();
+
+        if (ability2 != null && ability2.HasCharge())
+        {
+            ability2Charge.Value = ability2.CurrentCharge();
+        }
     }
 }

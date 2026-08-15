@@ -57,6 +57,13 @@ public class PlayerNetwork : NetworkBehaviour
     }
 
     // Combat input
+    public event System.Action AttackUsed;
+    [ClientRpc]
+    private void AttackUsedClientRpc()
+    {
+        AttackUsed?.Invoke();
+    }
+
     private bool isAttacking;
     private Vector2 aimDirection;
 
@@ -284,6 +291,19 @@ public class PlayerNetwork : NetworkBehaviour
     // Server simulation
     private float nextAttackTime;
 
+    private NetworkVariable<float> attackCooldownRemaining =
+        new NetworkVariable<float>(
+            0f,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    public float AttackCooldownRemaining =>
+        attackCooldownRemaining.Value;
+
+    public float AttackCooldownDuration =>
+        heroData != null ? heroData.attack.cooldown : 0f;
+
     private void Update()
     {
         if (IsServer)
@@ -316,7 +336,12 @@ public class PlayerNetwork : NetworkBehaviour
                     (1 / attackCooldownMultiplier);
 
                 ShootProjectile(aimDirection, moveInput);
+
+                AttackUsedClientRpc();
             }
+
+            attackCooldownRemaining.Value =
+                    Mathf.Max(0f, nextAttackTime - Time.time);
         }
 
         UpdateAnimator();
@@ -335,8 +360,32 @@ public class PlayerNetwork : NetworkBehaviour
         if (IsOwner)
         {
             Debug.Log("Its my player");
+            StartCoroutine(SetupHUD());
             StartCoroutine(SetupCamera());
         }
+    }
+
+    private System.Collections.IEnumerator SetupHUD()
+    {
+        while (HeroHUD.Instance == null)
+        {
+            yield return null;
+        }
+
+        Debug.Log("PlayerNetwork: HeroHUD found, initializing");
+
+        HeroHUD.Instance.Initialize(heroData);
+        HeroHUD.Instance.SetPlayerNetwork(this);
+
+        PlayerAbilities abilities = GetComponent<PlayerAbilities>();
+
+        if (abilities == null)
+        {
+            Debug.LogError("PlayerNetwork: PlayerAbilities not found!");
+            yield break;
+        }
+
+        HeroHUD.Instance.SetAbilities(abilities);
     }
 
     private System.Collections.IEnumerator SetupCamera()

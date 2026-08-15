@@ -6,10 +6,14 @@ public class GuitaristAbility2 : AbilityBase
     private PlayerStreak streak;
     private HeroDefinition heroData;
 
-    private float timer;
-
-    private int requiredStreaks = 8;
+    private int requiredStreaks = 6;
     private int newStreaks;
+
+    public override bool HasCharge() => true;
+
+    public override int CurrentCharge() => newStreaks;
+
+    public override int MaxCharge() => requiredStreaks; 
 
     public GuitaristAbility2(
         PlayerNetwork player,
@@ -42,13 +46,15 @@ public class GuitaristAbility2 : AbilityBase
         Debug.Log($"[{Time.time}] Guitarist A2 charge reset!");
     }
 
-    public override void Use()
+    public override bool IsUsable()
     {
-        if (active)
-            return;
+        return !active && newStreaks >= requiredStreaks;
+    }
 
-        if (newStreaks < requiredStreaks)
-            return;
+    public override bool Use()
+    {
+        if (!IsUsable())
+            return false;
 
         newStreaks = 0;
 
@@ -68,32 +74,24 @@ public class GuitaristAbility2 : AbilityBase
         streak.SetFrozen(true);
         streak.RefreshTimer();
 
-        Debug.Log(
-            "Guitarist A2 on! " +
-            "Atk cooldown mult: " + heroData.ability2.multiplier +
-            ", proj spd mult: " + heroData.ability2.multiplier
-        );
+        Debug.Log("Guitarist A2 on!");
+
+        return true;
     }
 
     public override void Update()
     {
-        if (!active)
-            return;
+        bool ended = UpdateTimer();
 
-        timer -= Time.deltaTime;
-
-        if (timer <= 0f)
+        if (ended)
         {
-            active = false;
-
             player.SetProjectileTrail(false);
-
             player.SetAttackCooldownMultiplier(1f);
             player.SetProjectileSpeedMultiplier(1f);
-
             streak.SetFrozen(false);
 
             Debug.Log("Guitarist A2 ended!");
+            return;
         }
     }
 }
