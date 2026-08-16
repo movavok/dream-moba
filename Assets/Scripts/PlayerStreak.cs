@@ -89,9 +89,22 @@ public class PlayerStreak : NetworkBehaviour
 
         if (streakTimer <= 0f)
         {
-            streak.Value = 0;
-            OnStreakReset?.Invoke();
-            Debug.Log("Streak lost");
+            streak.Value--;
+
+            if (streak.Value <= 0)
+            {
+                streak.Value = 0;
+                OnStreakReset?.Invoke();
+                Debug.Log("Streak lost completely");
+            }
+            else
+            {
+                streakTimer =
+                    heroData.attack.cooldown *
+                    heroData.streaks.streakTimeoutMultiplier;
+
+                Debug.Log("Streak decreased: " + streak.Value);
+            }
         }
     }
 

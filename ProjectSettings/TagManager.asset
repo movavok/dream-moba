@@ -53,6 +53,9 @@ TagManager:
   - name: Projectile
     uniqueID: 955594379
     locked: 0
+  - name: UI
+    uniqueID: 2526420685
+    locked: 0
   m_RenderingLayers:
   - Default
   m_MigratedRenderPipelines: []

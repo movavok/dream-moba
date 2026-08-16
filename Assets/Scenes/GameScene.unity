@@ -596,6 +596,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AbilityTooltip
   titleText: {fileID: 1769938652}
   descriptionText: {fileID: 448830250}
+  screenPadding: 10
 --- !u!1 &798225708
 GameObject:
   m_ObjectHideFlags: 0
@@ -1330,9 +1331,53 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1325450949009780224, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1325450949009780224, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1325450949009780224, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1325450949009780224, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1325450949009780224, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1835695908463747359, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1835695908463747359, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1835695908463747359, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1835695908463747359, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1835695908463747359, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2414796875610782180, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
       propertyPath: m_Name
       value: AbilityTooltip
+      objectReference: {fileID: 0}
+    - target: {fileID: 3676051691110364848, guid: 4ad7210160ce80743bff3aab9993af61, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

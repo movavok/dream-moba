@@ -8,6 +8,7 @@ public class GuitaristAbility2 : AbilityBase
 
     private int requiredStreaks = 6;
     private int newStreaks;
+    private bool abilityReady;
 
     public override bool HasCharge() => true;
 
@@ -34,11 +35,17 @@ public class GuitaristAbility2 : AbilityBase
             return;
 
         newStreaks++;
+
+        if (newStreaks >= requiredStreaks)
+        {
+            abilityReady = true;
+            Debug.Log("Guitarist A2 unlocked!");
+        }
     }
 
     private void OnStreakReset()
     {
-        if (active)
+        if (active || abilityReady)
             return;
 
         newStreaks = 0;
@@ -48,7 +55,7 @@ public class GuitaristAbility2 : AbilityBase
 
     public override bool IsUsable()
     {
-        return !active && newStreaks >= requiredStreaks;
+        return !active && abilityReady;
     }
 
     public override bool Use()
@@ -56,6 +63,7 @@ public class GuitaristAbility2 : AbilityBase
         if (!IsUsable())
             return false;
 
+        abilityReady = false;
         newStreaks = 0;
 
         active = true;
