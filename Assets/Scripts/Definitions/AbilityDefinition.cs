@@ -13,5 +13,8 @@ public class AbilityDefinition
     public float cooldown;
     public float duration;
 
+    [Header("Quick Cast")]
+    public bool quickCastEnabled;
+
     public string abilityId;
 }

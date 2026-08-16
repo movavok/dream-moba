@@ -1,8 +1,9 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
-public class AbilitySlot : MonoBehaviour
+public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [Header("UI")]
     [SerializeField] private Image frame;
@@ -14,10 +15,17 @@ public class AbilitySlot : MonoBehaviour
     [Header("Press Animation")]
     [SerializeField] private RectTransform slotVisual;
     [SerializeField] private float pressScale = 0.9f;
-    [SerializeField] private float pressDuration = 0.06f;
+    [SerializeField] private float pressDuration = 0.1f;
+
+    [Header("Tooltip")]
+    private string tooltipTitle;
+    private string tooltipDescription;  
 
     private Sprite normalFrame;
     private Sprite quickCastFrame;
+
+    private bool quickCastAvailable;
+    public bool QuickCastAvailable => quickCastAvailable;
 
     private void Awake()
     {
@@ -195,18 +203,62 @@ public class AbilitySlot : MonoBehaviour
             frame.sprite = normalFrame;
     }
 
+    public void SetQuickCastAvailable(bool available)
+    {
+        quickCastAvailable = available;
+
+        if (!available)
+        {
+            SetQuickCast(false);
+        }
+    }
+
     public void SetQuickCast(bool active)
     {
-        if (frame == null)
+        if (frame == null || !quickCastAvailable)
             return;
 
-        if (active)
-        {
-            frame.sprite = quickCastFrame;
-        }
-        else
-        {
-            frame.sprite = normalFrame;
-        }
+        frame.sprite = active
+            ? quickCastFrame
+            : normalFrame;
+    }
+
+    public void SetTooltipData(string title, string description)
+    {
+        tooltipTitle = title;
+        tooltipDescription = description;
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (HeroHUD.Instance == null)
+            return;
+
+        HeroHUD.Instance.ShowTooltip(
+            tooltipTitle,
+            tooltipDescription
+        );
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (HeroHUD.Instance == null)
+            return;
+
+        HeroHUD.Instance.HideTooltip();
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (!quickCastAvailable)
+            return;
+
+        if (eventData.button != PointerEventData.InputButton.Right)
+            return;
+
+        if (HeroHUD.Instance == null)
+            return;
+
+        HeroHUD.Instance.ToggleQuickCast(this);
     }
 }

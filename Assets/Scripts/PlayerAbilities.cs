@@ -14,6 +14,54 @@ public class PlayerAbilities : NetworkBehaviour
     public event System.Action Ability1Used;
     public event System.Action Ability2Used;
 
+    private bool ability1WasUsable;
+    private bool ability2WasUsable;
+
+    private NetworkVariable<bool> ability1QuickCast =
+        new NetworkVariable<bool>(
+            false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Owner
+        );
+
+    private NetworkVariable<bool> ability2QuickCast =
+        new NetworkVariable<bool>(
+            false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Owner
+        );
+
+    public bool Ability1QuickCast => ability1QuickCast.Value;
+    public bool Ability2QuickCast => ability2QuickCast.Value;
+
+    public void ToggleAbility1QuickCast()
+    {
+        if (!IsOwner)
+            return;
+
+        if (heroData == null || heroData.ability1 == null)
+            return;
+
+        if (!heroData.ability1.quickCastEnabled)
+            return;
+
+        ability1QuickCast.Value = !ability1QuickCast.Value;
+    }
+
+    public void ToggleAbility2QuickCast()
+    {
+        if (!IsOwner)
+            return;
+
+        if (heroData == null || heroData.ability2 == null)
+            return;
+
+        if (!heroData.ability2.quickCastEnabled)
+            return;
+
+        ability2QuickCast.Value = !ability2QuickCast.Value;
+    }
+
     private NetworkVariable<float> ability1CooldownTimer =
         new NetworkVariable<float>(
             0f,
@@ -124,9 +172,11 @@ public class PlayerAbilities : NetworkBehaviour
         UseAbility2ServerRpc();
     }
 
-    [ServerRpc]
-    private void UseAbility1ServerRpc()
+    private void UseAbility1()
     {
+        if (!IsServer)
+            return;
+
         if (ability1 == null)
             return;
 
@@ -141,9 +191,11 @@ public class PlayerAbilities : NetworkBehaviour
         }
     }
 
-    [ServerRpc]
-    private void UseAbility2ServerRpc()
+    private void UseAbility2()
     {
+        if (!IsServer)
+            return;
+
         if (ability2 == null)
             return;
 
@@ -156,6 +208,18 @@ public class PlayerAbilities : NetworkBehaviour
         {
             Ability2UsedClientRpc();
         }
+    }
+
+    [ServerRpc]
+    private void UseAbility1ServerRpc()
+    {
+        UseAbility1();
+    }
+
+    [ServerRpc]
+    private void UseAbility2ServerRpc()
+    {
+        UseAbility2();
     }
 
     [ClientRpc]
@@ -275,6 +339,50 @@ public class PlayerAbilities : NetworkBehaviour
     public bool Ability2IsUsable =>
         ability2 != null && ability2.IsUsable();
 
+    private void UpdateQuickCast()
+    {
+        // =========================
+        // ABILITY 1
+        // =========================
+
+        if (ability1 != null && ability1QuickCast.Value)
+        {
+            bool isUsable = ability1.IsUsable();
+
+            if (isUsable && !ability1WasUsable)
+            {
+                UseAbility1();
+            }
+
+            ability1WasUsable = isUsable;
+        }
+        else if (ability1 != null)
+        {
+            ability1WasUsable = ability1.IsUsable();
+        }
+
+
+        // =========================
+        // ABILITY 2
+        // =========================
+
+        if (ability2 != null && ability2QuickCast.Value)
+        {
+            bool isUsable = ability2.IsUsable();
+
+            if (isUsable && !ability2WasUsable)
+            {
+                UseAbility2();
+            }
+
+            ability2WasUsable = isUsable;
+        }
+        else if (ability2 != null)
+        {
+            ability2WasUsable = ability2.IsUsable();
+        }
+    }
+
     private void Update()
     {
         if (!IsServer)
@@ -282,6 +390,8 @@ public class PlayerAbilities : NetworkBehaviour
 
         ability1?.Update();
         ability2?.Update();
+
+        UpdateQuickCast();
 
         if (ability1 != null)
         {
