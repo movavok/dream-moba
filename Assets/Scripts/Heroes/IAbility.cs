@@ -10,4 +10,6 @@ public interface IAbility
     int MaxCharge();
     
     bool IsUsable();
+
+    float VisualPower { get; }
 }

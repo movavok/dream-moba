@@ -6,6 +6,11 @@ public class GuitaristAbility1 : AbilityBase
     private PlayerStreak streak;
     private HeroDefinition heroData;
 
+    private float activeSpeedMultiplier;
+    public float ActiveSpeedMultiplier => activeSpeedMultiplier;
+
+    public override float VisualPower => activeSpeedMultiplier;
+
     public GuitaristAbility1(
         PlayerNetwork player,
         PlayerStreak streak,
@@ -18,7 +23,7 @@ public class GuitaristAbility1 : AbilityBase
 
     public override bool IsUsable()
     {
-        return !active && streak.Streak >= 1;;
+        return !active && streak.Streak >= 1;
     }
 
     public override bool Use()
@@ -29,11 +34,12 @@ public class GuitaristAbility1 : AbilityBase
         active = true;
         timer = heroData.ability1.duration;
 
-        player.SetSpeedMultiplier(GetSpeedMultiplier());
+        activeSpeedMultiplier = GetSpeedMultiplier();
+        player.SetSpeedMultiplier(activeSpeedMultiplier);
 
         Debug.Log(
             "Guitarist A1 on! Spd mult: " +
-            GetSpeedMultiplier()
+            activeSpeedMultiplier
         );
 
         return true;
@@ -48,11 +54,6 @@ public class GuitaristAbility1 : AbilityBase
             player.SetSpeedMultiplier(1f);
             Debug.Log("Guitarist A1 ended!");
             return;
-        }
-
-        if (active)
-        {
-            player.SetSpeedMultiplier(GetSpeedMultiplier());
         }
     }
 

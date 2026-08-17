@@ -27,6 +27,7 @@ public class GuitaristAbility2 : AbilityBase
 
         streak.OnStreakAdded += OnStreakAdded;
         streak.OnStreakReset += OnStreakReset;
+        streak.OnStreakDecreased += OnStreakDecreased;
     }
 
     private void OnStreakAdded()
@@ -51,6 +52,17 @@ public class GuitaristAbility2 : AbilityBase
         newStreaks = 0;
 
         Debug.Log($"[{Time.time}] Guitarist A2 charge reset!");
+    }
+
+    private void OnStreakDecreased()
+    {
+        if (active || abilityReady)
+            return;
+
+        if (newStreaks > 0)
+            newStreaks--;
+
+        Debug.Log($"A2 charge decreased: {newStreaks}");
     }
 
     public override bool IsUsable()

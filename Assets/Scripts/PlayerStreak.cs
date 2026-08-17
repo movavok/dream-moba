@@ -10,7 +10,20 @@ public class PlayerStreak : NetworkBehaviour
     private NetworkVariable<int> streak =
         new NetworkVariable<int>(0);
 
-    private float streakTimer;
+    private NetworkVariable<float> streakTimer =
+        new NetworkVariable<float>(
+            0f,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    public float StreakTimer => streakTimer.Value;
+
+    public float StreakTimerMax =>
+        heroData != null
+            ? heroData.attack.cooldown *
+            heroData.streaks.streakTimeoutMultiplier
+            : 0f;
 
     public int Streak => streak.Value;
 
@@ -32,7 +45,7 @@ public class PlayerStreak : NetworkBehaviour
         if (heroData == null)
             return;
 
-        streakTimer =
+        streakTimer.Value =
             heroData.attack.cooldown *
             heroData.streaks.streakTimeoutMultiplier;
     }
@@ -63,13 +76,15 @@ public class PlayerStreak : NetworkBehaviour
 
         streak.Value++;
 
-        // Streak lives for 2x the attack cooldown
-        streakTimer = heroData.attack.cooldown * heroData.streaks.streakTimeoutMultiplier;
+        // Streak lives for 3x the attack cooldown
+        streakTimer.Value = heroData.attack.cooldown * heroData.streaks.streakTimeoutMultiplier;
 
         OnStreakAdded?.Invoke();
 
         Debug.Log("Streak: " + streak.Value);
     }
+
+    public event Action OnStreakDecreased;
 
     private void Update()
     {
@@ -85,23 +100,26 @@ public class PlayerStreak : NetworkBehaviour
         if (frozen)
             return;
 
-        streakTimer -= Time.deltaTime;
+        streakTimer.Value -= Time.deltaTime;
 
-        if (streakTimer <= 0f)
+        if (streakTimer.Value <= 0f)
         {
             streak.Value--;
 
             if (streak.Value <= 0)
             {
                 streak.Value = 0;
+                streakTimer.Value = 0f;
                 OnStreakReset?.Invoke();
                 Debug.Log("Streak lost completely");
             }
             else
             {
-                streakTimer =
+                streakTimer.Value =
                     heroData.attack.cooldown *
                     heroData.streaks.streakTimeoutMultiplier;
+
+                OnStreakDecreased?.Invoke();
 
                 Debug.Log("Streak decreased: " + streak.Value);
             }
@@ -116,7 +134,7 @@ public class PlayerStreak : NetworkBehaviour
             return;
 
         streak.Value = 0;
-        streakTimer = 0f;
+        streakTimer.Value = 0f;
         OnStreakReset?.Invoke();
     }
 }

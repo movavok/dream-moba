@@ -11,11 +11,17 @@ public class PlayerAbilities : NetworkBehaviour
     private IAbility ability1;
     private IAbility ability2;
 
+    public IAbility Ability1 => ability1;
+    public IAbility Ability2 => ability2;
+
     public event System.Action Ability1Used;
     public event System.Action Ability2Used;
 
     private bool ability1WasUsable;
     private bool ability2WasUsable;
+
+    private GameObject ability1Visual;
+    private GameObject ability2Visual;
 
     private NetworkVariable<bool> ability1QuickCast =
         new NetworkVariable<bool>(
@@ -172,6 +178,63 @@ public class PlayerAbilities : NetworkBehaviour
         UseAbility2ServerRpc();
     }
 
+    [ClientRpc]
+    private void StartAbilityVisualClientRpc(int abilityIndex, float power)
+    {
+        AbilityDefinition definition;
+
+        if (abilityIndex == 1)
+            definition = heroData.ability1;
+        else
+            definition = heroData.ability2;
+
+        if (definition == null)
+            return;
+
+        if (definition.VisualEffectPrefab == null)
+            return;
+
+        GameObject effect = Instantiate(
+            definition.VisualEffectPrefab,
+            transform.position,
+            Quaternion.identity,
+            transform
+        );
+
+        IAbilityVisual visual =
+            effect.GetComponent<IAbilityVisual>();
+
+        if (visual != null)
+        {
+            visual.Initialize(transform, power);
+        }
+
+        if (abilityIndex == 1)
+            ability1Visual = effect;
+        else
+            ability2Visual = effect;
+    }
+
+    private void StopAbilityVisual(int abilityIndex)
+    {
+        if (abilityIndex == 1 && ability1Visual != null)
+        {
+            Destroy(ability1Visual);
+            ability1Visual = null;
+        }
+        else if (abilityIndex == 2 && ability2Visual != null)
+        {
+            Destroy(ability2Visual);
+            ability2Visual = null;
+        }
+    }
+
+    [ClientRpc]
+    private void StopAbilityVisualClientRpc(int abilityIndex)
+    {
+        StopAbilityVisual(abilityIndex);
+    }
+
     private void UseAbility1()
     {
         if (!IsServer)
@@ -188,6 +251,7 @@ public class PlayerAbilities : NetworkBehaviour
         if (used)
         {
             Ability1UsedClientRpc();
+            StartAbilityVisualClientRpc(1, ability1.VisualPower);
         }
     }
 
@@ -207,6 +271,7 @@ public class PlayerAbilities : NetworkBehaviour
         if (used)
         {
             Ability2UsedClientRpc();
+            StartAbilityVisualClientRpc(2, ability2.VisualPower);
         }
     }
 
@@ -250,6 +315,8 @@ public class PlayerAbilities : NetworkBehaviour
                 ability1OnCooldown.Value = true;
                 ability1CooldownTimer.Value = heroData.ability1.cooldown;
 
+                StopAbilityVisualClientRpc(1);
+
                 Debug.Log(
                     "Ab1 cooldown started: " +
                     heroData.ability1.cooldown
@@ -285,6 +352,8 @@ public class PlayerAbilities : NetworkBehaviour
             {
                 ability2OnCooldown.Value = true;
                 ability2CooldownTimer.Value = heroData.ability2.cooldown;
+
+                StopAbilityVisualClientRpc(2);
 
                 Debug.Log(
                     "Ab2 cooldown started: " +

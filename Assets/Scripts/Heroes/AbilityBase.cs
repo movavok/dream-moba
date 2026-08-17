@@ -41,4 +41,6 @@ public abstract class AbilityBase : IAbility
 
     public abstract bool Use();
     public abstract void Update();
+
+    public virtual float VisualPower => 1f;
 }

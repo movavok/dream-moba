@@ -14,8 +14,6 @@ public class HealthBar : MonoBehaviour
 
     [Header("Streak")]
     [SerializeField] private Image streakIndicator;
-    [SerializeField] private Sprite streakActiveSprite;
-    [SerializeField] private Sprite streakInactiveSprite;
     [SerializeField] private TMP_Text streakText;
 
     [Header("Colors")]
@@ -212,16 +210,27 @@ public class HealthBar : MonoBehaviour
         if (streakText != null)
         {
             streakText.gameObject.SetActive(value > 0);
+
             if (value > 0)
                 streakText.text = $"<color=#FF9D3D><b>{value}</b></color>";
         }
 
         if (streakIndicator != null)
         {
-            streakIndicator.sprite =
-                value > 0
-                    ? streakActiveSprite
-                    : streakInactiveSprite;
+            if (value > 0)
+            {
+                float timerMax = streak.StreakTimerMax;
+
+                if (timerMax > 0f)
+                {
+                    streakIndicator.fillAmount =
+                        Mathf.Clamp01(streak.StreakTimer / timerMax);
+                }
+            }
+            else
+            {
+                streakIndicator.fillAmount = 0f;
+            }
         }
     }
 

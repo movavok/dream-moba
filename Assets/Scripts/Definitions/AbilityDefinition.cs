@@ -17,4 +17,7 @@ public class AbilityDefinition
     public bool quickCastEnabled;
 
     public string abilityId;
+
+    [SerializeField] private GameObject visualEffectPrefab;
+    public GameObject VisualEffectPrefab => visualEffectPrefab;
 }

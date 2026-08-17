@@ -6,6 +6,8 @@ public class HeroVisual : MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private SpriteLibrary spriteLibrary;
 
+    public SpriteRenderer SpriteRenderer => spriteRenderer;
+
     private HeroDefinition heroData;
 
     private void Awake()
