@@ -14,11 +14,18 @@ public class ProjectileNetwork : NetworkBehaviour
     [SerializeField] private TrailRenderer trail;
 
     private NetworkVariable<bool> networkTrailEnabled =
-    new NetworkVariable<bool>(
-        false,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server
-    );
+        new NetworkVariable<bool>(
+            false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    private NetworkVariable<int> networkVisualColorIndex =
+        new NetworkVariable<int>(
+            -1,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
 
     public void SetTrail(bool enabled)
     {
@@ -42,11 +49,11 @@ public class ProjectileNetwork : NetworkBehaviour
     }
 
     private NetworkVariable<bool> networkBehindPlayer =
-    new NetworkVariable<bool>(
-        false,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server
-    );
+        new NetworkVariable<bool>(
+            false,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
 
     public void SetBehindPlayer(bool behind)
     {
@@ -58,13 +65,14 @@ public class ProjectileNetwork : NetworkBehaviour
 
     private void ApplySortingLayer(bool behind)
     {
-        SpriteRenderer renderer = GetComponent<SpriteRenderer>();
+        SpriteRenderer[] renderers =
+            GetComponentsInChildren<SpriteRenderer>();
 
-        if (renderer == null)
-            return;
-
-        renderer.sortingLayerName =
-            behind ? "ProjectileBehind" : "Projectile";
+        foreach (SpriteRenderer renderer in renderers)
+        {
+            renderer.sortingLayerName =
+                behind ? "ProjectileBehind" : "Projectile";
+        }
     }
 
     private void OnBehindPlayerChanged(
@@ -84,6 +92,32 @@ public class ProjectileNetwork : NetworkBehaviour
     public void SetSpeedMultiplier(float multiplier)
     {
         speedMultiplier = multiplier;
+    }
+
+    public void SetTrailColor(Color color)
+    {
+        if (trail == null)
+            return;
+
+        Color darkColor = color * 0.6f;
+        darkColor.a = color.a;
+
+        Gradient gradient = new Gradient();
+
+        gradient.SetKeys(
+            new GradientColorKey[]
+            {
+                new GradientColorKey(darkColor, 0f),
+                new GradientColorKey(darkColor, 1f)
+            },
+            new GradientAlphaKey[]
+            {
+                new GradientAlphaKey(darkColor.a, 0f),
+                new GradientAlphaKey(0f, 1f)
+            }
+        );
+
+        trail.colorGradient = gradient;
     }
 
     private void ResolveAttackData()
@@ -125,6 +159,27 @@ public class ProjectileNetwork : NetworkBehaviour
         }
     }
 
+    private void OnVisualColorChanged(
+        int oldValue,
+        int newValue)
+    {
+        ApplyVisualColor(newValue);
+    }
+
+    private void ApplyVisualColor(int colorIndex)
+    {
+        if (colorIndex < 0)
+            return;
+
+        IProjectileVisual visual =
+            GetComponent<IProjectileVisual>();
+
+        if (visual == null)
+            return;
+
+        visual.Initialize(colorIndex);
+    }
+
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -134,6 +189,9 @@ public class ProjectileNetwork : NetworkBehaviour
 
         networkBehindPlayer.OnValueChanged += OnBehindPlayerChanged;
         ApplySortingLayer(networkBehindPlayer.Value);
+
+        networkVisualColorIndex.OnValueChanged += OnVisualColorChanged;
+        ApplyVisualColor(networkVisualColorIndex.Value);
 
         if (IsServer)
         {
@@ -166,6 +224,38 @@ public class ProjectileNetwork : NetworkBehaviour
     public void SetOwnerStreak(PlayerStreak streak)
     {
         ownerStreak = streak;
+    }
+
+    public void InitializeVisual()
+    {
+        if (!IsServer)
+            return;
+
+        if (ownerStreak == null)
+            return;
+
+        IProjectileVisual visual =
+            GetComponent<IProjectileVisual>();
+
+        if (visual == null)
+            return;
+
+        int colorCount = 0;
+
+        if (visual is GuitaristProjectileVisual guitaristVisual)
+        {
+            colorCount = guitaristVisual.ColorCount;
+        }
+
+        if (colorCount <= 0)
+            return;
+
+        int colorIndex =
+            ownerStreak.Streak % colorCount;
+
+        networkVisualColorIndex.Value = colorIndex;
+
+        ApplyVisualColor(colorIndex);
     }
 
     private bool hasHit;

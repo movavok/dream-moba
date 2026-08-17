@@ -260,6 +260,8 @@ public class PlayerNetwork : NetworkBehaviour
 
         projectile.GetComponent<NetworkObject>().Spawn();
 
+        projectileNetwork.InitializeVisual();
+
         projectileNetwork.SetTrail(
             projectileTrailActive.Value
         );

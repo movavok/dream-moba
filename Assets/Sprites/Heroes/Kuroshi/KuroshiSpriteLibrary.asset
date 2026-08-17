@@ -277,5 +277,29 @@ MonoBehaviour:
     - m_Name: Frame3
       m_Hash: 253676956
       m_Sprite: {fileID: -1654502282803633015, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
+  - m_Name: CoreAttack
+    m_Hash: 327739041
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: 949064584, guid: bace5b4a8a8ba6a43bf740d900a004a4, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: -1883291658, guid: bace5b4a8a8ba6a43bf740d900a004a4, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: 556671912, guid: bace5b4a8a8ba6a43bf740d900a004a4, type: 3}
+  - m_Name: GlowAttack
+    m_Hash: 873583363
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: 1904385408, guid: 46215194af81c4b48b73c2e7b7fc5813, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: 1345323720, guid: 46215194af81c4b48b73c2e7b7fc5813, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: 1929675906, guid: 46215194af81c4b48b73c2e7b7fc5813, type: 3}
   m_ModificationHash: 0
   m_Version: 1
