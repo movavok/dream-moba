@@ -278,9 +278,21 @@ public class ProjectileNetwork : NetworkBehaviour
         {
             hasHit = true;
 
-            float finalDamage = damage * ownerStreak.DamageMultiplier;
-            health.TakeDamage(Mathf.RoundToInt(finalDamage));
-            
+            int finalDamage =
+                Mathf.RoundToInt(
+                    damage * ownerStreak.DamageMultiplier
+                );
+
+            Vector2 hitPosition =
+                other.ClosestPoint(transform.position);
+
+            health.TakeDamage(finalDamage);
+
+            health.ShowDamageHit(
+                hitPosition,
+                finalDamage
+            );
+
             ownerStreak?.AddStreak();
 
             DestroyProjectile();

@@ -41,6 +41,9 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Shadow
+    uniqueID: 1648184473
+    locked: 0
   - name: Trail
     uniqueID: 1265377093
     locked: 0
@@ -49,6 +52,9 @@ TagManager:
     locked: 0
   - name: Hero
     uniqueID: 2852837037
+    locked: 0
+  - name: Effect
+    uniqueID: 1303551995
     locked: 0
   - name: Projectile
     uniqueID: 955594379

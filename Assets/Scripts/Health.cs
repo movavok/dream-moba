@@ -8,6 +8,54 @@ public class Health : NetworkBehaviour
 
     public event System.Action<int, int> HealthChanged;
 
+    private DamageHitEffect damageHitEffect;
+    private DamageHitFeedback damageHitFeedback;
+    
+    private void Awake()
+    {
+        damageHitEffect = GetComponentInChildren<DamageHitEffect>();
+        damageHitFeedback = GetComponentInChildren<DamageHitFeedback>();
+    }
+
+    public void ShowDamageHit(
+    Vector2 hitPosition,
+    float damage)
+    {
+        if (!IsServer)
+            return;
+
+        ShowDamageHitClientRpc(
+            hitPosition,
+            damage
+        );
+    }
+
+    [ClientRpc]
+    private void ShowDamageHitClientRpc(
+        Vector2 hitPosition,
+        float damage)
+    {
+        if (damageHitEffect == null)
+            return;
+
+        float radius = Mathf.Lerp(
+            0.15f,
+            0.5f,
+            Mathf.Clamp01(damage / 100f)
+        );
+
+        damageHitEffect.SetHit(
+            hitPosition,
+            radius,
+            damage
+        );
+
+        if (damageHitFeedback != null)
+        {
+            damageHitFeedback.Shake(damage);
+        }
+    }
+
     public int CurrentHealth => currentHealth.Value;
     public int MaxHealth =>
         playerNetwork != null && playerNetwork.HeroData != null
