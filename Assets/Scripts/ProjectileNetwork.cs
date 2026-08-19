@@ -10,7 +10,7 @@ public class ProjectileNetwork : NetworkBehaviour
     private Vector2 direction;
     private bool dataResolved;
     private bool lifeTimeScheduled;
-
+    
     [SerializeField] private TrailRenderer trail;
 
     private NetworkVariable<bool> networkTrailEnabled =
@@ -258,6 +258,31 @@ public class ProjectileNetwork : NetworkBehaviour
         ApplyVisualColor(colorIndex);
     }
 
+    [ClientRpc]
+    private void PlayHitSoundClientRpc(
+        Vector2 position,
+        int streak,
+        ulong attackerNetworkObjectId)
+    {
+        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(
+            attackerNetworkObjectId,
+            out NetworkObject attackerObject))
+        {
+            return;
+        }
+
+        HeroAudio heroAudio =
+            attackerObject.GetComponentInChildren<HeroAudio>();
+
+        if (heroAudio == null)
+            return;
+
+        heroAudio.PlayAttackHit(
+            position,
+            streak
+        );
+    }
+
     private bool hasHit;
     private void OnTriggerEnter2D(Collider2D other)
     {
@@ -291,6 +316,12 @@ public class ProjectileNetwork : NetworkBehaviour
             health.ShowDamageHit(
                 hitPosition,
                 finalDamage
+            );
+
+            PlayHitSoundClientRpc(
+                hitPosition,
+                ownerStreak.Streak,
+                ownerStreak.NetworkObjectId
             );
 
             ownerStreak?.AddStreak();

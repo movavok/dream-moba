@@ -30,4 +30,7 @@ public class HeroDefinition : ScriptableObject
 
     [Header("Visual")]
     public HeroVisualDefinition visual;
+
+    [Header("Audio")]
+    public HeroAudioDefinition audio;
 }

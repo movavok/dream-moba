@@ -50,6 +50,13 @@ public class Health : NetworkBehaviour
             damage
         );
 
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayDamageTaken(
+                hitPosition
+            );
+        }
+
         if (damageHitFeedback != null)
         {
             damageHitFeedback.Shake(damage);

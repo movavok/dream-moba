@@ -7,6 +7,7 @@ public class PlayerAbilities : NetworkBehaviour
     private PlayerNetwork playerNetwork;
     private PlayerStreak playerStreak;
     private HeroDefinition heroData;
+    private HeroAudio heroAudio;
 
     private IAbility ability1;
     private IAbility ability2;
@@ -126,7 +127,7 @@ public class PlayerAbilities : NetworkBehaviour
 
         playerNetwork = GetComponent<PlayerNetwork>();
         playerStreak = GetComponent<PlayerStreak>();
-
+        heroAudio = GetComponentInChildren<HeroAudio>();
         heroData = playerNetwork.HeroData;
 
         if (heroData == null)
@@ -291,12 +292,22 @@ public class PlayerAbilities : NetworkBehaviour
     private void Ability1UsedClientRpc()
     {
         Ability1Used?.Invoke();
+        
+        if (heroAudio != null)
+        {
+            heroAudio.PlayAbility1(transform.position);
+        }
     }
 
     [ClientRpc]
     private void Ability2UsedClientRpc()
     {
         Ability2Used?.Invoke();
+
+        if (heroAudio != null)
+        {
+            heroAudio.PlayAbility2(transform.position);
+        }
     }
 
     private void UpdateAbilityCooldowns()

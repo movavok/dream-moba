@@ -12,8 +12,6 @@ public class DamageHitParticles : MonoBehaviour
     [SerializeField] private float minSpeed = 1.5f;
     [SerializeField] private float maxSpeed = 3.5f;
 
-    [SerializeField] private float randomAngle = 35f;
-
     [Header("Damage")]
     [SerializeField] private float damageForMaxEffect = 100f;
 
