@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 8289956023670505750}
   - component: {fileID: 7728661495016210998}
   - component: {fileID: 1778005891414589845}
+  - component: {fileID: 3271730372274680130}
   m_Layer: 8
   m_Name: Projectile-kuroshi-baseAtk
   m_TagString: Untagged
@@ -223,14 +224,14 @@ TrailRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1265377093
-  m_SortingLayer: 1
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Time: 0.03
-  m_PreviewTimeScale: 0
+  m_Time: 0.06
+  m_PreviewTimeScale: 1
   m_Parameters:
     serializedVersion: 3
-    widthMultiplier: 0.5
+    widthMultiplier: 0.7
     widthCurve:
       serializedVersion: 2
       m_Curve:
@@ -321,6 +322,19 @@ MonoBehaviour:
   - {r: 0.6835511, g: 0, b: 1, a: 1}
   - {r: 1, g: 0.7935455, b: 0, a: 1}
   - {r: 0, g: 1, b: 0.9740362, a: 1}
+--- !u!114 &3271730372274680130
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1063077738926370981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb7432b4d094a44469cd6947bf53bbf9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GuitaristProjectileLogic
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!1 &1102321480480796514
 GameObject:
   m_ObjectHideFlags: 0
@@ -400,7 +414,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 955594379
-  m_SortingLayer: 4
+  m_SortingLayer: 6
   m_SortingOrder: 1
   m_MaskInteraction: 0
   m_Sprite: {fileID: 949064584, guid: bace5b4a8a8ba6a43bf740d900a004a4, type: 3}
@@ -577,7 +591,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 955594379
-  m_SortingLayer: 4
+  m_SortingLayer: 6
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: 1904385408, guid: 46215194af81c4b48b73c2e7b7fc5813, type: 3}

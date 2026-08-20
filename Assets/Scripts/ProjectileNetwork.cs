@@ -10,6 +10,7 @@ public class ProjectileNetwork : NetworkBehaviour
     private Vector2 direction;
     private bool dataResolved;
     private bool lifeTimeScheduled;
+    private bool logicInitialized;
     
     [SerializeField] private TrailRenderer trail;
 
@@ -120,6 +121,8 @@ public class ProjectileNetwork : NetworkBehaviour
         trail.colorGradient = gradient;
     }
 
+    public float Range { get; private set; }
+
     private void ResolveAttackData()
     {
         if (dataResolved || ownerStreak == null)
@@ -131,16 +134,33 @@ public class ProjectileNetwork : NetworkBehaviour
             return;
 
         AttackDefinition attack = playerNetwork.HeroData.attack;
+        Range = attack.range;
 
         damage = attack.damage;
         speed = attack.projectileSpeed;
 
         if (speed > 0f)
         {
-            lifeTime = attack.range / speed;
+            lifeTime = Range / speed;
         }
 
         dataResolved = true;
+    }
+
+    private void InitializeProjectileLogics()
+    {
+        if (!IsServer || !dataResolved || logicInitialized)
+            return;
+
+        IProjectileLogic[] logics =
+            GetComponents<IProjectileLogic>();
+
+        foreach (IProjectileLogic logic in logics)
+        {
+            logic.Initialize(this);
+        }
+
+        logicInitialized = true;
     }
 
     private void Update()
@@ -149,6 +169,8 @@ public class ProjectileNetwork : NetworkBehaviour
             return;
 
         ResolveAttackData();
+
+        InitializeProjectileLogics();
 
         transform.position += (Vector3)(direction * speed * speedMultiplier * Time.deltaTime);
 
