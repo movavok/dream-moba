@@ -10,6 +10,12 @@ public class RespawnManager : NetworkBehaviour
     [SerializeField] private Transform respawnPoint;
 
     [SerializeField] private float respawnTime = 5f;
+    [SerializeField] private GameObject deathVisualPrefab;
+    private readonly System.Collections.Generic.Dictionary<ulong, NetworkObject> deathVisuals =
+        new();
+
+    private readonly System.Collections.Generic.Dictionary<ulong, ulong> spectatingTargets =
+        new();
 
     private void Awake()
     {
@@ -23,9 +29,63 @@ public class RespawnManager : NetworkBehaviour
 
         Vector3 deathPosition = deadPlayer.transform.position;
 
+        PlayerNetwork deadPlayerNetwork =
+            deadPlayer.GetComponent<PlayerNetwork>();
+
+        if (deadPlayerNetwork == null)
+        {
+            Debug.LogError("RespawnManager: PlayerNetwork not found!");
+            return;
+        }
+
+        deadPlayerNetwork.PlayDeathAudio();
+
+        HeroDefinition deadHero =
+            deadPlayerNetwork.HeroData;
+
+        GameObject deathVisual =
+            Instantiate(
+                deathVisualPrefab,
+                deathPosition,
+                Quaternion.identity
+            );
+
+        NetworkObject deathNetworkObject =
+            deathVisual.GetComponent<NetworkObject>();
+
+        DeathVisual deathVisualComponent =
+            deathVisual.GetComponent<DeathVisual>();
+
+        if (deathVisualComponent == null)
+        {
+            Debug.LogError(
+                "DeathVisual prefab doesn't have DeathVisual component!"
+            );
+
+            Destroy(deathVisual);
+            return;
+        }
+
+        deathNetworkObject.Spawn();
+
+        deathVisualComponent.Initialize(deadHero);
+
+        deathVisuals[deadPlayer.NetworkObject.OwnerClientId] =
+            deathNetworkObject;
+
         Health nearestAlly = FindNearestAlly(deadPlayer); 
         
         ulong clientId = deadPlayer.NetworkObject.OwnerClientId;
+
+        if (nearestAlly != null)
+        {
+            spectatingTargets[clientId] =
+                nearestAlly.NetworkObject.NetworkObjectId;
+        }
+        else
+        {
+            spectatingTargets.Remove(clientId);
+        }
 
         ClientRpcParams clientRpcParams =
             new ClientRpcParams
@@ -58,7 +118,65 @@ public class RespawnManager : NetworkBehaviour
             );
         }
 
+        UpdateSpectators(deadPlayer);
+
         StartCoroutine(RespawnCoroutine(clientId, deadPlayer));
+    }
+
+    private void UpdateSpectators(Health deadPlayer)
+    {
+        ulong deadNetworkObjectId =
+            deadPlayer.NetworkObject.NetworkObjectId;
+
+        var spectatorsToUpdate =
+            new System.Collections.Generic.List<ulong>();
+
+        foreach (var pair in spectatingTargets)
+        {
+            if (pair.Key == deadPlayer.NetworkObject.OwnerClientId)
+                continue;
+
+            if (pair.Value == deadNetworkObjectId)
+            {
+                spectatorsToUpdate.Add(pair.Key);
+            }
+        }
+
+        foreach (ulong spectatorClientId in spectatorsToUpdate)
+        {
+            Health newTarget = FindNearestAlly(deadPlayer);
+
+            if (newTarget != null)
+            {
+                spectatingTargets[spectatorClientId] =
+                    newTarget.NetworkObject.NetworkObjectId;
+
+                SetCameraTargetClientRpc(
+                    newTarget.NetworkObject.NetworkObjectId,
+                    new ClientRpcParams
+                    {
+                        Send = new ClientRpcSendParams
+                        {
+                            TargetClientIds = new[] { spectatorClientId }
+                        }
+                    }
+                );
+
+                Debug.Log(
+                    $"Spectator {spectatorClientId} switched to " +
+                    $"player {newTarget.NetworkObject.OwnerClientId}"
+                );
+            }
+            else
+            {
+                spectatingTargets.Remove(spectatorClientId);
+
+                Debug.Log(
+                    $"Spectator {spectatorClientId}: " +
+                    "no alive allies left."
+                );
+            }
+        }
     }
 
     private Health FindNearestAlly(Health deadPlayer) 
@@ -130,6 +248,26 @@ public class RespawnManager : NetworkBehaviour
 
         yield return new WaitForSeconds(respawnTime);
 
+        if (deathVisuals.TryGetValue(clientId, out NetworkObject deathVisual))
+        {
+            if (deathVisual != null && deathVisual.IsSpawned)
+            {
+                deathVisual.Despawn();
+            }
+
+            deathVisuals.Remove(clientId);
+        }
+
+        if (!NetworkManager.Singleton.IsListening || !IsServer)
+        {
+            Debug.LogWarning(
+                "RespawnManager: NetworkManager is no longer listening. " +
+                "Respawn cancelled."
+            );
+
+            yield break;
+        }
+
         // Create a new player object at the respawn point
         GameObject newPlayer = Instantiate(
             playerPrefab,
@@ -140,8 +278,9 @@ public class RespawnManager : NetworkBehaviour
         NetworkObject networkObject =
             newPlayer.GetComponent<NetworkObject>();
 
-        // Spawn the new player object as a player object for the specified client
         networkObject.SpawnAsPlayerObject(clientId);
+
+        spectatingTargets.Remove(clientId);
 
         SetCameraTargetClientRpc(
             networkObject.NetworkObjectId,

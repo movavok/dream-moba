@@ -12,6 +12,9 @@ public class PlayerNetwork : NetworkBehaviour
 
     [SerializeField] private Animator animator;
 
+    [SerializeField] private Transform body;
+    public Transform Body => body;
+
     public HeroDefinition HeroData => heroData;
 
     private Vector2 moveInput;
@@ -32,9 +35,25 @@ public class PlayerNetwork : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
 
+    public event System.Action Death;
+
+    public void PlayDeathAudio()
+    {
+        if (!IsServer)
+            return;
+
+        PlayDeathAudioClientRpc();
+    }
+
+    [ClientRpc]
+    private void PlayDeathAudioClientRpc()
+    {
+        Death?.Invoke();
+    }
+
     public void OnMove(InputValue value)
     {
-        if (!IsOwner)
+        if (!IsOwner || !IsSpawned)
             return;
 
         moveInput = value.Get<Vector2>();
@@ -69,7 +88,7 @@ public class PlayerNetwork : NetworkBehaviour
 
     public void OnAttack(InputValue value)
     {
-        if (!IsOwner)
+        if (!IsOwner || !IsSpawned)
             return;
 
         isAttacking = value.isPressed;
@@ -83,7 +102,7 @@ public class PlayerNetwork : NetworkBehaviour
 
     public void OnAim(InputValue value)
     {
-        if (!IsOwner)
+        if (!IsOwner || !IsSpawned)
         return;
 
         mousePosition = value.Get<Vector2>();
@@ -105,6 +124,9 @@ public class PlayerNetwork : NetworkBehaviour
 
     public void SetProjectileTrail(bool active)
     {
+        if (!IsSpawned)
+            return;
+
         if (IsServer)
         {
             projectileTrailActive.Value = active;
@@ -354,6 +376,8 @@ public class PlayerNetwork : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+        GrassInteractionManager.Instance?.RegisterPlayer(body);
+
         if (heroVisual != null)
         {
             heroVisual.Initialize(heroData);
@@ -365,6 +389,13 @@ public class PlayerNetwork : NetworkBehaviour
             StartCoroutine(SetupHUD());
             StartCoroutine(SetupCamera());
         }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        GrassInteractionManager.Instance?.UnregisterPlayer(body);
+
+        base.OnNetworkDespawn();
     }
 
     private System.Collections.IEnumerator SetupHUD()

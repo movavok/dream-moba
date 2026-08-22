@@ -49,13 +49,40 @@ public class HeroAudio : MonoBehaviour
     private void OnEnable()
     {
         if (playerNetwork != null)
+        {
             playerNetwork.AttackUsed += OnAttackUsed;
+            playerNetwork.Death += OnDeath;
+        }
     }
 
     private void OnDisable()
     {
         if (playerNetwork != null)
+        {
             playerNetwork.AttackUsed -= OnAttackUsed;
+            playerNetwork.Death -= OnDeath;
+        }
+    }
+
+    private void OnDeath()
+    {
+        if (heroData == null || heroData.audio == null)
+            return;
+
+        AudioClip[] clips = heroData.audio.death;
+
+        if (clips == null || clips.Length == 0)
+            return;
+
+        AudioClip clip =
+            clips[Random.Range(0, clips.Length)];
+
+        AudioManager.Instance.PlayAtPosition(
+            clip,
+            transform.position,
+            heroData.audio.deathVolume,
+            Random.Range(0.95f, 1.05f)
+        );
     }
 
     private void OnAttackUsed()

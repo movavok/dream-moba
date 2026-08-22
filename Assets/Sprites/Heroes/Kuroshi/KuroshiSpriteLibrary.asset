@@ -301,5 +301,23 @@ MonoBehaviour:
     - m_Name: Frame2
       m_Hash: 941227274
       m_Sprite: {fileID: 1929675906, guid: 46215194af81c4b48b73c2e7b7fc5813, type: 3}
+  - m_Name: Die
+    m_Hash: 20298039
+    m_CategoryList:
+    - m_Name: Frame0
+      m_Hash: 370646054
+      m_Sprite: {fileID: -7101538484883132816, guid: d39b7cabd50b00a4f9bd39d97a4a45be, type: 3}
+    - m_Name: Frame1
+      m_Hash: 554740912
+      m_Sprite: {fileID: -6461072859671880885, guid: d39b7cabd50b00a4f9bd39d97a4a45be, type: 3}
+    - m_Name: Frame2
+      m_Hash: 941227274
+      m_Sprite: {fileID: 8083363789541788403, guid: d39b7cabd50b00a4f9bd39d97a4a45be, type: 3}
+    - m_Name: Frame3
+      m_Hash: 253676956
+      m_Sprite: {fileID: 2221961576512755613, guid: d39b7cabd50b00a4f9bd39d97a4a45be, type: 3}
+    - m_Name: Frame4
+      m_Hash: 293230655
+      m_Sprite: {fileID: -361800483154351431, guid: d39b7cabd50b00a4f9bd39d97a4a45be, type: 3}
   m_ModificationHash: 0
   m_Version: 1
