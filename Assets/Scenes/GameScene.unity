@@ -474,8 +474,17 @@ PrefabInstance:
       propertyPath: m_Name
       value: Grid
       objectReference: {fileID: 0}
+    - target: {fileID: 2441399110915141235, guid: 81d80f3a587f72147b86dc0017eacb90, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2441399110915141235, guid: 81d80f3a587f72147b86dc0017eacb90, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 3313098956
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 3237282360315334773, guid: 81d80f3a587f72147b86dc0017eacb90, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 81d80f3a587f72147b86dc0017eacb90, type: 3}

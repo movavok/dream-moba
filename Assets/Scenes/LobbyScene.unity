@@ -2160,7 +2160,7 @@ MonoBehaviour:
   m_Intensity: 1
   m_LightVolumeIntensity: 1
   m_LightVolumeEnabled: 0
-  m_ApplyToSortingLayers: 00000000
+  m_ApplyToSortingLayers: 00000000078416ec
   m_LightCookieSprite: {fileID: 0}
   m_DeprecatedPointLightCookieSprite: {fileID: 0}
   m_LightOrder: 0
@@ -2709,8 +2709,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1762261437}
   m_HandleRect: {fileID: 1762261436}
   m_Direction: 0
-  m_Value: 1
-  m_Size: 0.99964714
+  m_Value: 0.99986404
+  m_Size: 0.99957526
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -2915,7 +2915,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 252510821}
   m_Direction: 2
   m_Value: 0
-  m_Size: 1
+  m_Size: 0.99992806
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -4179,7 +4179,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 635.55115, y: -0.0000009807588}
+  m_AnchoredPosition: {x: 635.5512, y: -0.00002958623}
   m_SizeDelta: {x: 1272, y: 712}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1695122481

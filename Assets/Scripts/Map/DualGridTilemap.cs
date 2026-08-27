@@ -111,9 +111,9 @@ public class DualGridTilemap : MonoBehaviour
 
     public void RefreshDisplayTilemap()
     {
-        for (int x = -50; x < 50; x++)
+        for (int x = -53; x < 120; x++)
         {
-            for (int y = -50; y < 50; y++)
+            for (int y = -30; y < 135; y++)
             {
                 SetDisplayTilesAround(new Vector3Int(x, y, 0));
             }

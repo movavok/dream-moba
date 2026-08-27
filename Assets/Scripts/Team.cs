@@ -10,7 +10,7 @@ public enum TeamAssignmentMode
 
 public class Team : NetworkBehaviour
 {
-    private TeamAssignmentMode assignmentMode = TeamAssignmentMode.Alternate;
+    private TeamAssignmentMode assignmentMode = TeamAssignmentMode.AllDifferent;
 
     public NetworkVariable<short> TeamId =
         new NetworkVariable<short>();

@@ -47,6 +47,12 @@ TagManager:
   - name: Grass
     uniqueID: 895244931
     locked: 0
+  - name: Wall
+    uniqueID: 2629816395
+    locked: 0
+  - name: Water
+    uniqueID: 3960898567
+    locked: 0
   - name: Details
     uniqueID: 3424306403
     locked: 0
