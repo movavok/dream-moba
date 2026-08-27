@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Unity.Services.Multiplayer;
 using Unity.Netcode;
+using TMPro;
 
 public class LobbyUI : MonoBehaviour
 {
@@ -33,6 +34,129 @@ public class LobbyUI : MonoBehaviour
     private readonly List<LobbyPlayerUI> playerItems = new();
 
     private ISession subscribedSession;
+
+    [SerializeField] private TMP_Dropdown teamModeDropdown;
+
+    private const string TEAM_MODE_PROPERTY = "teamMode";
+
+    public async Task SaveTeamMode()
+    {
+        ISession session =
+            NetworkSessionManager.Instance?.CurrentSession;
+
+        if (session == null)
+        {
+            Debug.LogError("SaveTeamMode: session is null!");
+            return;
+        }
+
+        if (!session.IsHost)
+        {
+            Debug.LogWarning("Only host can change team mode.");
+            return;
+        }
+
+        TeamAssignmentMode mode =
+            (TeamAssignmentMode)teamModeDropdown.value;
+
+        MatchSettings.Instance.SetTeamAssignmentMode(mode);
+
+        try
+        {
+            IHostSession hostSession = session.AsHost();
+
+            hostSession.SetProperty(
+                TEAM_MODE_PROPERTY,
+                new SessionProperty(
+                    mode.ToString()
+                )
+            );
+
+            await hostSession.SavePropertiesAsync();
+
+            Debug.Log(
+                $"Team mode saved to lobby: {mode}"
+            );
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError(
+                $"Failed to save team mode: {e}"
+            );
+        }
+    }
+
+    private void UpdateTeamModeDropdown()
+    {
+        ISession session =
+            NetworkSessionManager.Instance?.CurrentSession;
+
+        if (session == null)
+            return;
+
+        teamModeDropdown.interactable = session.IsHost;
+
+        if (!session.Properties.TryGetValue(
+            TEAM_MODE_PROPERTY,
+            out SessionProperty property))
+        {
+            return;
+        }
+
+        if (!System.Enum.TryParse(
+            property.Value,
+            out TeamAssignmentMode mode))
+        {
+            return;
+        }
+
+        teamModeDropdown.SetValueWithoutNotify(
+            (int)mode
+        );
+
+        MatchSettings.Instance.SetTeamAssignmentMode(mode);
+
+        Debug.Log(
+            $"TEAM MODE FROM SESSION: {property.Value}"
+        );
+    }
+
+    public async void OnTeamModeChanged(int value)
+    {
+        ISession session =
+            NetworkSessionManager.Instance?.CurrentSession;
+
+        if (session == null)
+            return;
+
+        if (!session.IsHost)
+            return;
+
+        TeamAssignmentMode mode =
+            (TeamAssignmentMode)value;
+
+        Debug.Log($"Dropdown changed by HOST: {mode}");
+
+        MatchSettings.Instance.SetTeamAssignmentMode(mode);
+
+        try
+        {
+            IHostSession hostSession = session.AsHost();
+
+            hostSession.SetProperty(
+                TEAM_MODE_PROPERTY,
+                new SessionProperty(mode.ToString())
+            );
+
+            await hostSession.SavePropertiesAsync();
+
+            Debug.Log($"TEAM MODE SAVED TO SESSION: {mode}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"Failed to save team mode: {e}");
+        }
+    }
 
     private void Start()
     {
@@ -66,7 +190,8 @@ public class LobbyUI : MonoBehaviour
         joinRoomPanel.SetActive(false);
         lobbyPanel.SetActive(true);
 
-        ISession session = NetworkSessionManager.Instance?.CurrentSession;
+        ISession session =
+            NetworkSessionManager.Instance?.CurrentSession;
 
         if (session == null)
         {
@@ -78,6 +203,7 @@ public class LobbyUI : MonoBehaviour
 
         RefreshPlayers();
         UpdateOwnReadyButton();
+        UpdateTeamModeDropdown();
 
         if (lobbyCodeUI != null)
             lobbyCodeUI.UpdateCode();
@@ -92,6 +218,7 @@ public class LobbyUI : MonoBehaviour
         subscribedSession.PlayerJoined += OnPlayerJoined;
         subscribedSession.PlayerHasLeft += OnPlayerLeft;
         subscribedSession.PlayerPropertiesChanged += OnPlayerPropertiesChanged;
+        subscribedSession.SessionPropertiesChanged += OnSessionPropertiesChanged;
 
         Debug.Log("LobbyUI subscribed to session events.");
     }
@@ -104,8 +231,16 @@ public class LobbyUI : MonoBehaviour
         subscribedSession.PlayerJoined -= OnPlayerJoined;
         subscribedSession.PlayerHasLeft -= OnPlayerLeft;
         subscribedSession.PlayerPropertiesChanged -= OnPlayerPropertiesChanged;
+        subscribedSession.SessionPropertiesChanged -= OnSessionPropertiesChanged;
 
         subscribedSession = null;
+    }
+
+    private void OnSessionPropertiesChanged()
+    {
+        Debug.Log("Session properties changed.");
+
+        UpdateTeamModeDropdown();
     }
 
     private void OnPlayerJoined(string playerId)
@@ -189,8 +324,6 @@ public class LobbyUI : MonoBehaviour
             {
                 ready = readyProperty.Value == "true";
             }
-
-            item.Setup(playerName, ready);
 
             item.Setup(playerName, ready);
 
@@ -360,6 +493,8 @@ public class LobbyUI : MonoBehaviour
             Debug.Log("IsClient: " + NetworkManager.Singleton.IsClient);
             Debug.Log("IsServer: " + NetworkManager.Singleton.IsServer);
         }
+
+        await SaveTeamMode();
 
         await NetworkSessionManager.Instance.StartGame();
     }

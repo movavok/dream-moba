@@ -141,7 +141,7 @@ public class ProjectileNetwork : NetworkBehaviour
 
         if (speed > 0f)
         {
-            lifeTime = Range / speed;
+            lifeTime = Range / (speed * speedMultiplier);
         }
 
         dataResolved = true;

@@ -1325,6 +1325,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 7872330702470042723, guid: 1e3e1301b49784c4cbd797d9f8764f9d, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2033136045}
+    - targetCorrespondingSourceObject: {fileID: 7872330702470042723, guid: 1e3e1301b49784c4cbd797d9f8764f9d, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2033136046}
   m_SourcePrefab: {fileID: 100100000, guid: 1e3e1301b49784c4cbd797d9f8764f9d, type: 3}
 --- !u!4 &2033136042 stripped
 Transform:
@@ -1365,6 +1368,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GrassInteractionManager
   grassMaterial: {fileID: 2100000, guid: 2147cc39f7143404da4f397715a70733, type: 2}
+--- !u!114 &2033136046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2033136043}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 53ca66eeb20d5fd418dde37d2aa4e146, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TeamManager
+  ShowTopMostFoldoutHeaderGroup: 1
+  assignmentMode: 0
 --- !u!114 &2074328693 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 7301317747958395619, guid: dc15a6c035127cd45b16acf09a5778f7, type: 3}

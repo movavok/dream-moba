@@ -17,7 +17,10 @@ public class PlayerNetwork : NetworkBehaviour
 
     public HeroDefinition HeroData => heroData;
 
+    private Rigidbody2D rb;
+
     private Vector2 moveInput;
+    private Vector2 lastPosition;
 
     private Vector2 lastMoveDirection = Vector2.down;
 
@@ -293,10 +296,52 @@ public class PlayerNetwork : NetworkBehaviour
         );
     }
 
-    private void Awake()
+        private void Awake()
     {
         if (animator == null)
-        animator = GetComponentInChildren<Animator>();
+            animator = GetComponentInChildren<Animator>();
+
+        rb = GetComponent<Rigidbody2D>();
+
+        if (rb == null)
+        {
+            Debug.LogError(
+                $"PlayerNetwork on {gameObject.name} has no Rigidbody2D!"
+            );
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (!IsServer)
+            return;
+
+        if (heroData == null || rb == null)
+            return;
+
+        float speed =
+            heroData.stats.moveSpeed *
+            speedMultiplier;
+
+        Vector2 moveDirection = moveInput;
+
+        rb.linearVelocity = moveDirection * speed;
+
+        Vector2 actualMovement =
+            rb.position - lastPosition;
+
+        bool isMoving =
+            actualMovement.sqrMagnitude > 0.000001f;
+
+        if (moveInput.sqrMagnitude > 0.01f)
+        {
+            lastMoveDirection = moveInput;
+        }
+
+        networkMoveDirection.Value = lastMoveDirection;
+        networkIsMoving.Value = isMoving;
+
+        lastPosition = rb.position;
     }
 
     private void UpdateAnimator()
@@ -335,23 +380,6 @@ public class PlayerNetwork : NetworkBehaviour
             if (heroData == null)
                 return;
 
-            float speed = heroData.stats.moveSpeed * speedMultiplier;
-
-            Vector2 moveDirection = moveInput;
-
-            transform.position +=
-                (Vector3)moveDirection * speed * Time.deltaTime;
-
-            bool isMoving = moveDirection.sqrMagnitude > 0.01f;
-
-            if (isMoving)
-            {
-                lastMoveDirection = moveDirection;
-            }
-
-            networkMoveDirection.Value = lastMoveDirection;
-            networkIsMoving.Value = isMoving;
-
             if (isAttacking && Time.time >= nextAttackTime)
             {
                 nextAttackTime =
@@ -365,7 +393,10 @@ public class PlayerNetwork : NetworkBehaviour
             }
 
             attackCooldownRemaining.Value =
-                    Mathf.Max(0f, nextAttackTime - Time.time);
+                Mathf.Max(
+                    0f,
+                    nextAttackTime - Time.time
+                );
         }
 
         UpdateAnimator();
@@ -388,6 +419,11 @@ public class PlayerNetwork : NetworkBehaviour
             Debug.Log("Its my player");
             StartCoroutine(SetupHUD());
             StartCoroutine(SetupCamera());
+        }
+
+        if (IsServer)
+        {
+            lastPosition = rb.position;
         }
     }
 

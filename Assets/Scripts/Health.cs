@@ -4,6 +4,13 @@ using Unity.Netcode;
 public class Health : NetworkBehaviour
 {
     private NetworkVariable<int> currentHealth = new NetworkVariable<int>();
+
+    private const float REGEN_DELAY = 3f;
+    private const float REGEN_INTERVAL = 1f;
+    private const int REGEN_AMOUNT = 10;
+
+    private float lastDamageTime;
+    private float regenTimer;
     private PlayerNetwork playerNetwork;
 
     public event System.Action<int, int> HealthChanged;
@@ -15,6 +22,36 @@ public class Health : NetworkBehaviour
     {
         damageHitEffect = GetComponentInChildren<DamageHitEffect>();
         damageHitFeedback = GetComponentInChildren<DamageHitFeedback>();
+    }
+
+    private void Update()
+    {
+        if (!IsServer)
+            return;
+
+        if (!IsAlive())
+            return;
+
+        if (currentHealth.Value >= MaxHealth)
+            return;
+
+        if (Time.time < lastDamageTime + REGEN_DELAY)
+        {
+            regenTimer = 0f;
+            return;
+        }
+
+        regenTimer += Time.deltaTime;
+
+        if (regenTimer >= REGEN_INTERVAL)
+        {
+            regenTimer -= REGEN_INTERVAL;
+
+            currentHealth.Value = Mathf.Min(
+                currentHealth.Value + REGEN_AMOUNT,
+                MaxHealth
+            );
+        }
     }
 
     public void ShowDamageHit(
@@ -113,7 +150,10 @@ public class Health : NetworkBehaviour
 
         currentHealth.Value = Mathf.Max(0, currentHealth.Value - damage);
 
-        Debug.Log("After damage HP: " + currentHealth.Value);
+        lastDamageTime = Time.time;
+        regenTimer = 0f;
+
+        Debug.Log("[Health][" + Time.time + "]  After damage HP: " + currentHealth.Value);
 
         if (!IsAlive())
             Die();

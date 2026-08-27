@@ -1,0 +1,47 @@
+using UnityEngine;
+using Unity.Netcode;
+
+public enum TeamAssignmentMode
+{
+    Alternate,
+    AllTeam1,
+    AllDifferent
+}
+
+public class TeamManager : NetworkBehaviour
+{
+    public TeamAssignmentMode AssignmentMode =>
+        MatchSettings.Instance.TeamAssignmentMode;
+
+    public short GetTeamId(ulong clientId)
+    {
+        switch (AssignmentMode)
+        {
+            case TeamAssignmentMode.AllTeam1:
+                return 1;
+
+            case TeamAssignmentMode.Alternate:
+                return (short)((clientId % 2) + 1);
+
+            case TeamAssignmentMode.AllDifferent:
+                return (short)(clientId + 1);
+
+            default:
+                return 1;
+        }
+    }
+
+    public void AssignTeam(Team team)
+    {
+        if (!IsServer || team == null)
+            return;
+
+        short teamId = GetTeamId(team.OwnerClientId);
+
+        team.TeamId.Value = teamId;
+
+        Debug.Log(
+            $"Player {team.OwnerClientId} Team: {teamId}"
+        );
+    }
+}
