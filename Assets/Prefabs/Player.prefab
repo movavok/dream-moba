@@ -488,6 +488,62 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!1 &3751601798659840402
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7213875410042016198}
+  - component: {fileID: 2886602833078668544}
+  m_Layer: 5
+  m_Name: HealthChangeText
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &7213875410042016198
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3751601798659840402}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 4590813244743563438}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 58.1, y: 28.1}
+  m_SizeDelta: {x: 200, y: 25.46}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2886602833078668544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3751601798659840402}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c5e6206571fc5545996072ebf159566, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HealthFloatingText
+  numberPrefab: {fileID: 4098788435239793024, guid: 5abee7ff83ad6ce4bb49f24888f1aa82, type: 3}
+  damageColor: {r: 0.97735846, g: 0.19731575, b: 0.19731575, a: 1}
+  healColor: {r: 0.2470273, g: 0.96981126, b: 0.24702734, a: 1}
+  spacing: 25
+  maxNumbers: 4
+  appearDuration: 0.25
+  moveDuration: 0.2
+  appearOffset: 15
 --- !u!1 &5914568623819287789
 GameObject:
   m_ObjectHideFlags: 0
@@ -1180,6 +1236,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Health
   ShowTopMostFoldoutHeaderGroup: 1
+  healthFloatingText: {fileID: 0}
 --- !u!114 &6821608293737209610
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1352,6 +1409,18 @@ PrefabInstance:
       propertyPath: m_SortingLayerID
       value: -1768546611
       objectReference: {fileID: 0}
+    - target: {fileID: 6196160828801772878, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 2073d2329e275df4f9dc13b1415a52d7, type: 2}
+    - target: {fileID: 6196160828801772878, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 7533972399218729949, guid: 2073d2329e275df4f9dc13b1415a52d7, type: 2}
+    - target: {fileID: 6196160828801772878, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6554379502924616986, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
       propertyPath: m_PresetInfoIsWorld
       value: 1
@@ -1360,14 +1429,38 @@ PrefabInstance:
       propertyPath: damageSpeed
       value: 100
       objectReference: {fileID: 0}
+    - target: {fileID: 7317011648039262519, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 2073d2329e275df4f9dc13b1415a52d7, type: 2}
+    - target: {fileID: 7317011648039262519, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+      propertyPath: m_fontStyle
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7317011648039262519, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 7533972399218729949, guid: 2073d2329e275df4f9dc13b1415a52d7, type: 2}
+    - target: {fileID: 7317011648039262519, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 3757309334988382856, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
       insertIndex: 1
       addedObject: {fileID: 613984123760674974}
+    - targetCorrespondingSourceObject: {fileID: 7319915121176863438, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+      insertIndex: 4
+      addedObject: {fileID: 7213875410042016198}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+--- !u!224 &4590813244743563438 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 7319915121176863438, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+  m_PrefabInstance: {fileID: 6494270203530631776}
+  m_PrefabAsset: {fileID: 0}
 --- !u!224 &7927721524799551720 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3757309334988382856, guid: 6d080d1910b2102469826ce84a29a559, type: 3}

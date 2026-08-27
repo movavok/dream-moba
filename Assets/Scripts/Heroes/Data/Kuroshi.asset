@@ -21,7 +21,7 @@ MonoBehaviour:
     maxStacks: 999
   stats:
     maxHealth: 250
-    moveSpeed: 5
+    moveSpeed: 4.5
     weight: 70
   attack:
     icon: {fileID: 5806666077224011524, guid: 3cb3e6f03f951ae4bbce6aa7060134ac, type: 3}
@@ -38,7 +38,7 @@ MonoBehaviour:
     damage: 20
     cooldown: 0.5
     range: 10
-    projectileSpeed: 10
+    projectileSpeed: 12
   passive:
     icon: {fileID: -583702576, guid: 3cb3e6f03f951ae4bbce6aa7060134ac, type: 3}
     name: "\u0420\u0430\u0437\u043E\u0433\u0440\u0435\u0432"

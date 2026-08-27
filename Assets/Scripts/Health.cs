@@ -5,6 +5,8 @@ public class Health : NetworkBehaviour
 {
     private NetworkVariable<int> currentHealth = new NetworkVariable<int>();
 
+    [SerializeField] private HealthFloatingText healthFloatingText;
+
     private const float REGEN_DELAY = 3f;
     private const float REGEN_INTERVAL = 1f;
     private const int REGEN_AMOUNT = 10;
@@ -22,6 +24,9 @@ public class Health : NetworkBehaviour
     {
         damageHitEffect = GetComponentInChildren<DamageHitEffect>();
         damageHitFeedback = GetComponentInChildren<DamageHitFeedback>();
+
+        if (healthFloatingText == null)
+            healthFloatingText = GetComponentInChildren<HealthFloatingText>();
     }
 
     private void Update()
@@ -51,6 +56,8 @@ public class Health : NetworkBehaviour
                 currentHealth.Value + REGEN_AMOUNT,
                 MaxHealth
             );
+
+            ShowHealthNumberClientRpc(REGEN_AMOUNT);
         }
     }
 
@@ -153,10 +160,24 @@ public class Health : NetworkBehaviour
         lastDamageTime = Time.time;
         regenTimer = 0f;
 
+        ShowHealthNumberClientRpc(-damage);
+
         Debug.Log("[Health][" + Time.time + "]  After damage HP: " + currentHealth.Value);
 
         if (!IsAlive())
             Die();
+    }
+
+    [ClientRpc]
+    private void ShowHealthNumberClientRpc(int amount)
+    {
+        if (healthFloatingText == null)
+            return;
+
+        if (amount < 0)
+            healthFloatingText.ShowDamage(-amount);
+        else
+            healthFloatingText.ShowHeal(amount);
     }
 
     private void Die()

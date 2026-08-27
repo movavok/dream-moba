@@ -88,7 +88,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!114 &6501291741108556864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -123,10 +123,9 @@ MonoBehaviour:
   healthText: {fileID: 6196160828801772878}
   teamIndicator: {fileID: 5569234703513445671}
   streakIndicator: {fileID: 4988280217790146951}
-  streakActiveSprite: {fileID: -244319086701380080, guid: eb38c07e4c01b774882a9b28a70b4258, type: 3}
-  streakInactiveSprite: {fileID: -709145920559767552, guid: d3b6f51613017d046b24013c60af0c69, type: 3}
   streakText: {fileID: 7317011648039262519}
   ownHealthColor: {r: 0.36037737, g: 1, b: 0.3603774, a: 1}
+  allyHealthColor: {r: 0, g: 1, b: 1, a: 1}
   enemyHealthColor: {r: 0.98490566, g: 0.31777143, b: 0.31777143, a: 1}
   team1Color: {r: 0.3467783, g: 0.34677824, b: 0.9622642, a: 1}
   team2Color: {r: 1, g: 0.33773577, b: 0.33773577, a: 1}

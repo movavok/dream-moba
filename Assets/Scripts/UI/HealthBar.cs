@@ -187,7 +187,7 @@ public class HealthBar : MonoBehaviour
         if (healthText != null)
         {
             healthText.text =
-                $"<color=#FF8A8A><b>{health.CurrentHealth}</b></color>";
+                $"<color=#ff5252><b>{health.CurrentHealth}</b></color>";
         }
     }
 
@@ -212,7 +212,7 @@ public class HealthBar : MonoBehaviour
             streakText.gameObject.SetActive(value > 0);
 
             if (value > 0)
-                streakText.text = $"<color=#FF9D3D><b>{value}</b></color>";
+                streakText.text = $"<color=#fc9025><b>{value}</b></color>";
         }
 
         if (streakIndicator != null)
