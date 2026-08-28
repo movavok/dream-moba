@@ -55,6 +55,16 @@
                     "interactions": "",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "Volume",
+                    "type": "Button",
+                    "id": "40e9b4d6-87d5-4b0d-a8af-997797c8e2a2",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -126,6 +136,39 @@
                 },
                 {
                     "name": "",
+                    "id": "e7356746-ca04-4a95-9a07-461e289c3a2f",
+                    "path": "<Keyboard>/v",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Volume",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "364b8b2b-88ff-4aa2-b06b-150bd6341158",
+                    "path": "<Gamepad>/select",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Volume",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "cdde1da5-d6b2-447e-9701-df286fbc5291",
+                    "path": "<XInputController>/select",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Volume",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
                     "id": "c9870b32-2f63-4dde-8e1e-67fc3d2e085e",
                     "path": "<Mouse>/leftButton",
                     "interactions": "",
@@ -182,7 +225,18 @@
                 {
                     "name": "",
                     "id": "fa3de958-3798-43b3-8837-395108f81af8",
-                    "path": "",
+                    "path": "<XInputController>/leftShoulder",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Ability1",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "95184036-dd41-462f-a74a-43f645fd06da",
+                    "path": "<DualShockGamepad>/leftShoulder",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -204,7 +258,18 @@
                 {
                     "name": "",
                     "id": "09f51ced-51d2-4efb-9ba7-998f477a6c4c",
-                    "path": "",
+                    "path": "<XInputController>/rightShoulder",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Ability2",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "1332c040-2cc7-4437-947c-adaa6e0e7fe2",
+                    "path": "<DualShockGamepad>/rightShoulder",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -215,13 +280,23 @@
             ]
         },
         {
-            "name": "New action map",
+            "name": "UI",
             "id": "75999354-19d9-43fd-b7e9-e0dc50e9e979",
             "actions": [
                 {
-                    "name": "New action",
+                    "name": "Volume",
                     "type": "Button",
                     "id": "ac93c758-7595-4d26-b93e-43d2217bef87",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
+                },
+                {
+                    "name": "New action",
+                    "type": "Button",
+                    "id": "8088207a-1356-4885-9a05-c14a297aa273",
                     "expectedControlType": "",
                     "processors": "",
                     "interactions": "",
@@ -233,6 +308,39 @@
                 {
                     "name": "",
                     "id": "d326230e-5f55-4e47-87d2-cd8c0c17a4fa",
+                    "path": "<Keyboard>/v",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Volume",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b6ff145a-d382-4a36-9cc6-a60b06a5cc40",
+                    "path": "<Gamepad>/select",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Volume",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b27d05aa-e0f1-4ad5-b504-96105936d4e1",
+                    "path": "<XInputController>/select",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Volume",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e2d96272-c285-415d-8fc5-47b59b3e2f5d",
                     "path": "",
                     "interactions": "",
                     "processors": "",

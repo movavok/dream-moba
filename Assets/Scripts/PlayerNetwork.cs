@@ -38,6 +38,9 @@ public class PlayerNetwork : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
 
+    public static PlayerNetwork LocalPlayer { get; private set; }
+    public static event System.Action<PlayerNetwork> LocalPlayerSpawned;
+
     public event System.Action Death;
 
     public void PlayDeathAudio()
@@ -417,6 +420,8 @@ public class PlayerNetwork : NetworkBehaviour
         if (IsOwner)
         {
             Debug.Log("Its my player");
+            LocalPlayer = this;
+            LocalPlayerSpawned?.Invoke(this);
             StartCoroutine(SetupHUD());
             StartCoroutine(SetupCamera());
         }
@@ -429,9 +434,29 @@ public class PlayerNetwork : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        if (LocalPlayer == this)
+        {
+            LocalPlayer = null;
+        }
+
         GrassInteractionManager.Instance?.UnregisterPlayer(body);
 
         base.OnNetworkDespawn();
+    }
+
+    public event System.Action VolumePressed;
+
+    public void OnVolume(InputValue value)
+    {
+        Debug.Log("VOLUME INPUT RECEIVED: " + value.isPressed);
+
+        if (!IsOwner || !IsSpawned)
+            return;
+
+        if (!value.isPressed)
+            return;
+
+        VolumePressed?.Invoke();
     }
 
     private System.Collections.IEnumerator SetupHUD()

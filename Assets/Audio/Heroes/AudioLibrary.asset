@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AudioLibrary
   damageTaken:
   - {fileID: 8300000, guid: 3b619cc00f515f4458a2d65e9d43af8f, type: 3}
-  damageTakenVolume: 0.07
+  damageTakenVolume: 0.14
