@@ -10,8 +10,21 @@ public enum TeamAssignmentMode
 
 public class TeamManager : NetworkBehaviour
 {
+    [SerializeField] private TeamDefinition teamDefinition;
+
     public TeamAssignmentMode AssignmentMode =>
         MatchSettings.Instance.TeamAssignmentMode;
+
+    public TeamDefinition.TeamData GetTeamData(short teamId)
+    {
+        if (teamDefinition == null)
+        {
+            Debug.LogError("TeamManager: TeamDefinition is not assigned!");
+            return null;
+        }
+
+        return teamDefinition.GetTeam(teamId);
+    }
 
     public short GetTeamId(ulong clientId)
     {

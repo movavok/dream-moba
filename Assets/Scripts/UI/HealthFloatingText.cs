@@ -11,7 +11,7 @@ public class HealthFloatingText : MonoBehaviour
 
     [Header("Layout")]
     [SerializeField] private float spacing = 24f;
-    [SerializeField] private float maxNumbers = 5;
+    [SerializeField] private int maxNumbers = 4;
 
     [Header("Animation")]
     [SerializeField] private float appearDuration = 0.25f;
@@ -36,39 +36,20 @@ public class HealthFloatingText : MonoBehaviour
         );
     }
 
-    private System.Collections.IEnumerator FadeNumber(
-        HealthNumber number,
-        float duration)
-    {
-        yield return new WaitForSeconds(1f);
-
-        float time = 0f;
-
-        while (time < duration)
-        {
-            time += Time.deltaTime;
-
-            float t = Mathf.Clamp01(time / duration);
-
-            number.SetAlpha(1f - t);
-
-            yield return null;
-        }
-
-        if (numbers.Contains(number))
-            numbers.Remove(number);
-
-        Destroy(number.gameObject);
-    }
-
     private void CreateNumber(
         int amount,
         Color color)
     {
+        // Сначала удаляем из списка уже уничтоженные объекты
+        CleanupDestroyedNumbers();
+
         // Сдвигаем существующие цифры вверх
         for (int i = 0; i < numbers.Count; i++)
         {
             HealthNumber number = numbers[i];
+
+            if (number == null)
+                continue;
 
             Vector2 targetPosition =
                 Vector2.up *
@@ -122,13 +103,17 @@ public class HealthFloatingText : MonoBehaviour
 
             numbers.RemoveAt(numbers.Count - 1);
 
-            Destroy(oldNumber.gameObject);
+            if (oldNumber != null)
+                Destroy(oldNumber.gameObject);
         }
     }
 
     private System.Collections.IEnumerator AppearNumber(
         HealthNumber number)
     {
+        if (number == null || number.RectTransform == null)
+            yield break;
+
         RectTransform rect =
             number.RectTransform;
 
@@ -142,6 +127,9 @@ public class HealthFloatingText : MonoBehaviour
 
         while (time < appearDuration)
         {
+            if (number == null || rect == null)
+                yield break;
+
             time += Time.deltaTime;
 
             float t =
@@ -163,6 +151,9 @@ public class HealthFloatingText : MonoBehaviour
             yield return null;
         }
 
+        if (number == null || rect == null)
+            yield break;
+
         rect.anchoredPosition = endPosition;
         number.SetAlpha(1f);
     }
@@ -172,6 +163,9 @@ public class HealthFloatingText : MonoBehaviour
         Vector2 targetPosition,
         float targetScale)
     {
+        if (number == null || number.RectTransform == null)
+            yield break;
+
         RectTransform rect =
             number.RectTransform;
 
@@ -185,6 +179,9 @@ public class HealthFloatingText : MonoBehaviour
 
         while (time < moveDuration)
         {
+            if (number == null || rect == null)
+                yield break;
+
             time += Time.deltaTime;
 
             float t =
@@ -213,7 +210,55 @@ public class HealthFloatingText : MonoBehaviour
             yield return null;
         }
 
+        if (number == null || rect == null)
+            yield break;
+
         rect.anchoredPosition = targetPosition;
         number.SetScale(targetScale);
+    }
+
+    private System.Collections.IEnumerator FadeNumber(
+        HealthNumber number,
+        float duration)
+    {
+        yield return new WaitForSeconds(1f);
+
+        if (number == null)
+            yield break;
+
+        float time = 0f;
+
+        while (time < duration)
+        {
+            if (number == null)
+                yield break;
+
+            time += Time.deltaTime;
+
+            float t =
+                Mathf.Clamp01(
+                    time / duration
+                );
+
+            number.SetAlpha(1f - t);
+
+            yield return null;
+        }
+
+        if (number == null)
+            yield break;
+
+        numbers.Remove(number);
+
+        Destroy(number.gameObject);
+    }
+
+    private void CleanupDestroyedNumbers()
+    {
+        for (int i = numbers.Count - 1; i >= 0; i--)
+        {
+            if (numbers[i] == null)
+                numbers.RemoveAt(i);
+        }
     }
 }

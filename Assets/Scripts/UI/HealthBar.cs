@@ -196,8 +196,7 @@ public class HealthBar : MonoBehaviour
         if (team == null || teamIndicator == null)
             return;
 
-        teamIndicator.color =
-            GetTeamColor(team.TeamId.Value);
+        teamIndicator.color = team.TeamColor;
     }
 
     private void UpdateStreak()
@@ -242,23 +241,5 @@ public class HealthBar : MonoBehaviour
             return false;
 
         return player.IsOwner;
-    }
-
-    private Color GetTeamColor(short teamId)
-    {
-        switch (teamId)
-        {
-            case 1:
-                return team1Color;
-
-            case 2:
-                return team2Color;
-
-            case 3:
-                return team3Color;
-
-            default:
-                return Color.white;
-        }
     }
 }

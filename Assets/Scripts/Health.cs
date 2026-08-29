@@ -147,7 +147,9 @@ public class Health : NetworkBehaviour
         base.OnNetworkDespawn();
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(
+        int damage,
+        PlayerNetwork attacker)
     {
         if (!IsServer || !NetworkObject.IsSpawned)
             return;
@@ -155,17 +157,48 @@ public class Health : NetworkBehaviour
         if (!IsAlive())
             return;
 
-        currentHealth.Value = Mathf.Max(0, currentHealth.Value - damage);
+        currentHealth.Value =
+            Mathf.Max(
+                0,
+                currentHealth.Value - damage
+            );
 
         lastDamageTime = Time.time;
         regenTimer = 0f;
 
         ShowHealthNumberClientRpc(-damage);
 
-        Debug.Log("[Health][" + Time.time + "]  After damage HP: " + currentHealth.Value);
-
         if (!IsAlive())
+        {
+            PlayerNetwork victim =
+                GetComponent<PlayerNetwork>();
+
+            if (MatchStatsManager.Instance != null)
+            {
+                Debug.Log(
+                    $"[STATS TEST] Manager found! " +
+                    $"Victim={OwnerClientId}, " +
+                    $"Attacker={(attacker != null ? attacker.OwnerClientId.ToString() : "NULL")}"
+                );
+
+                MatchStatsManager.Instance.AddDeath(
+                    OwnerClientId
+                );
+
+                if (attacker != null)
+                {
+                    MatchStatsManager.Instance.AddKill(
+                        attacker.OwnerClientId
+                    );
+                }
+            }
+            else
+            {
+                Debug.LogError("[STATS TEST] MatchStatsManager.Instance == NULL!");
+            }
+
             Die();
+        }
     }
 
     [ClientRpc]

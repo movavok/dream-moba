@@ -2,6 +2,8 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
+using Unity.Collections;
+using Unity.Services.Authentication;
 
 public class PlayerNetwork : NetworkBehaviour
 {
@@ -37,6 +39,24 @@ public class PlayerNetwork : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
+
+    private NetworkVariable<FixedString64Bytes> playerName =
+        new NetworkVariable<FixedString64Bytes>(
+            "",
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    public string PlayerName => playerName.Value.ToString();
+
+    [ServerRpc]
+    private void SetPlayerNameServerRpc(string nickname)
+    {
+        if (string.IsNullOrWhiteSpace(nickname))
+            nickname = "Player";
+
+        playerName.Value = nickname.Trim();
+    }
 
     public static PlayerNetwork LocalPlayer { get; private set; }
     public static event System.Action<PlayerNetwork> LocalPlayerSpawned;
@@ -404,6 +424,30 @@ public class PlayerNetwork : NetworkBehaviour
 
         UpdateAnimator();
     }
+
+    private string GetLocalNickname()
+    {
+        string defaultNickname = "Player " + (OwnerClientId + 1);
+
+        if (NetworkSessionManager.Instance == null)
+            return defaultNickname;
+
+        var session =
+            NetworkSessionManager.Instance.CurrentSession;
+
+        if (session == null || session.CurrentPlayer == null)
+            return defaultNickname;
+
+        if (session.CurrentPlayer.Properties.TryGetValue(
+            "nickname",
+            out var nicknameProperty))
+        {
+            if (!string.IsNullOrWhiteSpace(nicknameProperty.Value))
+                return nicknameProperty.Value;
+        }
+
+        return defaultNickname;
+    }
     
     // Network setup
     public override void OnNetworkSpawn()
@@ -420,8 +464,16 @@ public class PlayerNetwork : NetworkBehaviour
         if (IsOwner)
         {
             Debug.Log("Its my player");
+
             LocalPlayer = this;
             LocalPlayerSpawned?.Invoke(this);
+
+            string nickname = GetLocalNickname();
+
+            Debug.Log("My nickname: " + nickname);
+
+            SetPlayerNameServerRpc(nickname);
+
             StartCoroutine(SetupHUD());
             StartCoroutine(SetupCamera());
         }

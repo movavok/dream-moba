@@ -333,7 +333,10 @@ public class ProjectileNetwork : NetworkBehaviour
             Vector2 hitPosition =
                 other.ClosestPoint(transform.position);
 
-            health.TakeDamage(finalDamage);
+            health.TakeDamage(
+                finalDamage,
+                ownerStreak.GetComponent<PlayerNetwork>()
+            );
 
             health.ShowDamageHit(
                 hitPosition,

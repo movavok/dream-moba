@@ -11,6 +11,7 @@ public class RespawnManager : NetworkBehaviour
 
     [SerializeField] private float respawnTime = 5f;
     [SerializeField] private GameObject deathVisualPrefab;
+
     private readonly System.Collections.Generic.Dictionary<ulong, NetworkObject> deathVisuals =
         new();
 
@@ -241,6 +242,7 @@ public class RespawnManager : NetworkBehaviour
         ulong clientId,
         Health deadPlayer)
     {
+
         // Despawn the dead player object
         deadPlayer.NetworkObject.Despawn();
 

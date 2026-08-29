@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5989577f21c6e45499db1caa3c4fc0c9, type: 3}
+  m_Name: TeamDefinition
+  m_EditorClassIdentifier: Assembly-CSharp::TeamDefinition
+  teams:
+  - id: 0
+    teamName: NEUTRAL
+    color: {r: 1, g: 1, b: 1, a: 1}
+  - id: 1
+    teamName: BLUE
+    color: {r: 0.18679237, g: 0.28844342, b: 1, a: 1}
+  - id: 2
+    teamName: RED
+    color: {r: 1, g: 0.28490567, b: 0.28490567, a: 1}
+  - id: 3
+    teamName: GREEN
+    color: {r: 0.2918064, g: 0.94716984, b: 0.29129934, a: 1}
+  - id: 4
+    teamName: PURPLE
+    color: {r: 0.6537415, g: 0.35563537, b: 0.94716984, a: 1}
+  - id: 5
+    teamName: BLACK
+    color: {r: 0.15471691, g: 0.14099672, b: 0.14099672, a: 1}
+  - id: 6
+    teamName: YELLOW
+    color: {r: 0.9622642, g: 0.8870543, b: 0.28141674, a: 1}
+  - id: 7
+    teamName: ORANGE
+    color: {r: 0.96981126, g: 0.577177, b: 0.13723731, a: 1}
+  - id: 8
+    teamName: PINK
+    color: {r: 0.93207544, g: 0.5399003, b: 0.816481, a: 1}
+  - id: 9
+    teamName: CYAN
+    color: {r: 0.39953715, g: 0.98490566, b: 0.80908906, a: 1}
