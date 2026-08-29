@@ -11,6 +11,29 @@ public class ProjectileNetwork : NetworkBehaviour
     private bool dataResolved;
     private bool lifeTimeScheduled;
     private bool logicInitialized;
+
+    private ulong attackerClientId;
+
+    private float damageMultiplier = 1f;
+    private int attackerStreak;
+
+
+    public void SetAttacker(PlayerNetwork player)
+    {
+        if (player == null)
+            return;
+
+        attackerClientId = player.OwnerClientId;
+    }
+
+    public void SetAttackerStats(PlayerStreak streak)
+    {
+        if (streak == null)
+            return;
+
+        damageMultiplier = streak.DamageMultiplier;
+        attackerStreak = streak.Streak;
+    }
     
     [SerializeField] private TrailRenderer trail;
 
@@ -284,17 +307,23 @@ public class ProjectileNetwork : NetworkBehaviour
     private void PlayHitSoundClientRpc(
         Vector2 position,
         int streak,
-        ulong attackerNetworkObjectId)
+        ulong attackerClientId)
     {
-        if (!NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(
-            attackerNetworkObjectId,
-            out NetworkObject attackerObject))
+        if (!NetworkManager.Singleton.ConnectedClients.TryGetValue(
+            attackerClientId,
+            out NetworkClient client))
         {
             return;
         }
 
+        PlayerNetwork attacker =
+            client.PlayerObject.GetComponent<PlayerNetwork>();
+
+        if (attacker == null)
+            return;
+
         HeroAudio heroAudio =
-            attackerObject.GetComponentInChildren<HeroAudio>();
+            attacker.GetComponentInChildren<HeroAudio>();
 
         if (heroAudio == null)
             return;
@@ -327,15 +356,18 @@ public class ProjectileNetwork : NetworkBehaviour
 
             int finalDamage =
                 Mathf.RoundToInt(
-                    damage * ownerStreak.DamageMultiplier
+                    damage * damageMultiplier
                 );
 
             Vector2 hitPosition =
                 other.ClosestPoint(transform.position);
 
+            bool targetWasProtected =
+                health.IsSpawnProtected;
+
             health.TakeDamage(
                 finalDamage,
-                ownerStreak.GetComponent<PlayerNetwork>()
+                attackerClientId
             );
 
             health.ShowDamageHit(
@@ -345,11 +377,14 @@ public class ProjectileNetwork : NetworkBehaviour
 
             PlayHitSoundClientRpc(
                 hitPosition,
-                ownerStreak.Streak,
-                ownerStreak.NetworkObjectId
+                attackerStreak,
+                attackerClientId
             );
 
-            ownerStreak?.AddStreak();
+            if (!targetWasProtected)
+            {
+                ownerStreak?.AddStreak();
+            }
 
             DestroyProjectile();
         }

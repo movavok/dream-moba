@@ -251,6 +251,8 @@ public class PlayerAbilities : NetworkBehaviour
 
         if (used)
         {
+            playerNetwork.DisableSpawnProtection();
+
             Ability1UsedClientRpc();
             StartAbilityVisualClientRpc(1, ability1.VisualPower);
         }
@@ -271,6 +273,8 @@ public class PlayerAbilities : NetworkBehaviour
 
         if (used)
         {
+            playerNetwork.DisableSpawnProtection();
+
             Ability2UsedClientRpc();
             StartAbilityVisualClientRpc(2, ability2.VisualPower);
         }

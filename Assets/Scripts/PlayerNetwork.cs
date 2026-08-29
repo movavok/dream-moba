@@ -215,6 +215,17 @@ public class PlayerNetwork : NetworkBehaviour
     private void SendMoveServerRpc(Vector2 input)
     {
         moveInput = input;
+
+        if (input.sqrMagnitude > 0.01f)
+            DisableSpawnProtection();
+    }
+
+    public void DisableSpawnProtection()
+    {
+        Health health = GetComponent<Health>();
+
+        if (health != null)
+            health.DisableSpawnProtection();
     }
 
     // Shared combat state
@@ -296,6 +307,10 @@ public class PlayerNetwork : NetworkBehaviour
             GetComponent<PlayerStreak>()
         );
 
+        projectileNetwork.SetAttackerStats(
+            GetComponent<PlayerStreak>()
+        );
+
         projectileNetwork.SetSpeedMultiplier(
             projectileSpeedMultiplier
         );
@@ -303,6 +318,8 @@ public class PlayerNetwork : NetworkBehaviour
         projectileNetwork.SetTeam(
             GetComponent<Team>().TeamId.Value
         );
+
+        projectileNetwork.SetAttacker(this);
 
         projectileNetwork.SetDirection(direction);
 
@@ -411,6 +428,8 @@ public class PlayerNetwork : NetworkBehaviour
                     (1 / attackCooldownMultiplier);
 
                 ShootProjectile(aimDirection, moveInput);
+
+                DisableSpawnProtection();
 
                 AttackUsedClientRpc();
             }

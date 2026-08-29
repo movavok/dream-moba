@@ -9,6 +9,10 @@ public class HealthBar : MonoBehaviour
     [SerializeField] private Image damageFill;
     [SerializeField] private TMP_Text healthText;
 
+    [SerializeField] private Image border;
+    [SerializeField] private Sprite normalBorder;
+    [SerializeField] private Sprite spawnProtectionBorder;
+
     [Header("Team")]
     [SerializeField] private Image teamIndicator;
 
@@ -20,10 +24,6 @@ public class HealthBar : MonoBehaviour
     [SerializeField] private Color ownHealthColor = Color.green;
     [SerializeField] private Color allyHealthColor = Color.cyan;
     [SerializeField] private Color enemyHealthColor = Color.red;
-
-    [SerializeField] private Color team1Color = Color.blue;
-    [SerializeField] private Color team2Color = Color.red;
-    [SerializeField] private Color team3Color = Color.yellow;
 
     [Header("Damage Animation")]
     [SerializeField] private float damageSpeed = 5f;
@@ -62,6 +62,12 @@ public class HealthBar : MonoBehaviour
                 health.CurrentHealth,
                 health.MaxHealth
             );
+
+            health.SpawnProtectionChanged += OnSpawnProtectionChanged;
+
+            OnSpawnProtectionChanged(
+                health.IsSpawnProtected
+            );
         }
     }
 
@@ -69,6 +75,18 @@ public class HealthBar : MonoBehaviour
     {
         if (health != null)
             health.HealthChanged -= OnHealthChanged;
+            health.SpawnProtectionChanged -= OnSpawnProtectionChanged;
+    }
+
+    private void OnSpawnProtectionChanged(bool protectedState)
+    {
+        if (border == null)
+            return;
+
+        border.sprite =
+            protectedState
+                ? spawnProtectionBorder
+                : normalBorder;
     }
 
     private void OnHealthChanged(int newHealth, int maxHealth)

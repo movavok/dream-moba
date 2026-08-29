@@ -19,6 +19,17 @@ public class Health : NetworkBehaviour
 
     private DamageHitEffect damageHitEffect;
     private DamageHitFeedback damageHitFeedback;
+
+    private NetworkVariable<bool> spawnProtection =
+    new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public bool IsSpawnProtected => spawnProtection.Value;
+
+    public event System.Action<bool> SpawnProtectionChanged;
     
     private void Awake()
     {
@@ -62,11 +73,14 @@ public class Health : NetworkBehaviour
     }
 
     public void ShowDamageHit(
-    Vector2 hitPosition,
-    float damage)
+        Vector2 hitPosition,
+        float damage)
     {
         if (!IsServer)
             return;
+
+        if (spawnProtection.Value)
+            damage = 0f;
 
         ShowDamageHitClientRpc(
             hitPosition,
@@ -117,11 +131,18 @@ public class Health : NetworkBehaviour
     {
         playerNetwork = GetComponent<PlayerNetwork>();
 
-        if (IsServer && playerNetwork != null && playerNetwork.HeroData != null)
+        if (IsServer)
         {
-            currentHealth.Value = playerNetwork.HeroData.stats.maxHealth;
+            spawnProtection.Value = true;
+
+            if (playerNetwork != null && playerNetwork.HeroData != null)
+            {
+                currentHealth.Value =
+                    playerNetwork.HeroData.stats.maxHealth;
+            }
         }
 
+        spawnProtection.OnValueChanged += OnSpawnProtectionChanged;
         currentHealth.OnValueChanged += OnHealthChanged;
 
         Debug.Log("Spawned with HP: " + currentHealth.Value);
@@ -130,6 +151,17 @@ public class Health : NetworkBehaviour
             currentHealth.Value,
             MaxHealth
         );
+
+        SpawnProtectionChanged?.Invoke(
+            spawnProtection.Value
+        );
+    }
+
+    private void OnSpawnProtectionChanged(
+        bool oldValue,
+        bool newValue)
+    {
+        SpawnProtectionChanged?.Invoke(newValue);
     }
 
     private void OnHealthChanged(int oldHealth, int newHealth)
@@ -143,19 +175,37 @@ public class Health : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         currentHealth.OnValueChanged -= OnHealthChanged;
+        spawnProtection.OnValueChanged -= OnSpawnProtectionChanged;
 
         base.OnNetworkDespawn();
     }
 
+    public void DisableSpawnProtection()
+    {
+        if (!IsServer)
+            return;
+
+        if (!spawnProtection.Value)
+            return;
+
+        spawnProtection.Value = false;
+    }
+
     public void TakeDamage(
         int damage,
-        PlayerNetwork attacker)
+        ulong attackerClientId)
     {
         if (!IsServer || !NetworkObject.IsSpawned)
             return;
 
         if (!IsAlive())
             return;
+
+        if (spawnProtection.Value)
+        {
+            ShowHealthNumberClientRpc(0);
+            return;
+        }
 
         currentHealth.Value =
             Mathf.Max(
@@ -170,31 +220,27 @@ public class Health : NetworkBehaviour
 
         if (!IsAlive())
         {
-            PlayerNetwork victim =
-                GetComponent<PlayerNetwork>();
-
             if (MatchStatsManager.Instance != null)
             {
                 Debug.Log(
                     $"[STATS TEST] Manager found! " +
                     $"Victim={OwnerClientId}, " +
-                    $"Attacker={(attacker != null ? attacker.OwnerClientId.ToString() : "NULL")}"
+                    $"Attacker={attackerClientId}"
                 );
 
                 MatchStatsManager.Instance.AddDeath(
                     OwnerClientId
                 );
 
-                if (attacker != null)
-                {
-                    MatchStatsManager.Instance.AddKill(
-                        attacker.OwnerClientId
-                    );
-                }
+                MatchStatsManager.Instance.AddKill(
+                    attackerClientId
+                );
             }
             else
             {
-                Debug.LogError("[STATS TEST] MatchStatsManager.Instance == NULL!");
+                Debug.LogError(
+                    "[STATS TEST] MatchStatsManager.Instance == NULL!"
+                );
             }
 
             Die();
