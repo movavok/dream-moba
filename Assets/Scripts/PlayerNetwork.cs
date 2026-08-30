@@ -431,6 +431,14 @@ public class PlayerNetwork : NetworkBehaviour
 
                 DisableSpawnProtection();
 
+                Health health = GetComponent<Health>();
+
+                if (health != null)
+                {
+                    health.ResetRegenDelay();
+                    health.DisableSpawnProtection();
+                }
+
                 AttackUsedClientRpc();
             }
 

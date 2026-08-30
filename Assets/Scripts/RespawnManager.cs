@@ -238,21 +238,88 @@ public class RespawnManager : NetworkBehaviour
         PlayerCamera.Instance.MoveToPosition(position);
     }
 
+    public void PlayerDisconnected(ulong clientId)
+    {
+        if (!IsServer)
+            return;
+
+        Debug.Log(
+            $"RespawnManager: player {clientId} disconnected."
+        );
+
+        // Удаляем его spectating target
+        spectatingTargets.Remove(clientId);
+
+        // Удаляем death visual
+        if (deathVisuals.TryGetValue(
+            clientId,
+            out NetworkObject deathVisual))
+        {
+            if (deathVisual != null &&
+                deathVisual.IsSpawned)
+            {
+                deathVisual.Despawn();
+            }
+
+            deathVisuals.Remove(clientId);
+        }
+    }
+
     private IEnumerator RespawnCoroutine(
         ulong clientId,
         Health deadPlayer)
     {
-
         // Despawn the dead player object
-        deadPlayer.NetworkObject.Despawn();
+        if (deadPlayer != null &&
+            deadPlayer.NetworkObject != null &&
+            deadPlayer.NetworkObject.IsSpawned)
+        {
+            deadPlayer.NetworkObject.Despawn();
+        }
 
-        Debug.Log("Player despawned. Respawn in " + respawnTime + " seconds.");
+        Debug.Log(
+            "Player despawned. Respawn in " +
+            respawnTime +
+            " seconds."
+        );
 
         yield return new WaitForSeconds(respawnTime);
 
-        if (deathVisuals.TryGetValue(clientId, out NetworkObject deathVisual))
+        // Игрок вышел во время смерти.
+        // Не создаём ему нового PlayerObject.
+        if (NetworkManager.Singleton == null ||
+            !NetworkManager.Singleton.IsListening ||
+            !NetworkManager.Singleton.ConnectedClients.ContainsKey(clientId))
         {
-            if (deathVisual != null && deathVisual.IsSpawned)
+            Debug.Log(
+                $"Respawn cancelled: client {clientId} is no longer connected."
+            );
+
+            if (deathVisuals.TryGetValue(
+                clientId,
+                out NetworkObject disconnectedDeathVisual))
+            {
+                if (disconnectedDeathVisual != null &&
+                    disconnectedDeathVisual.IsSpawned)
+                {
+                    disconnectedDeathVisual.Despawn();
+                }
+
+                deathVisuals.Remove(clientId);
+            }
+
+            spectatingTargets.Remove(clientId);
+
+            yield break;
+        }
+
+        // Удаляем death visual
+        if (deathVisuals.TryGetValue(
+            clientId,
+            out NetworkObject deathVisual))
+        {
+            if (deathVisual != null &&
+                deathVisual.IsSpawned)
             {
                 deathVisual.Despawn();
             }
@@ -295,7 +362,9 @@ public class RespawnManager : NetworkBehaviour
             }
         );
 
-        Debug.Log("Player " + clientId + " respawned.");
+        Debug.Log(
+            "Player " + clientId + " respawned."
+        );
     }
 }
 

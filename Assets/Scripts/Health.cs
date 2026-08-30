@@ -191,6 +191,15 @@ public class Health : NetworkBehaviour
         spawnProtection.Value = false;
     }
 
+    public void ResetRegenDelay()
+    {
+        if (!IsServer)
+            return;
+
+        lastDamageTime = Time.time;
+        regenTimer = 0f;
+    }
+
     public void TakeDamage(
         int damage,
         ulong attackerClientId)

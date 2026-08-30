@@ -91,6 +91,42 @@ public class ScoreboardUI : MonoBehaviour
         return teamHeader;
     }
 
+
+    public void OnPlayerLeft(ulong clientId)
+    {
+        short teamToRemove = -1;
+
+        foreach (var pair in teamHeaders)
+        {
+            TeamHeader teamHeader = pair.Value;
+
+            if (teamHeader.RemovePlayer(clientId))
+            {
+                StartCoroutine(RemoveEmptyTeam(pair.Key, teamHeader));
+                break;
+            }
+        }
+
+        if (teamToRemove != -1)
+        {
+            Destroy(teamHeaders[teamToRemove].gameObject);
+            teamHeaders.Remove(teamToRemove);
+        }
+    }
+
+    private IEnumerator RemoveEmptyTeam(
+        short teamId,
+        TeamHeader teamHeader)
+    {
+        yield return null;
+
+        if (!teamHeader.HasPlayers())
+        {
+            Destroy(teamHeader.gameObject);
+            teamHeaders.Remove(teamId);
+        }
+    }
+
     private void Clear()
     {
         foreach (TeamHeader teamHeader in teamHeaders.Values)

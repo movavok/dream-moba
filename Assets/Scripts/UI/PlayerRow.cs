@@ -5,6 +5,8 @@ public class PlayerRow : MonoBehaviour
 {
     private ulong clientId;
 
+    public ulong ClientId => clientId;
+
     [Header("Texts")]
     [SerializeField] private TMP_Text heroNameText;
     [SerializeField] private TMP_Text playerNameText;

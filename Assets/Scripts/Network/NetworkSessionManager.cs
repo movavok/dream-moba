@@ -14,6 +14,10 @@ public class NetworkSessionManager : MonoBehaviour
     public ISession CurrentSession { get; private set; }
     public bool IsSessionOperationInProgress { get; private set; }
 
+    public bool HostLeftGame { get; private set; }
+
+    private bool isLeavingGame;
+
     private async void Awake()
     {
         if (Instance != null && Instance != this)
@@ -23,9 +27,76 @@ public class NetworkSessionManager : MonoBehaviour
         }
 
         Instance = this;
+
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+        }
+
         DontDestroyOnLoad(gameObject);
 
         await InitializeServices();
+    }
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        if (NetworkManager.Singleton == null)
+            return;
+
+        // Сервер обнаружил отключившегося игрока
+        if (NetworkManager.Singleton.IsServer)
+        {
+            Debug.Log(
+                $"Client disconnected from server: {clientId}"
+            );
+
+            if (RespawnManager.Instance != null)
+            {
+                RespawnManager.Instance.PlayerDisconnected(clientId);
+            }
+
+            ScoreboardUI scoreboard = FindFirstObjectByType<ScoreboardUI>();
+
+            if (scoreboard != null)
+            {
+                scoreboard.OnPlayerLeft(clientId);
+            }
+
+            return;
+        }
+
+        // Клиент обновляет табло при выходе любого игрока
+        ScoreboardUI clientScoreboard =
+            FindFirstObjectByType<ScoreboardUI>();
+
+        if (clientScoreboard != null)
+        {
+            clientScoreboard.OnPlayerLeft(clientId);
+        }
+
+        // Если отключился именно хост — возвращаемся в лобби
+        if (clientId != NetworkManager.Singleton.LocalClientId)
+            return;
+
+        if (isLeavingGame)
+            return;
+
+        Debug.Log(
+            "Host disconnected. Returning to LobbyScene."
+        );
+
+        HostLeftGame = true;
+        CurrentSession = null;
+
+        SceneManager.LoadScene("LobbyScene");
+    }
+
+    private void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+        }
     }
 
     private async Task InitializeServices()
@@ -238,4 +309,71 @@ public class NetworkSessionManager : MonoBehaviour
             Debug.LogError($"Unexpected error while leaving room: {e}");
         }
     }
+
+    public async Task LeaveGame()
+    {
+        if (isLeavingGame)
+            return;
+
+        isLeavingGame = true;
+        HostLeftGame = false;
+
+        Debug.Log("Leaving game...");
+
+        try
+        {
+            ISession session = CurrentSession;
+
+            // Сначала отключаем Netcode.
+            if (NetworkManager.Singleton != null &&
+                NetworkManager.Singleton.IsListening)
+            {
+                Debug.Log("Shutting down NetworkManager...");
+
+                NetworkManager.Singleton.Shutdown();
+
+                // Даём Netcode закончить отключение.
+                await Task.Yield();
+            }
+
+            // Затем покидаем Unity Multiplayer Session.
+            if (session != null)
+            {
+                string playerId =
+                    session.CurrentPlayer?.Id ?? "unknown";
+
+                Debug.Log($"Leaving session. Player: {playerId}");
+
+                await session.LeaveAsync();
+
+                Debug.Log(
+                    $"Successfully left game session. Player: {playerId}"
+                );
+            }
+
+            CurrentSession = null;
+
+            SceneManager.LoadScene("LobbyScene");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Failed to leave game: {e}");
+
+            CurrentSession = null;
+
+            if (NetworkManager.Singleton != null &&
+                NetworkManager.Singleton.IsListening)
+            {
+                NetworkManager.Singleton.Shutdown();
+            }
+
+            SceneManager.LoadScene("LobbyScene");
+        }
+        finally
+        {
+            isLeavingGame = false;
+        }
+    }
+
+
 }
