@@ -9,6 +9,14 @@ using UnityEngine.SceneManagement;
 
 public class NetworkSessionManager : MonoBehaviour
 {
+
+    private LobbyLoadingUI loadingUI;
+
+    public void RegisterLoadingUI(LobbyLoadingUI ui)
+    {
+        loadingUI = ui;
+    }
+
     public static NetworkSessionManager Instance { get; private set; }
 
     public ISession CurrentSession { get; private set; }
@@ -55,7 +63,7 @@ public class NetworkSessionManager : MonoBehaviour
                 RespawnManager.Instance.PlayerDisconnected(clientId);
             }
 
-            ScoreboardUI scoreboard = FindFirstObjectByType<ScoreboardUI>();
+            ScoreboardUI scoreboard = FindAnyObjectByType<ScoreboardUI>();
 
             if (scoreboard != null)
             {
@@ -67,7 +75,7 @@ public class NetworkSessionManager : MonoBehaviour
 
         // Клиент обновляет табло при выходе любого игрока
         ScoreboardUI clientScoreboard =
-            FindFirstObjectByType<ScoreboardUI>();
+            FindAnyObjectByType<ScoreboardUI>();
 
         if (clientScoreboard != null)
         {
@@ -127,6 +135,8 @@ public class NetworkSessionManager : MonoBehaviour
 
         try
         {
+            loadingUI?.Show();
+
             IsSessionOperationInProgress = true;
 
             SessionOptions options = new SessionOptions
@@ -150,6 +160,7 @@ public class NetworkSessionManager : MonoBehaviour
         finally
         {
             IsSessionOperationInProgress = false;
+            loadingUI?.Hide();
         }
     }
 
@@ -175,6 +186,8 @@ public class NetworkSessionManager : MonoBehaviour
 
         try
         {
+            loadingUI?.Show();
+
             IsSessionOperationInProgress = true;
 
             roomCode = roomCode.Trim().ToUpper();
@@ -199,6 +212,7 @@ public class NetworkSessionManager : MonoBehaviour
         }
         finally
         {
+            loadingUI?.Hide();
             IsSessionOperationInProgress = false;
         }
     }

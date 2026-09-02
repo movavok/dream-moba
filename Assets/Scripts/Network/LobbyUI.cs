@@ -86,6 +86,17 @@ public class LobbyUI : MonoBehaviour
         }
     }
 
+    public void QuitGame()
+    {
+        Debug.Log("Quitting game...");
+
+        Application.Quit();
+
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #endif
+    }
+
     private void UpdateTeamModeDropdown()
     {
         ISession session =

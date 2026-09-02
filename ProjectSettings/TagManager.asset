@@ -3,7 +3,8 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 3
-  tags: []
+  tags:
+  - HeroSorting
   layers:
   - Default
   - TransparentFX
@@ -46,6 +47,12 @@ TagManager:
     locked: 0
   - name: Grass
     uniqueID: 895244931
+    locked: 0
+  - name: ShadowBehind
+    uniqueID: 320710837
+    locked: 0
+  - name: HeroBehind
+    uniqueID: 2293680009
     locked: 0
   - name: Wall
     uniqueID: 2629816395

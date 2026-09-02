@@ -422,7 +422,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 1648184473
-  m_SortingLayer: 6
+  m_SortingLayer: 8
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -4372308811048212294, guid: 9faa4776e6b27f5409ccfa2f87cdb6b6, type: 3}
@@ -626,7 +626,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: -1442130259
-  m_SortingLayer: 9
+  m_SortingLayer: 11
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3048184384510238455, guid: 44c9a60e98f358041bc0d1b5a70bd97c, type: 3}
@@ -718,7 +718,7 @@ GameObject:
   - component: {fileID: 9070943657810725501}
   m_Layer: 6
   m_Name: Body
-  m_TagString: Untagged
+  m_TagString: HeroSorting
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -944,8 +944,8 @@ SpriteMask:
   m_MaskAlphaCutoff: 0.2
   m_FrontSortingLayerID: 1303551995
   m_BackSortingLayerID: -1442130259
-  m_FrontSortingLayer: 10
-  m_BackSortingLayer: 9
+  m_FrontSortingLayer: 12
+  m_BackSortingLayer: 11
   m_FrontSortingOrder: 0
   m_BackSortingOrder: 0
   m_IsCustomRangeActive: 0
@@ -1031,6 +1031,7 @@ GameObject:
   - component: {fileID: 6821608293737209610}
   - component: {fileID: 4497391279065934968}
   - component: {fileID: 4418126354132710016}
+  - component: {fileID: 608649215324937352}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1282,6 +1283,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerAbilities
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &608649215324937352
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7869603720132464616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73a53905636efd04f9def01e601486b5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeroSorting
+  heroRenderer: {fileID: 1877963979028858135}
+  shadowRenderer: {fileID: 7131984431244636473}
 --- !u!1001 &6494270203530631776
 PrefabInstance:
   m_ObjectHideFlags: 0

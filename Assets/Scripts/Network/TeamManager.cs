@@ -51,10 +51,19 @@ public class TeamManager : NetworkBehaviour
 
         short teamId = GetTeamId(team.OwnerClientId);
 
+        Debug.Log(
+            $"[TEAM ASSIGN] " +
+            $"ClientId={team.OwnerClientId} | " +
+            $"Mode={AssignmentMode} | " +
+            $"CalculatedTeam={teamId}"
+        );
+
         team.TeamId.Value = teamId;
 
         Debug.Log(
-            $"Player {team.OwnerClientId} Team: {teamId}"
+            $"[TEAM ASSIGN] " +
+            $"ClientId={team.OwnerClientId} | " +
+            $"FinalTeam={team.TeamId.Value}"
         );
     }
 }
