@@ -6,6 +6,7 @@ public class PlayerCamera : MonoBehaviour
     public static PlayerCamera Instance { get; private set; }
 
     [SerializeField] private CinemachineCamera virtualCamera;
+    [SerializeField] private CinemachineImpulseSource impulseSource;
 
     public bool IsReady => virtualCamera != null;
 
@@ -17,6 +18,29 @@ public class PlayerCamera : MonoBehaviour
             $"PlayerCamera Awake: {gameObject.name}, " +
             $"VirtualCamera = {virtualCamera}"
         );
+    }
+
+    public void Shake(float damage)
+    {
+        if (impulseSource == null)
+            return;
+
+        float strength = Mathf.Clamp(damage / 100f, 0.005f, 0.025f);
+
+        float angle = Random.Range(0f, Mathf.PI * 2f);
+
+        Vector3 direction = new Vector3(
+            Mathf.Cos(angle),
+            Mathf.Sin(angle),
+            0f
+        );
+
+        impulseSource.GenerateImpulse(direction * strength);
+}
+
+    public void SetImpulseSource(CinemachineImpulseSource source)
+    {
+        impulseSource = source;
     }
 
     private void OnDestroy()

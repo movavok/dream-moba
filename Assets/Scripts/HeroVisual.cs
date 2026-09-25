@@ -4,6 +4,7 @@ using UnityEngine.U2D.Animation;
 public class HeroVisual : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private SpriteRenderer behindOutline;
     [SerializeField] private SpriteLibrary spriteLibrary;
 
     public SpriteRenderer SpriteRenderer => spriteRenderer;
@@ -51,5 +52,13 @@ public class HeroVisual : MonoBehaviour
 
         spriteLibrary.spriteLibraryAsset =
             heroData.visual.spriteLibrary;
+    }
+
+    private void LateUpdate()
+    {
+        if (spriteRenderer == null || behindOutline == null)
+            return;
+
+        behindOutline.sprite = spriteRenderer.sprite;
     }
 }

@@ -340,6 +340,13 @@ public class ProjectileNetwork : NetworkBehaviour
         if (!IsServer || hasHit)
             return;
 
+        if (other.CompareTag("Blocker"))
+        {
+            hasHit = true;
+            DestroyProjectile();
+            return;
+        }
+
         Health health = other.GetComponentInParent<Health>();
         Team targetTeam = other.GetComponentInParent<Team>();
 

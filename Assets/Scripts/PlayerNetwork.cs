@@ -580,6 +580,10 @@ public class PlayerNetwork : NetworkBehaviour
             yield return null;
         }
 
+        CinemachineImpulseSource impulseSource =
+            GetComponentInChildren<CinemachineImpulseSource>();
+
+        PlayerCamera.Instance.SetImpulseSource(impulseSource);
         PlayerCamera.Instance.FollowPlayer(transform);
 
         Debug.Log(

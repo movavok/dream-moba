@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Netcode;
+using Unity.Cinemachine;
 
 public class Health : NetworkBehaviour
 {
@@ -118,6 +119,11 @@ public class Health : NetworkBehaviour
         if (damageHitFeedback != null)
         {
             damageHitFeedback.Shake(damage);
+        }
+
+        if (IsOwner && PlayerCamera.Instance != null)
+        {
+            PlayerCamera.Instance.Shake(damage);
         }
     }
 

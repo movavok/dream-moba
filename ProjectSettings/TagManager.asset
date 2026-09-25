@@ -5,6 +5,8 @@ TagManager:
   serializedVersion: 3
   tags:
   - HeroSorting
+  - Blocker
+  - ProjectileSorting
   layers:
   - Default
   - TransparentFX
@@ -48,17 +50,20 @@ TagManager:
   - name: Grass
     uniqueID: 895244931
     locked: 0
+  - name: Water
+    uniqueID: 3960898567
+    locked: 0
   - name: ShadowBehind
     uniqueID: 320710837
     locked: 0
   - name: HeroBehind
     uniqueID: 2293680009
     locked: 0
+  - name: ProjectileBuilding
+    uniqueID: 118035733
+    locked: 0
   - name: Wall
     uniqueID: 2629816395
-    locked: 0
-  - name: Water
-    uniqueID: 3960898567
     locked: 0
   - name: Details
     uniqueID: 3424306403
@@ -75,11 +80,11 @@ TagManager:
   - name: Hero
     uniqueID: 2852837037
     locked: 0
-  - name: Effect
-    uniqueID: 1303551995
-    locked: 0
   - name: Projectile
     uniqueID: 955594379
+    locked: 0
+  - name: Effect
+    uniqueID: 1303551995
     locked: 0
   - name: UI
     uniqueID: 2526420685

@@ -4,6 +4,7 @@ public class HeroSorting : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer heroRenderer;
     [SerializeField] private SpriteRenderer shadowRenderer;
+    [SerializeField] private SpriteRenderer behindOutline;
 
     private const string HERO_LAYER = "Hero";
     private const string HERO_BEHIND_LAYER = "HeroBehind";
@@ -32,6 +33,11 @@ public class HeroSorting : MonoBehaviour
         {
             shadowRenderer.sortingLayerName =
                 behind ? SHADOW_BEHIND_LAYER : SHADOW_LAYER;
+        }
+
+        if (behindOutline != null)
+        {
+            behindOutline.enabled = behind;
         }
     }
 }
