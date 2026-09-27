@@ -21,9 +21,9 @@ A personal indie project built for learning, experimenting and eventually turnin
 
 ![Combat](Documentation/Media/combat.gif)
 
-### Building Occlusion
+### Buildings
 
-![Building Occlusion](Documentation/Media/occlusion.gif)
+![Building Occlusion](Documentation/Media/buildings.gif)
 
 ---
 
@@ -158,7 +158,7 @@ The roadmap is flexible and will change as the project evolves.
 
 Playable builds will be published here as stable prototype milestones.
 
-**Latest release:** Coming soon
+**Latest release:** [Download](https://github.com/movavok/dream-moba/releases/latest)
 
 **itch.io:** Coming soon
 

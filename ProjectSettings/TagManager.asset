@@ -7,6 +7,7 @@ TagManager:
   - HeroSorting
   - Blocker
   - ProjectileSorting
+  - Door
   layers:
   - Default
   - TransparentFX

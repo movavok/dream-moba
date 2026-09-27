@@ -8,6 +8,9 @@ public class PlayerCamera : MonoBehaviour
     [SerializeField] private CinemachineCamera virtualCamera;
     [SerializeField] private CinemachineImpulseSource impulseSource;
 
+    [SerializeField] private CinemachineConfiner2D confiner;
+    [SerializeField] private Collider2D mapBounds;
+
     public bool IsReady => virtualCamera != null;
 
     private void Awake()
@@ -36,13 +39,28 @@ public class PlayerCamera : MonoBehaviour
         );
 
         impulseSource.GenerateImpulse(direction * strength);
-}
+    }
 
     public void SetImpulseSource(CinemachineImpulseSource source)
     {
         impulseSource = source;
     }
 
+    public void SetMapBounds()
+    {
+        if (confiner == null)
+            return;
+
+        confiner.BoundingShape2D = mapBounds;
+    }
+
+    public void SetCameraBounds(Collider2D bounds)
+    {
+        if (confiner == null)
+            return;
+
+        confiner.BoundingShape2D = bounds;
+    }
     private void OnDestroy()
     {
         if (Instance == this)
@@ -93,5 +111,17 @@ public class PlayerCamera : MonoBehaviour
                 position.y,
                 currentPosition.z
             );
+    }
+
+    public void TeleportToPlayer(Transform target)
+    {
+        if (virtualCamera == null || target == null)
+            return;
+
+        virtualCamera.Follow = target;
+
+        Debug.Log($"CAMERA TELEPORT → {target.position}");
+
+        virtualCamera.PreviousStateIsValid = false;
     }
 }

@@ -15,3 +15,6 @@ MonoBehaviour:
   damageTaken:
   - {fileID: 8300000, guid: 3b619cc00f515f4458a2d65e9d43af8f, type: 3}
   damageTakenVolume: 0.34
+  buildingTransitions:
+  - {fileID: 8300000, guid: 05625656bdf210f4ba471860a7f92f1b, type: 3}
+  buildingTransitionVolume: 0.1

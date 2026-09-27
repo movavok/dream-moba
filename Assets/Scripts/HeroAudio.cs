@@ -80,8 +80,7 @@ public class HeroAudio : MonoBehaviour
         AudioManager.Instance.PlayAtPosition(
             clip,
             transform.position,
-            heroData.audio.deathVolume,
-            Random.Range(0.95f, 1.05f)
+            heroData.audio.deathVolume
         );
     }
 

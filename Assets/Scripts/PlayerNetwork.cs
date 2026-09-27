@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
 using Unity.Collections;
+using System.Collections;
 using Unity.Services.Authentication;
 
 public class PlayerNetwork : NetworkBehaviour
@@ -592,4 +593,83 @@ public class PlayerNetwork : NetworkBehaviour
         );
     }
 
+    [ClientRpc]
+    private void EnterBuildingClientRpc(
+        Vector3 targetPosition,
+        int soundIndex)
+    {
+        if (!IsOwner)
+            return;
+
+        StartCoroutine(
+            BuildingTransition(
+                targetPosition,
+                soundIndex
+            )
+        );
+    }
+
+    [ServerRpc]
+    private void TeleportToBuildingServerRpc(Vector3 targetPosition)
+    {
+        Teleport(targetPosition);
+
+        BuildingTeleportedClientRpc();
+    }
+
+    private IEnumerator TeleportCameraAfterPhysics()
+    {
+        yield return new WaitForFixedUpdate();
+        yield return null;
+
+        PlayerCamera.Instance.TeleportToPlayer(transform);
+
+        yield return ScreenTransition.Instance.FadeOut();
+    }
+
+    [ClientRpc]
+    private void BuildingTeleportedClientRpc()
+    {
+        if (!IsOwner)
+            return;
+
+        StartCoroutine(TeleportCameraAfterPhysics());
+    }
+
+    public void EnterBuilding(
+        Vector3 targetPosition,
+        int soundIndex)
+    {
+        if (!IsServer)
+            return;
+
+        EnterBuildingClientRpc(
+            targetPosition,
+            soundIndex
+        );
+    }
+
+    private IEnumerator BuildingTransition(
+        Vector3 targetPosition,
+        int soundIndex)
+    {
+        yield return ScreenTransition.Instance.FadeIn();
+
+        AudioManager.Instance.PlayBuildingTransition(
+            soundIndex
+        );
+
+        TeleportToBuildingServerRpc(targetPosition);
+    }
+
+    public void Teleport(Vector3 position)
+    {
+        if (!IsServer)
+            return;
+
+        rb.linearVelocity = Vector2.zero;
+
+        rb.position = position;
+        transform.position = position;
+    }
 }

@@ -7,9 +7,9 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource audioSourcePrefab;
     [SerializeField] private AudioLibrary globalLibrary;
 
-    [Header("Damage")]
-    [SerializeField] private float damageMinPitch = 0.9f;
-    [SerializeField] private float damageMaxPitch = 1.1f;
+    [Header("Pitch")]
+    [SerializeField] private float minPitch = 0.95f;
+    [SerializeField] private float maxPitch = 1.05f;
 
     private void Awake()
     {
@@ -23,10 +23,9 @@ public class AudioManager : MonoBehaviour
     }
 
     public AudioSource PlayAtPosition(
-    AudioClip clip,
-    Vector3 position,
-    float volume = 1f,
-    float pitch = 1f)
+        AudioClip clip,
+        Vector3 position,
+        float volume = 1f)
     {
         if (clip == null)
             return null;
@@ -47,9 +46,11 @@ public class AudioManager : MonoBehaviour
                 Quaternion.identity
             );
 
-        source.clip = clip;
+        source.spatialBlend = 1f;
         source.volume = volume;
-        source.pitch = pitch;
+        source.pitch = Random.Range(minPitch, maxPitch);
+        source.clip = clip;
+
         source.Play();
 
         Destroy(
@@ -77,16 +78,55 @@ public class AudioManager : MonoBehaviour
                 )
             ];
 
-        float pitch = Random.Range(
-            damageMinPitch,
-            damageMaxPitch
-        );
-
         PlayAtPosition(
             clip,
             position,
-            globalLibrary.damageTakenVolume,
-            pitch
+            globalLibrary.damageTakenVolume
+        );
+    }
+
+    public void PlayBuildingTransition(int soundIndex)
+    {
+        if (globalLibrary == null)
+            return;
+
+        if (globalLibrary.buildingTransitions == null ||
+            soundIndex < 0 ||
+            soundIndex >= globalLibrary.buildingTransitions.Length)
+            return;
+
+        AudioClip clip =
+            globalLibrary.buildingTransitions[soundIndex];
+
+        PlayLocal(
+            clip,
+            globalLibrary.buildingTransitionVolume
+        );
+    }
+
+    private void PlayLocal(
+        AudioClip clip,
+        float volume = 1f)
+    {
+        if (clip == null || audioSourcePrefab == null)
+            return;
+
+        AudioSource source =
+            Instantiate(audioSourcePrefab);
+
+        source.transform.position = Vector3.zero;
+
+        source.spatialBlend = 0f;
+        source.panStereo = 0f;
+        source.volume = volume;
+        source.pitch = Random.Range(minPitch, maxPitch);
+        source.clip = clip;
+
+        source.Play();
+
+        Destroy(
+            source.gameObject,
+            clip.length + 0.1f
         );
     }
 }
