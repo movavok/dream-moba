@@ -19,11 +19,13 @@ A personal indie project built for learning, experimenting and eventually turnin
 
 ### Combat
 
-![Combat](Documentation/Media/combat.gif)
+![Combat](Documentation/Media/combatg1.gif)
+![Combat](Documentation/Media/combatg2.gif)
 
 ### Buildings
 
-![Building Occlusion](Documentation/Media/buildings.gif)
+![Building](Documentation/Media/buildings.gif)
+![Multiplayer](Documentation/Media/chillg.gif)
 
 ---
 
