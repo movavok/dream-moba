@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: bluetent-inside_17
+  m_Name: light-in-tent_1
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.Tilemaps.Tile
-  m_Sprite: {fileID: -1682225494, guid: b5045efcd8f90f148a214dcc8f664e97, type: 3}
+  m_Sprite: {fileID: 1771056625, guid: 1c09eabd567aa434b9a756586854b829, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

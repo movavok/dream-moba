@@ -614,26 +614,29 @@ public class PlayerNetwork : NetworkBehaviour
     {
         Teleport(targetPosition);
 
-        BuildingTeleportedClientRpc();
+        BuildingTeleportedClientRpc(targetPosition);
     }
 
-    private IEnumerator TeleportCameraAfterPhysics()
+    private IEnumerator TeleportCameraAfterPhysics(
+        Vector3 targetPosition)
     {
         yield return new WaitForFixedUpdate();
         yield return null;
 
-        PlayerCamera.Instance.TeleportToPlayer(transform);
+        PlayerCamera.Instance.TeleportToPosition(targetPosition);
 
         yield return ScreenTransition.Instance.FadeOut();
     }
 
     [ClientRpc]
-    private void BuildingTeleportedClientRpc()
+    private void BuildingTeleportedClientRpc(Vector3 targetPosition)
     {
         if (!IsOwner)
             return;
 
-        StartCoroutine(TeleportCameraAfterPhysics());
+        StartCoroutine(
+            TeleportCameraAfterPhysics(targetPosition)
+        );
     }
 
     public void EnterBuilding(

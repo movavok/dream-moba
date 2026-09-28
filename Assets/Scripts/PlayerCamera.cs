@@ -124,4 +124,22 @@ public class PlayerCamera : MonoBehaviour
 
         virtualCamera.PreviousStateIsValid = false;
     }
+
+    public void TeleportToPosition(Vector3 position)
+    {
+        if (virtualCamera == null)
+            return;
+
+        Vector3 cameraPosition =
+            virtualCamera.transform.position;
+
+        virtualCamera.transform.position =
+            new Vector3(
+                position.x,
+                position.y,
+                cameraPosition.z
+            );
+
+        virtualCamera.PreviousStateIsValid = false;
+    }
 }

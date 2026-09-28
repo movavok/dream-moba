@@ -24,7 +24,8 @@ A personal indie project built for learning, experimenting and eventually turnin
 
 ### Buildings
 
-![Building](Documentation/Media/buildings.gif)
+<img src="Documentation/Media/buildings.gif" width="500">
+
 ![Multiplayer](Documentation/Media/chillg.gif)
 
 ---
