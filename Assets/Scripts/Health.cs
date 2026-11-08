@@ -7,6 +7,9 @@ public class Health : NetworkBehaviour
     private NetworkVariable<int> currentHealth = new NetworkVariable<int>();
 
     [SerializeField] private HealthFloatingText healthFloatingText;
+    [SerializeField] private int standaloneMaxHealth;
+    [SerializeField] private bool respawnOnDeath = true;
+    [SerializeField] private bool standardRegenEnabled = true;
 
     private const float REGEN_DELAY = 3f;
     private const float REGEN_INTERVAL = 1f;
@@ -43,7 +46,7 @@ public class Health : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsServer)
+        if (!IsServer || !standardRegenEnabled)
             return;
 
         if (!IsAlive())
@@ -131,7 +134,7 @@ public class Health : NetworkBehaviour
     public int MaxHealth =>
         playerNetwork != null && playerNetwork.HeroData != null
             ? playerNetwork.HeroData.stats.maxHealth
-            : 0;
+            : standaloneMaxHealth;
 
     public override void OnNetworkSpawn()
     {
@@ -145,6 +148,11 @@ public class Health : NetworkBehaviour
             {
                 currentHealth.Value =
                     playerNetwork.HeroData.stats.maxHealth;
+            }
+            else if (standaloneMaxHealth > 0)
+            {
+                currentHealth.Value = standaloneMaxHealth;
+                spawnProtection.Value = false;
             }
         }
 
@@ -277,7 +285,27 @@ public class Health : NetworkBehaviour
     private void Die()
     {
         Debug.Log("PLAYER DIED");
-        RespawnManager.Instance.RespawnPlayer(this);
+        if (respawnOnDeath && RespawnManager.Instance != null)
+            RespawnManager.Instance.RespawnPlayer(this);
+    }
+
+    public void Heal(int amount, bool showNumber = false)
+    {
+        if (!IsServer || !NetworkObject.IsSpawned || amount <= 0)
+            return;
+
+        if (MaxHealth <= 0 || currentHealth.Value >= MaxHealth)
+            return;
+
+        int healedAmount = Mathf.Min(
+            amount,
+            MaxHealth - currentHealth.Value
+        );
+
+        currentHealth.Value += healedAmount;
+
+        if (showNumber && healedAmount > 0)
+            ShowHealthNumberClientRpc(healedAmount);
     }
 
     public bool IsAlive()

@@ -5,6 +5,8 @@ public class GamePlayerSpawner : NetworkBehaviour
 {
     [Header("Player")]
     [SerializeField] private GameObject playerPrefab;
+    [SerializeField] private GameObject trainingDummyPrefab;
+    [SerializeField] private Vector2 trainingDummyOffset = new Vector2(1.5f, 0f);
 
     [Header("Spawn Points")]
     [SerializeField] private Transform[] spawnPoints;
@@ -84,11 +86,38 @@ public class GamePlayerSpawner : NetworkBehaviour
 
             networkObject.SpawnAsPlayerObject(clientId);
 
+            SpawnTrainingDummy(spawnPoint.position);
+
             Debug.Log(
                 $"Spawned player for client {clientId} at {spawnPoint.position}"
             );
 
             spawnIndex++;
         }
+    }
+
+    private void SpawnTrainingDummy(Vector3 playerPosition)
+    {
+        if (trainingDummyPrefab == null)
+            return;
+
+        GameObject dummy = Instantiate(
+            trainingDummyPrefab,
+            playerPosition + (Vector3)trainingDummyOffset,
+            Quaternion.identity
+        );
+
+        NetworkObject networkObject = dummy.GetComponent<NetworkObject>();
+
+        if (networkObject == null)
+        {
+            Debug.LogError(
+                "GamePlayerSpawner: Training Dummy Prefab has no NetworkObject!"
+            );
+            Destroy(dummy);
+            return;
+        }
+
+        networkObject.Spawn();
     }
 }

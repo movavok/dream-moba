@@ -3041,6 +3041,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GamePlayerSpawner
   ShowTopMostFoldoutHeaderGroup: 1
   playerPrefab: {fileID: 7869603720132464616, guid: c910fd23f540078468e0b70b514a6108, type: 3}
+  trainingDummyPrefab: {fileID: 1000000000000000000, guid: 9f7e6d5c4b3a291807f6e5d4c3b2a190, type: 3}
+  trainingDummyOffset: {x: 1.5, y: 0}
   spawnPoints:
   - {fileID: 2110970301}
 --- !u!114 &2033136045
