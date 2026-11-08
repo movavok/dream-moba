@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: BehindBuilding
-  m_Shader: {fileID: -6465566751694194690, guid: 1aa448f62c08f3a43a94febb436b3eb1, type: 3}
+  m_Shader: {fileID: 4800000, guid: 6a9cbb8a4d8c4d2a9c7f1a3b8e5d6c41, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []

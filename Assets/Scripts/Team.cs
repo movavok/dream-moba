@@ -12,6 +12,21 @@ public class Team : NetworkBehaviour
             NetworkVariableWritePermission.Server
         );
 
+    public bool IsEnemyFor(short attackerTeamId)
+    {
+        if (attackerTeamId < 1)
+            return false;
+
+        if (TeamId.Value == -1)
+            return true;
+
+        if (TeamId.Value == 0)
+            return false;
+
+        return TeamId.Value > 0 &&
+            TeamId.Value != attackerTeamId;
+    }
+
     public TeamDefinition.TeamData Data
     {
         get

@@ -316,8 +316,9 @@ public class PlayerNetwork : NetworkBehaviour
             projectileSpeedMultiplier
         );
 
+        var team = GetComponent<Team>();
         projectileNetwork.SetTeam(
-            GetComponent<Team>().TeamId.Value
+            team.TeamId.Value
         );
 
         projectileNetwork.SetAttacker(this);
@@ -509,6 +510,16 @@ public class PlayerNetwork : NetworkBehaviour
         if (IsServer)
         {
             lastPosition = rb.position;
+        }
+
+        Team team = GetComponent<Team>();
+        HeroSorting sorting = GetComponentInChildren<HeroSorting>();
+
+        if (team != null &&
+            sorting != null &&
+            team.TeamId.Value != 0)
+        {
+            sorting.SetTeamColor(team.TeamColor);
         }
     }
 

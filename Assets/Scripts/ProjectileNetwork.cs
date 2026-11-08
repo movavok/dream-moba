@@ -13,6 +13,10 @@ public class ProjectileNetwork : NetworkBehaviour
     private bool logicInitialized;
 
     private ulong attackerClientId;
+    private NetworkObjectReference attackerReference;
+    private Team attackerTeam;
+    private bool teamColorApplied;
+    private short teamId;
 
     private float damageMultiplier = 1f;
     private int attackerStreak;
@@ -23,7 +27,11 @@ public class ProjectileNetwork : NetworkBehaviour
         if (player == null)
             return;
 
+        attackerReference = player.NetworkObject;
         attackerClientId = player.OwnerClientId;
+
+        if (IsServer)
+            networkAttackerReference.Value = attackerReference;
     }
 
     public void SetAttackerStats(PlayerStreak streak)
@@ -97,6 +105,7 @@ public class ProjectileNetwork : NetworkBehaviour
             renderer.sortingLayerName =
                 behind ? "ProjectileBehind" : "Projectile";
         }
+
     }
 
     private void OnBehindPlayerChanged(
@@ -188,6 +197,9 @@ public class ProjectileNetwork : NetworkBehaviour
 
     private void Update()
     {
+        if (!teamColorApplied && networkTeamId.Value != 0)
+            ApplyTeamColor();
+
         if (!IsServer)
             return;
 
@@ -238,6 +250,14 @@ public class ProjectileNetwork : NetworkBehaviour
         networkVisualColorIndex.OnValueChanged += OnVisualColorChanged;
         ApplyVisualColor(networkVisualColorIndex.Value);
 
+        networkTeamId.OnValueChanged += OnTeamIdChanged;
+        networkAttackerReference.OnValueChanged += OnAttackerReferenceChanged;
+
+        if (IsServer && attackerReference.TryGet(out _))
+            networkAttackerReference.Value = attackerReference;
+
+        ApplyTeamColor();
+
         if (IsServer)
         {
             ResolveAttackData();
@@ -258,10 +278,85 @@ public class ProjectileNetwork : NetworkBehaviour
         NetworkObject.Despawn();
     }
 
-    private short teamId;
+    private NetworkVariable<short> networkTeamId =
+        new NetworkVariable<short>(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    private NetworkVariable<NetworkObjectReference> networkAttackerReference =
+        new NetworkVariable<NetworkObjectReference>(
+            default,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
     public void SetTeam(short team)
     {
         teamId = team;
+
+        if (IsServer)
+            networkTeamId.Value = team;
+    }
+
+    private void ApplyTeamColor()
+    {
+        var sorting = GetComponent<ProjectileSorting>();
+        if (sorting == null)
+            return;
+
+        if (!networkAttackerReference.Value.TryGet(
+                out NetworkObject attackerObject,
+                NetworkManager.Singleton))
+            return;
+
+        Team team = attackerObject.GetComponent<Team>();
+        if (team == null)
+            return;
+
+        if (attackerTeam != team)
+        {
+            if (attackerTeam != null)
+                attackerTeam.TeamId.OnValueChanged -= OnAttackerTeamIdChanged;
+
+            attackerTeam = team;
+            attackerTeam.TeamId.OnValueChanged += OnAttackerTeamIdChanged;
+        }
+
+        sorting.SetTeamColor(team.TeamColor);
+        teamColorApplied = true;
+    }
+
+    private void OnTeamIdChanged(short oldValue, short newValue)
+    {
+        teamColorApplied = false;
+        ApplyTeamColor();
+    }
+
+    private void OnAttackerReferenceChanged(
+        NetworkObjectReference oldValue,
+        NetworkObjectReference newValue)
+    {
+        teamColorApplied = false;
+        ApplyTeamColor();
+    }
+
+    private void OnAttackerTeamIdChanged(short oldValue, short newValue)
+    {
+        teamColorApplied = false;
+        ApplyTeamColor();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (attackerTeam != null)
+            attackerTeam.TeamId.OnValueChanged -= OnAttackerTeamIdChanged;
+
+        networkTeamId.OnValueChanged -= OnTeamIdChanged;
+        networkAttackerReference.OnValueChanged -= OnAttackerReferenceChanged;
+
+        base.OnNetworkDespawn();
     }
 
     private PlayerStreak ownerStreak;
@@ -353,8 +448,7 @@ public class ProjectileNetwork : NetworkBehaviour
         if (health == null || targetTeam == null)
             return;
 
-        // Check if target is teammate or neutral (teamId < 1)
-        if (targetTeam.TeamId.Value == teamId || targetTeam.TeamId.Value < 1)
+        if (!targetTeam.IsEnemyFor(teamId))
             return;
 
         if (health.IsAlive())

@@ -6,6 +6,35 @@ using Unity.Collections;
 public class DeathVisual : NetworkBehaviour
 {
     [SerializeField] private SpriteLibrary spriteLibrary;
+    [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private SpriteRenderer behindOutline;
+
+    private NetworkVariable<short> teamId =
+        new NetworkVariable<short>(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    public short TeamId => teamId.Value;
+
+    public Color TeamColor
+    {
+        get
+        {
+            TeamManager manager = FindAnyObjectByType<TeamManager>();
+
+            if (manager == null)
+                return Color.white;
+
+            TeamDefinition.TeamData data =
+                manager.GetTeamData(teamId.Value);
+
+            return data != null
+                ? data.color
+                : Color.white;
+        }
+    }
 
     private NetworkVariable<FixedString64Bytes> heroId =
         new NetworkVariable<FixedString64Bytes>(
@@ -18,6 +47,12 @@ public class DeathVisual : NetworkBehaviour
     {
         if (spriteLibrary == null)
             spriteLibrary = GetComponentInChildren<SpriteLibrary>();
+
+        if (spriteRenderer == null)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+
+        if (behindOutline == null)
+            behindOutline = GetComponentInChildren<SpriteRenderer>();
     }
 
     public override void OnNetworkSpawn()
@@ -36,7 +71,7 @@ public class DeathVisual : NetworkBehaviour
         ApplyHeroVisual();
     }
 
-    public void Initialize(HeroDefinition hero)
+    public void Initialize(HeroDefinition hero, short deadPlayerTeamId)
     {
         if (!IsServer)
             return;
@@ -48,6 +83,15 @@ public class DeathVisual : NetworkBehaviour
         }
 
         heroId.Value = hero.id;
+        teamId.Value = deadPlayerTeamId;
+    }
+
+    private void LateUpdate()
+    {
+        if (spriteRenderer == null || behindOutline == null)
+            return;
+
+        behindOutline.sprite = spriteRenderer.sprite;
     }
 
     private void ApplyHeroVisual()

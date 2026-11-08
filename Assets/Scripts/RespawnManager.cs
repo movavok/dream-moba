@@ -69,7 +69,23 @@ public class RespawnManager : NetworkBehaviour
 
         deathNetworkObject.Spawn();
 
-        deathVisualComponent.Initialize(deadHero);
+        Team deadPlayerTeam =
+            deadPlayerNetwork.GetComponent<Team>();
+
+        if (deadPlayerTeam == null)
+        {
+            Debug.LogError(
+                "RespawnManager: Team not found on dead player!"
+            );
+
+            deathNetworkObject.Despawn();
+            return;
+        }
+
+        deathVisualComponent.Initialize(
+            deadHero,
+            deadPlayerTeam.TeamId.Value
+        );
 
         deathVisuals[deadPlayer.NetworkObject.OwnerClientId] =
             deathNetworkObject;
@@ -367,4 +383,3 @@ public class RespawnManager : NetworkBehaviour
         );
     }
 }
-

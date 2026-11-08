@@ -21,7 +21,10 @@ public class BuildingSortingTrigger : MonoBehaviour
 
             if (projectile != null)
                 projectile.SetBehind(behind);
+
+            return;
         }
+
     }
 
     private void OnTriggerEnter2D(Collider2D other)

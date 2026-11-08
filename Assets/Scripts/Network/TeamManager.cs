@@ -49,6 +49,9 @@ public class TeamManager : NetworkBehaviour
         if (!IsServer || team == null)
             return;
 
+        if (team.GetComponent<PlayerNetwork>() == null)
+            return;
+
         short teamId = GetTeamId(team.OwnerClientId);
 
         Debug.Log(
