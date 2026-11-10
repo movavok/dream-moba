@@ -17,8 +17,8 @@ public class DamageHitParticles : MonoBehaviour
 
     private void Awake()
     {
-        if (particles == null)
-            particles = GetComponent<ParticleSystem>();
+    if (particles == null)
+        particles = GetComponent<ParticleSystem>();
     }
 
     public void Play(
@@ -26,47 +26,47 @@ public class DamageHitParticles : MonoBehaviour
     Vector2 playerPosition,
     float damage)
     {
-        if (particles == null)
-            return;
+    if (particles == null)
+        return;
 
-        transform.position = hitPosition;
+    transform.position = hitPosition;
 
-        float power =
-            Mathf.Clamp01(damage / damageForMaxEffect);
+    float power =
+        Mathf.Clamp01(damage / damageForMaxEffect);
 
-        int amount =
-            Mathf.RoundToInt(
-                Mathf.Lerp(minParticles, maxParticles, power)
-            );
-
-        float speed =
-            Mathf.Lerp(minSpeed, maxSpeed, power);
-
-        Vector2 direction =
-            hitPosition - playerPosition;
-
-        if (direction.sqrMagnitude > 0.001f)
-        {
-            float angle =
-                Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-
-            transform.rotation =
-                Quaternion.Euler(0f, 0f, angle);
-        }
-
-        var main = particles.main;
-        main.startSpeed = speed;
-
-        var emission = particles.emission;
-
-        emission.SetBurst(
-            0,
-            new ParticleSystem.Burst(
-                0f,
-                (short)amount
-            )
+    int amount =
+        Mathf.RoundToInt(
+            Mathf.Lerp(minParticles, maxParticles, power)
         );
 
-        particles.Play();
+    float speed =
+        Mathf.Lerp(minSpeed, maxSpeed, power);
+
+    Vector2 direction =
+        hitPosition - playerPosition;
+
+    if (direction.sqrMagnitude > 0.001f)
+    {
+        float angle =
+            Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+
+        transform.rotation =
+            Quaternion.Euler(0f, 0f, angle);
+    }
+
+    var main = particles.main;
+    main.startSpeed = speed;
+
+    var emission = particles.emission;
+
+    emission.SetBurst(
+        0,
+        new ParticleSystem.Burst(
+            0f,
+            (short)amount
+        )
+    );
+
+    particles.Play();
     }
 }

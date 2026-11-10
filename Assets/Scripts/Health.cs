@@ -4,6 +4,7 @@ using Unity.Cinemachine;
 
 public class Health : NetworkBehaviour
 {
+    public event System.Action Died;
     private NetworkVariable<int> currentHealth = new NetworkVariable<int>();
 
     [SerializeField] private HealthFloatingText healthFloatingText;
@@ -124,7 +125,9 @@ public class Health : NetworkBehaviour
             damageHitFeedback.Shake(damage);
         }
 
-        if (IsOwner && PlayerCamera.Instance != null)
+        if (playerNetwork != null &&
+            IsOwner &&
+            PlayerCamera.Instance != null)
         {
             PlayerCamera.Instance.Shake(damage);
         }
@@ -251,13 +254,16 @@ public class Health : NetworkBehaviour
                     $"Attacker={attackerClientId}"
                 );
 
-                MatchStatsManager.Instance.AddDeath(
-                    OwnerClientId
-                );
+                if (playerNetwork != null)
+                {
+                    MatchStatsManager.Instance.AddDeath(
+                        OwnerClientId
+                    );
 
-                MatchStatsManager.Instance.AddKill(
-                    attackerClientId
-                );
+                    MatchStatsManager.Instance.AddKill(
+                        attackerClientId
+                    );
+                }
             }
             else
             {
@@ -285,6 +291,7 @@ public class Health : NetworkBehaviour
     private void Die()
     {
         Debug.Log("PLAYER DIED");
+        Died?.Invoke();
         if (respawnOnDeath && RespawnManager.Instance != null)
             RespawnManager.Instance.RespawnPlayer(this);
     }

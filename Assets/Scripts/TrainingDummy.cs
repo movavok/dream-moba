@@ -35,7 +35,7 @@ public class TrainingDummy : NetworkBehaviour
         health.HealthChanged += OnHealthChanged;
     }
 
-    private void OnDestroy()
+    private new void OnDestroy()
     {
         if (health != null)
             health.HealthChanged -= OnHealthChanged;

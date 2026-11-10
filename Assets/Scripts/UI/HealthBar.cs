@@ -188,7 +188,7 @@ public class HealthBar : MonoBehaviour
             displayedDamageHealth = Mathf.MoveTowards(
                 displayedDamageHealth,
                 currentHealth,
-                damageSpeed * Time.deltaTime
+                maxHealth * (damageSpeed / 100f) * Time.deltaTime
             );
         }
         else
