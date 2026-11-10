@@ -1,0 +1,70 @@
+Shader "DreamMoba/InteractionHighlight"
+{
+    Properties
+    {
+        [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
+        [PerRendererData] _Color ("Sprite Color", Color) = (1,1,1,1)
+        _HighlightStrength ("Highlight Strength", Range(0,1)) = 0.2
+    }
+
+    SubShader
+    {
+        Tags
+        {
+            "Queue" = "Transparent"
+            "RenderType" = "Transparent"
+            "IgnoreProjector" = "True"
+            "CanUseSpriteAtlas" = "True"
+        }
+
+        Cull Off
+        Lighting Off
+        ZWrite Off
+        Blend One OneMinusSrcAlpha
+
+        Pass
+        {
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "UnityCG.cginc"
+
+            struct appdata_t
+            {
+                float4 vertex : POSITION;
+                fixed4 color : COLOR;
+                float2 texcoord : TEXCOORD0;
+            };
+
+            struct v2f
+            {
+                float4 vertex : SV_POSITION;
+                fixed4 color : COLOR;
+                float2 texcoord : TEXCOORD0;
+            };
+
+            sampler2D _MainTex;
+            fixed4 _Color;
+            fixed _HighlightStrength;
+
+            v2f vert(appdata_t input)
+            {
+                v2f output;
+                output.vertex = UnityObjectToClipPos(input.vertex);
+                output.texcoord = input.texcoord;
+                output.color = input.color * _Color;
+                return output;
+            }
+
+            fixed4 frag(v2f input) : SV_Target
+            {
+                fixed4 sprite = tex2D(_MainTex, input.texcoord);
+                fixed4 color = sprite * input.color;
+                color.rgb = lerp(color.rgb, 1.0, _HighlightStrength);
+                color.rgb *= color.a;
+                return color;
+            }
+            ENDCG
+        }
+    }
+}
