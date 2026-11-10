@@ -8,6 +8,16 @@ public class MatchStatsManager : NetworkBehaviour
 
     private readonly Dictionary<ulong, int> kills = new();
     private readonly Dictionary<ulong, int> deaths = new();
+    private NetworkVariable<float> matchTime =
+        new NetworkVariable<float>(
+            0f,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    private float syncTimer;
+
+    public float MatchTime => matchTime.Value;
 
     public event System.Action<ulong> StatsChanged;
 
@@ -42,6 +52,20 @@ public class MatchStatsManager : NetworkBehaviour
             kills.TryAdd(clientId, 0);
             deaths.TryAdd(clientId, 0);
         }
+    }
+
+    private void Update()
+    {
+        if (!IsServer)
+            return;
+
+        syncTimer += Time.deltaTime;
+
+        if (syncTimer < 0.1f)
+            return;
+
+        matchTime.Value += syncTimer;
+        syncTimer = 0f;
     }
 
     public void AddKill(ulong clientId)
