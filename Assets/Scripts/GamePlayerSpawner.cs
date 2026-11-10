@@ -6,6 +6,7 @@ public class GamePlayerSpawner : NetworkBehaviour
     [Header("Player")]
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private GameObject trainingDummyPrefab;
+    [SerializeField] private Transform trainingDummySpawnPoint;
     [SerializeField] private Vector2 trainingDummyOffset = new Vector2(1.5f, 0f);
 
     [Header("Spawn Points")]
@@ -86,24 +87,41 @@ public class GamePlayerSpawner : NetworkBehaviour
 
             networkObject.SpawnAsPlayerObject(clientId);
 
-            SpawnTrainingDummy(spawnPoint.position);
-
             Debug.Log(
                 $"Spawned player for client {clientId} at {spawnPoint.position}"
             );
 
             spawnIndex++;
         }
+
+        SpawnTrainingDummy();
     }
 
-    private void SpawnTrainingDummy(Vector3 playerPosition)
+    private void SpawnTrainingDummy()
     {
         if (trainingDummyPrefab == null)
             return;
 
+        if (trainingDummySpawnPoint == null &&
+            (spawnPoints == null || spawnPoints.Length == 0))
+            return;
+
+        Vector3 dummyPosition;
+
+        if (trainingDummySpawnPoint != null)
+        {
+            dummyPosition = trainingDummySpawnPoint.position;
+        }
+        else
+        {
+            dummyPosition =
+                spawnPoints[0].position +
+                (Vector3)trainingDummyOffset;
+        }
+
         GameObject dummy = Instantiate(
             trainingDummyPrefab,
-            playerPosition + (Vector3)trainingDummyOffset,
+            dummyPosition,
             Quaternion.identity
         );
 
@@ -118,6 +136,7 @@ public class GamePlayerSpawner : NetworkBehaviour
             return;
         }
 
+        // Spawn without a client owner so the dummy is a shared server object.
         networkObject.Spawn();
     }
 }

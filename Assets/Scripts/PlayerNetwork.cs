@@ -64,6 +64,80 @@ public class PlayerNetwork : NetworkBehaviour
 
     public event System.Action Death;
 
+    [ServerRpc]
+    public void RequestInteractionServerRpc(
+        NetworkObjectReference targetReference)
+    {
+        if (!IsServer || !IsSpawned || !IsAliveForInteraction())
+            return;
+
+        if (!targetReference.TryGet(out NetworkObject target))
+            return;
+
+        IInteractable interactable =
+            FindInteractable(target.gameObject);
+
+        if (interactable == null ||
+            !interactable.CanInteract(this))
+            return;
+
+        if (Vector2.Distance(transform.position, target.transform.position) >
+            1.75f)
+            return;
+
+        interactable.Interact(this);
+    }
+
+    private IInteractable FindInteractable(GameObject target)
+    {
+        MonoBehaviour[] components =
+            target.GetComponentsInParent<MonoBehaviour>();
+
+        foreach (MonoBehaviour component in components)
+        {
+            if (component is IInteractable interactable)
+                return interactable;
+        }
+
+        return null;
+    }
+
+    private bool IsAliveForInteraction()
+    {
+        Health health = GetComponent<Health>();
+        return health != null && health.IsAlive();
+    }
+
+    [ServerRpc]
+    private void RequestThrowServerRpc()
+    {
+        if (!IsServer || !IsAliveForInteraction())
+            return;
+
+        Vector2 direction = lastMoveDirection;
+        if (direction.sqrMagnitude < 0.01f)
+            direction = Vector2.down;
+
+        foreach (NetworkObject networkObject in
+            NetworkManager.Singleton.SpawnManager.SpawnedObjects.Values)
+        {
+            MonoBehaviour[] components =
+                networkObject.GetComponents<MonoBehaviour>();
+
+            foreach (MonoBehaviour component in components)
+            {
+                if (component is not ICarriableItem carriable ||
+                    !carriable.IsCarriedBy(this))
+                    continue;
+
+                carriable.Throw(this, direction.normalized);
+                return;
+            }
+        }
+    }
+
+    private InputAction throwAction;
+
     public void PlayDeathAudio()
     {
         if (!IsServer)
@@ -86,6 +160,12 @@ public class PlayerNetwork : NetworkBehaviour
         moveInput = value.Get<Vector2>();
 
         SendMoveServerRpc(moveInput);
+    }
+
+    private void OnThrowPerformed(InputAction.CallbackContext context)
+    {
+        if (IsOwner && IsSpawned)
+            RequestThrowServerRpc();
     }
 
     private float speedMultiplier = 1f;
@@ -338,12 +418,21 @@ public class PlayerNetwork : NetworkBehaviour
         );
     }
 
-        private void Awake()
+    private void Awake()
     {
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
 
         rb = GetComponent<Rigidbody2D>();
+
+        PlayerInput playerInput = GetComponent<PlayerInput>();
+        if (playerInput != null)
+        {
+            throwAction = playerInput.actions.FindAction(
+                "Player/Throw",
+                false
+            );
+        }
 
         if (rb == null)
         {
@@ -351,6 +440,23 @@ public class PlayerNetwork : NetworkBehaviour
                 $"PlayerNetwork on {gameObject.name} has no Rigidbody2D!"
             );
         }
+    }
+
+    private void OnEnable()
+    {
+        if (throwAction == null)
+            return;
+
+        if (!throwAction.enabled)
+            throwAction.Enable();
+
+        throwAction.performed += OnThrowPerformed;
+    }
+
+    private void OnDisable()
+    {
+        if (throwAction != null)
+            throwAction.performed -= OnThrowPerformed;
     }
 
     private void FixedUpdate()
