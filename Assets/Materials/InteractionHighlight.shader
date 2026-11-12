@@ -1,3 +1,4 @@
+
 Shader "DreamMoba/InteractionHighlight"
 {
     Properties
@@ -13,58 +14,84 @@ Shader "DreamMoba/InteractionHighlight"
         {
             "Queue" = "Transparent"
             "RenderType" = "Transparent"
+            "RenderPipeline" = "UniversalPipeline"
+            "UniversalMaterialType" = "Unlit"
             "IgnoreProjector" = "True"
             "CanUseSpriteAtlas" = "True"
         }
 
         Cull Off
-        Lighting Off
         ZWrite Off
         Blend One OneMinusSrcAlpha
 
         Pass
         {
-            CGPROGRAM
+            HLSLPROGRAM
+
             #pragma vertex vert
             #pragma fragment frag
-            #include "UnityCG.cginc"
+            #pragma target 2.0
 
-            struct appdata_t
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct Attributes
             {
-                float4 vertex : POSITION;
-                fixed4 color : COLOR;
-                float2 texcoord : TEXCOORD0;
+                float4 positionOS : POSITION;
+                half4 color : COLOR;
+                float2 uv : TEXCOORD0;
             };
 
-            struct v2f
+            struct Varyings
             {
-                float4 vertex : SV_POSITION;
-                fixed4 color : COLOR;
-                float2 texcoord : TEXCOORD0;
+                float4 positionHCS : SV_POSITION;
+                half4 color : COLOR;
+                float2 uv : TEXCOORD0;
             };
 
-            sampler2D _MainTex;
-            fixed4 _Color;
-            fixed _HighlightStrength;
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
 
-            v2f vert(appdata_t input)
+            CBUFFER_START(UnityPerMaterial)
+                float4 _MainTex_ST;
+                half4 _Color;
+                half _HighlightStrength;
+            CBUFFER_END
+
+            Varyings vert(Attributes input)
             {
-                v2f output;
-                output.vertex = UnityObjectToClipPos(input.vertex);
-                output.texcoord = input.texcoord;
+                Varyings output;
+
+                output.positionHCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.uv = TRANSFORM_TEX(input.uv, _MainTex);
                 output.color = input.color * _Color;
+
                 return output;
             }
 
-            fixed4 frag(v2f input) : SV_Target
+            half4 frag(Varyings input) : SV_Target
             {
-                fixed4 sprite = tex2D(_MainTex, input.texcoord);
-                fixed4 color = sprite * input.color;
-                color.rgb = lerp(color.rgb, 1.0, _HighlightStrength);
+                half4 sprite = SAMPLE_TEXTURE2D(
+                    _MainTex,
+                    sampler_MainTex,
+                    input.uv
+                );
+
+                half4 color = sprite * input.color;
+
+                color.rgb = lerp(
+                    color.rgb,
+                    half3(1.0, 1.0, 1.0),
+                    _HighlightStrength
+                );
+
                 color.rgb *= color.a;
+
                 return color;
             }
-            ENDCG
+
+            ENDHLSL
         }
     }
+
+    FallBack Off
 }
