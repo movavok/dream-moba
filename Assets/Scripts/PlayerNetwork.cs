@@ -50,6 +50,15 @@ public class PlayerNetwork : NetworkBehaviour
 
     public string PlayerName => playerName.Value.ToString();
 
+    public event System.Action PlayerNameChanged;
+
+    private void OnPlayerNameChanged(
+        FixedString64Bytes oldValue,
+        FixedString64Bytes newValue)
+    {
+        PlayerNameChanged?.Invoke();
+    }
+
     [ServerRpc]
     private void SetPlayerNameServerRpc(string nickname)
     {
@@ -109,7 +118,7 @@ public class PlayerNetwork : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void RequestThrowServerRpc()
+    private void RequestThrowServerRpc(bool strongThrow)
     {
         if (!IsServer || !IsAliveForInteraction())
             return;
@@ -117,6 +126,8 @@ public class PlayerNetwork : NetworkBehaviour
         Vector2 direction = lastMoveDirection;
         if (direction.sqrMagnitude < 0.01f)
             direction = Vector2.down;
+
+        float distanceMultiplier = strongThrow ? 3f : 1f;
 
         foreach (NetworkObject networkObject in
             NetworkManager.Singleton.SpawnManager.SpawnedObjects.Values)
@@ -130,13 +141,19 @@ public class PlayerNetwork : NetworkBehaviour
                     !carriable.IsCarriedBy(this))
                     continue;
 
-                carriable.Throw(this, direction.normalized);
+                carriable.Throw(
+                    this,
+                    direction.normalized,
+                    distanceMultiplier
+                );
+
                 return;
             }
         }
     }
 
     private InputAction throwAction;
+    private InputAction forceAction;
 
     public void PlayDeathAudio()
     {
@@ -164,8 +181,14 @@ public class PlayerNetwork : NetworkBehaviour
 
     private void OnThrowPerformed(InputAction.CallbackContext context)
     {
-        if (IsOwner && IsSpawned)
-            RequestThrowServerRpc();
+        if (!IsOwner || !IsSpawned)
+            return;
+
+        bool strongThrow =
+            forceAction != null &&
+            forceAction.IsPressed();
+
+        RequestThrowServerRpc(strongThrow);
     }
 
     private float speedMultiplier = 1f;
@@ -420,6 +443,8 @@ public class PlayerNetwork : NetworkBehaviour
 
     private void Awake()
     {
+        playerName.OnValueChanged += OnPlayerNameChanged;
+
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
 
@@ -430,6 +455,10 @@ public class PlayerNetwork : NetworkBehaviour
         {
             throwAction = playerInput.actions.FindAction(
                 "Player/Throw",
+                false
+            );
+            forceAction = playerInput.actions.FindAction(
+                "Player/Force",
                 false
             );
         }
@@ -444,13 +473,16 @@ public class PlayerNetwork : NetworkBehaviour
 
     private void OnEnable()
     {
-        if (throwAction == null)
-            return;
+        if (throwAction != null)
+        {
+            if (!throwAction.enabled)
+                throwAction.Enable();
 
-        if (!throwAction.enabled)
-            throwAction.Enable();
+            throwAction.performed += OnThrowPerformed;
+        }
 
-        throwAction.performed += OnThrowPerformed;
+        if (forceAction != null && !forceAction.enabled)
+            forceAction.Enable();
     }
 
     private void OnDisable()

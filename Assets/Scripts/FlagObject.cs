@@ -11,6 +11,7 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
     [SerializeField] private string interactionVerb = "Take";
     [SerializeField] private string interactionName = "flag";
     [SerializeField] private InteractionOutline interactionOutline;
+    [SerializeField] private ItemThrowMotion throwMotion;
 
     private readonly NetworkVariable<bool> pickedUp =
         new NetworkVariable<bool>(
@@ -64,25 +65,32 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
             carrierClientId.Value == player.OwnerClientId;
     }
 
-    public void Throw(PlayerNetwork player, Vector2 direction)
+    public void Throw(
+        PlayerNetwork player,
+        Vector2 direction,
+        float distanceMultiplier)
     {
         if (!IsServer || !IsCarriedBy(player))
             return;
 
+        if (throwMotion == null)
+            return;
+
         UnsubscribeFromCarrierDeath();
+
         pickedUp.Value = false;
         carrierClientId.Value = NoCarrier;
         isFlying.Value = true;
-
-        transform.position = player.transform.position +
-            (Vector3)(direction * 0.25f);
-        transform.rotation = Quaternion.identity;
 
         if (throwRoutine != null)
             StopCoroutine(throwRoutine);
 
         throwRoutine = StartCoroutine(
-            ThrowRoutine(direction)
+            ThrowRoutine(
+                player.transform.position,
+                direction,
+                distanceMultiplier
+            )
         );
     }
 
@@ -95,6 +103,18 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
             FindRenderers();
 
         interactionCollider = GetComponent<Collider2D>();
+
+        if (throwMotion == null)
+            throwMotion = GetComponent<ItemThrowMotion>();
+
+        if (throwMotion == null)
+        {
+            Debug.LogError(
+                "FlagObject requires ItemThrowMotion component!",
+                this
+            );
+        }
+
         defaultScale = transform.localScale;
         defaultRotation = transform.rotation;
 
@@ -375,61 +395,22 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
         UnsubscribeFromCarrierDeath();
     }
 
-    private IEnumerator ThrowRoutine(Vector2 direction)
+    private IEnumerator ThrowRoutine(
+        Vector3 origin,
+        Vector2 direction,
+        float distanceMultiplier)
     {
-        float distance =
-            Mathf.Abs(direction.x) > 0.25f &&
-            Mathf.Abs(direction.y) > 0.25f
-                ? 1.35f
-                : 0.65f;
-        float duration = distance > 1f ? 0.42f : 0.28f;
-        Vector3 start = transform.position;
-        Vector3 end = start + (Vector3)(direction * distance);
-        float elapsed = 0f;
-        float rotationSpeed = Random.Range(-540f, 540f);
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float progress = Mathf.Clamp01(elapsed / duration);
-            float arc = Mathf.Sin(progress * Mathf.PI) * 0.35f;
-            transform.position = Vector3.Lerp(start, end, progress) +
-                Vector3.up * arc;
-            transform.Rotate(0f, 0f, rotationSpeed * Time.deltaTime);
-            yield return null;
-        }
-
-        transform.position = end;
-        yield return BounceRoutine(end);
+        yield return throwMotion.Play(
+            origin,
+            direction,
+            distanceMultiplier
+        );
 
         transform.localScale = defaultScale;
         transform.rotation = defaultRotation;
+
         isFlying.Value = false;
         throwRoutine = null;
-    }
-
-    private IEnumerator BounceRoutine(Vector3 position)
-    {
-        float duration = 0.16f;
-        float elapsed = 0f;
-        float height = 0.12f;
-        Quaternion rotation = transform.rotation;
-
-        while (elapsed < duration)
-        {
-            elapsed += Time.deltaTime;
-            float progress = Mathf.Clamp01(elapsed / duration);
-            transform.position = position +
-                Vector3.up * Mathf.Sin(progress * Mathf.PI) * height;
-            transform.rotation = Quaternion.Lerp(
-                rotation,
-                defaultRotation,
-                progress
-            );
-            yield return null;
-        }
-
-        transform.position = position;
     }
 
     private void FindRenderers()

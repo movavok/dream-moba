@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 1000000000000000005}
   - component: {fileID: 1000000000000000006}
   - component: {fileID: 2554156389704640607}
+  - component: {fileID: 1108179426851341576}
   m_Layer: 0
   m_Name: FlagObject
   m_TagString: Untagged
@@ -50,7 +51,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 42940036
+  GlobalObjectIdHash: 2606162422
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -127,7 +128,8 @@ MonoBehaviour:
   clothRenderer: {fileID: 1000000000000020002}
   interactionVerb: Take
   interactionName: flag
-  interactionOutline: {fileID: 0}
+  interactionOutline: {fileID: 1000000000000000006}
+  throwMotion: {fileID: 1108179426851341576}
 --- !u!114 &1000000000000000006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -179,6 +181,25 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.75
+--- !u!114 &1108179426851341576
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f70e6852d9dd1134e8710f465a5a1a6e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ItemThrowMotion
+  spawnForwardOffset: 0.3
+  spawnHeightOffset: -0.2
+  throwDistance: 1
+  throwDuration: 0.35
+  throwArcHeight: 0.25
+  bounceDuration: 0.16
+  bounceHeight: 0.08
 --- !u!1 &1000000000000010000
 GameObject:
   m_ObjectHideFlags: 0

@@ -105,6 +105,16 @@
                     "interactions": "Press(behavior=1)",
                     "initialStateCheck": false,
                     "priority": 0
+                },
+                {
+                    "name": "Force",
+                    "type": "Button",
+                    "id": "b8e4d2a1-7c93-4f56-9a20-6d1e3b5c8f42",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false,
+                    "priority": 0
                 }
             ],
             "bindings": [
@@ -396,12 +406,34 @@
                 },
                 {
                     "name": "Throw",
-                    "id": "f1c9a7e5-4d3b-4a2f-9c8e-6b7d5a3f1e2c",
+                    "id": "d7b2c491-8e35-4f6a-a912-3c5e7b8d0f21",
                     "path": "<Keyboard>/r",
                     "interactions": "Press(behavior=1)",
                     "processors": "",
                     "groups": "",
                     "action": "Throw",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "c1a5e8b2-3d74-4f90-b621-8a7c2e5d9f13",
+                    "path": "<Keyboard>/leftShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Force",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e3b7c9d1-5a82-4f64-8c20-1d6e4a9b7f35",
+                    "path": "<Keyboard>/rightShift",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Force",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
