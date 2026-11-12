@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using System.Collections;
+using Unity.Netcode;
 
 public class ScoreboardUI : MonoBehaviour
 {
@@ -10,9 +12,51 @@ public class ScoreboardUI : MonoBehaviour
 
     private readonly Dictionary<short, TeamHeader> teamHeaders = new();
 
+    private NetworkManager networkManager;
+
     private void OnEnable()
     {
+        networkManager = NetworkManager.Singleton;
+
+        if (networkManager != null)
+            networkManager.OnClientConnectedCallback += OnClientConnected;
+
         StartCoroutine(WaitForPlayers());
+    }
+
+    private void OnDisable()
+    {
+        if (networkManager != null)
+            networkManager.OnClientConnectedCallback -= OnClientConnected;
+
+        networkManager = null;
+    }
+
+    private void OnClientConnected(ulong clientId)
+    {
+        StartCoroutine(RefreshWhenPlayerSpawns(clientId));
+    }
+
+    private IEnumerator RefreshWhenPlayerSpawns(ulong clientId)
+    {
+        float timeout = Time.time + 10f;
+
+        while (Time.time < timeout && !HasPlayer(clientId))
+            yield return null;
+
+        if (HasPlayer(clientId))
+            Refresh();
+    }
+
+    private bool HasPlayer(ulong clientId)
+    {
+        foreach (PlayerNetwork player in FindObjectsByType<PlayerNetwork>())
+        {
+            if (player.OwnerClientId == clientId)
+                return true;
+        }
+
+        return false;
     }
 
     private IEnumerator WaitForPlayers()
@@ -22,23 +66,19 @@ public class ScoreboardUI : MonoBehaviour
             yield return null;
         }
 
-        Debug.Log("PLAYERS FOUND: " +
-                  FindObjectsByType<PlayerNetwork>().Length);
-
         Refresh();
     }
 
 
     public void Refresh()
     {
-        Debug.Log("SCOREBOARD REFRESH");
-
         Clear();
 
-        PlayerNetwork[] players =
-            FindObjectsByType<PlayerNetwork>();
-
-        Debug.Log("PLAYERS FOUND: " + players.Length);
+        PlayerNetwork[] players = FindObjectsByType<PlayerNetwork>()
+            .OrderBy(GetTeamId)
+            .ThenByDescending(GetKillCount)
+            .ThenBy(player => player.OwnerClientId)
+            .ToArray();
 
         foreach (PlayerNetwork player in players)
         {
@@ -53,25 +93,30 @@ public class ScoreboardUI : MonoBehaviour
                 continue;
             }
 
-            Debug.Log(
-                $"Player: {player.PlayerName} | Team: {team.TeamId.Value}"
-            );
-
             short teamId = team.TeamId.Value;
 
             if (!teamHeaders.TryGetValue(
                 teamId,
                 out TeamHeader teamHeader))
             {
-                Debug.Log(
-                    "Creating TeamHeader for team: " + teamId
-                );
-
                 teamHeader = CreateTeamHeader(team);
             }
 
             teamHeader.AddPlayer(player);
         }
+    }
+
+    private static short GetTeamId(PlayerNetwork player)
+    {
+        Team team = player.GetComponent<Team>();
+        return team != null ? team.TeamId.Value : (short)0;
+    }
+
+    private static int GetKillCount(PlayerNetwork player)
+    {
+        return MatchStatsManager.Instance != null
+            ? MatchStatsManager.Instance.GetKills(player.OwnerClientId)
+            : 0;
     }
 
     private TeamHeader CreateTeamHeader(Team team)
@@ -94,23 +139,13 @@ public class ScoreboardUI : MonoBehaviour
 
     public void OnPlayerLeft(ulong clientId)
     {
-        short teamToRemove = -1;
-
         foreach (var pair in teamHeaders)
         {
-            TeamHeader teamHeader = pair.Value;
-
-            if (teamHeader.RemovePlayer(clientId))
+            if (pair.Value.RemovePlayer(clientId))
             {
-                StartCoroutine(RemoveEmptyTeam(pair.Key, teamHeader));
+                StartCoroutine(RemoveEmptyTeam(pair.Key, pair.Value));
                 break;
             }
-        }
-
-        if (teamToRemove != -1)
-        {
-            Destroy(teamHeaders[teamToRemove].gameObject);
-            teamHeaders.Remove(teamToRemove);
         }
     }
 

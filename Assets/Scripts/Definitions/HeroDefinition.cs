@@ -9,6 +9,7 @@ public class HeroDefinition : ScriptableObject
     [Header("Identity")]
     public string id;
     public string heroName;
+    public Sprite portrait;
     [TextArea]
     public string description;
 
