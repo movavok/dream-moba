@@ -233,16 +233,30 @@ public class Health : NetworkBehaviour
             return;
         }
 
+        int healthBefore = currentHealth.Value;
+
         currentHealth.Value =
             Mathf.Max(
                 0,
-                currentHealth.Value - damage
+                healthBefore - damage
             );
+
+        int appliedDamage = healthBefore - currentHealth.Value;
 
         lastDamageTime = Time.time;
         regenTimer = 0f;
 
         ShowHealthNumberClientRpc(-damage);
+
+        if (appliedDamage > 0 &&
+            attackerClientId != OwnerClientId &&
+            MatchStatsManager.Instance != null)
+        {
+            MatchStatsManager.Instance.AddDamage(
+                attackerClientId,
+                appliedDamage
+            );
+        }
 
         if (!IsAlive())
         {
@@ -263,6 +277,18 @@ public class Health : NetworkBehaviour
                     MatchStatsManager.Instance.AddKill(
                         attackerClientId
                     );
+
+                    FlagCarryVisual flagCarry =
+                        GetComponent<FlagCarryVisual>();
+
+                    if (flagCarry != null &&
+                        flagCarry.IsCarrying &&
+                        attackerClientId != OwnerClientId)
+                    {
+                        MatchStatsManager.Instance.AddCounter(
+                            attackerClientId
+                        );
+                    }
                 }
             }
             else

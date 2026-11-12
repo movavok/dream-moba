@@ -123,6 +123,12 @@ public class FlagGameManager : MonoBehaviour
         Color celebrationColor =
             team != null ? team.TeamColor : Color.white;
 
+        short teamId = team != null ? team.TeamId.Value : (short)1;
+        MatchStatsManager.Instance?.AddFlagDelivery(
+            player.OwnerClientId
+        );
+        MatchStatsManager.Instance?.AddFlagScore(teamId);
+
         FlagDeliveryZone deliveryZone =
             activeDeliveryZone != null
                 ? activeDeliveryZone.GetComponent<FlagDeliveryZone>()
@@ -163,6 +169,11 @@ public class FlagGameManager : MonoBehaviour
         yield return new WaitForSeconds(30f);
 
         deliveryInProgress = false;
+
+        if (MatchStatsManager.Instance != null &&
+            MatchStatsManager.Instance.HasMatchEnded)
+            yield break;
+
         StartInitialFlag();
     }
 

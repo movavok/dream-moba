@@ -10,6 +10,13 @@ public class PlayerStreak : NetworkBehaviour
     private NetworkVariable<int> streak =
         new NetworkVariable<int>(0);
 
+    private NetworkVariable<int> bestStreak =
+        new NetworkVariable<int>(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
     private NetworkVariable<float> streakTimer =
         new NetworkVariable<float>(
             0f,
@@ -26,6 +33,7 @@ public class PlayerStreak : NetworkBehaviour
             : 0f;
 
     public int Streak => streak.Value;
+    public int BestStreak => bestStreak.Value;
 
     private bool frozen;
 
@@ -75,6 +83,9 @@ public class PlayerStreak : NetworkBehaviour
             return;
 
         streak.Value++;
+
+        if (streak.Value > bestStreak.Value)
+            bestStreak.Value = streak.Value;
 
         // Streak lives for 3x the attack cooldown
         streakTimer.Value = heroData.attack.cooldown * heroData.streaks.streakTimeoutMultiplier;
