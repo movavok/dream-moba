@@ -124,7 +124,7 @@ public class FlagDeliveryZone : NetworkBehaviour
             return;
 
         FlagCarryVisual[] carryVisuals =
-            FindObjectsByType<FlagCarryVisual>(FindObjectsSortMode.None);
+            FindObjectsByType<FlagCarryVisual>();
         float nearestDistance = float.PositiveInfinity;
         bool hasCarrier = false;
 
