@@ -281,6 +281,7 @@ MonoBehaviour:
   playersContent: {fileID: 3130243201502648387}
   playerRowPrefab: {fileID: 7611934939029629831, guid: c129954ed3e2ef24aadee7c9223435d8, type: 3}
   teamNameText: {fileID: 4647852395419905602}
+  flagsText: {fileID: 4004263100530534408}
 --- !u!1 &4151769670953746474
 GameObject:
   m_ObjectHideFlags: 0

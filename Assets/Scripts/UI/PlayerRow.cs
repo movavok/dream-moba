@@ -4,6 +4,7 @@ using TMPro;
 public class PlayerRow : MonoBehaviour
 {
     private ulong clientId;
+    private PlayerNetwork player;
 
     public ulong ClientId => clientId;
 
@@ -16,11 +17,21 @@ public class PlayerRow : MonoBehaviour
     {
         if (player == null)
             return;
+
+        this.player = player;
         clientId = player.OwnerClientId;
+
+        player.PlayerNameChanged -= OnPlayerNameChanged;
+        player.PlayerNameChanged += OnPlayerNameChanged;
 
         UpdatePlayerInfo(player);
         SubscribeToStats();
         UpdateKillsDeaths();
+    }
+
+    private void OnPlayerNameChanged()
+    {
+        UpdatePlayerInfo(player);
     }
 
     private void SubscribeToStats()
@@ -80,6 +91,9 @@ public class PlayerRow : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (player != null)
+            player.PlayerNameChanged -= OnPlayerNameChanged;
+
         if (MatchStatsManager.Instance != null)
         {
             MatchStatsManager.Instance.StatsChanged -= OnStatsChanged;

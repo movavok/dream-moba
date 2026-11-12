@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using TMPro;
 
@@ -7,6 +8,7 @@ public class TeamHeader : MonoBehaviour
     [SerializeField] private PlayerRow playerRowPrefab;
 
     [SerializeField] private TMP_Text teamNameText;
+    [SerializeField] private TMP_Text flagsText;
 
     private short teamId;
 
@@ -19,6 +21,40 @@ public class TeamHeader : MonoBehaviour
             teamNameText.text = team.TeamName;
             teamNameText.color = team.TeamColor;
         }
+
+        StartCoroutine(SubscribeToFlagsWhenReady());
+    }
+
+    private IEnumerator SubscribeToFlagsWhenReady()
+    {
+        float timeout = Time.time + 10f;
+
+        while (MatchStatsManager.Instance == null &&
+            Time.time < timeout)
+        {
+            yield return null;
+        }
+
+        if (MatchStatsManager.Instance == null)
+            yield break;
+
+        MatchStatsManager.Instance.FlagsChanged -= UpdateFlags;
+        MatchStatsManager.Instance.FlagsChanged += UpdateFlags;
+
+        UpdateFlags();
+    }
+
+    private void UpdateFlags()
+    {
+        if (flagsText == null)
+            return;
+
+        flagsText.text =
+            MatchStatsManager.Instance != null
+                ? MatchStatsManager.Instance
+                    .GetFlagScore(teamId)
+                    .ToString()
+                : "0";
     }
 
     public void AddPlayer(PlayerNetwork player)
@@ -37,29 +73,10 @@ public class TeamHeader : MonoBehaviour
 
     public bool HasPlayers()
     {
-        PlayerRow[] rows =
-            playersContent.GetComponentsInChildren<PlayerRow>(true);
-
-        Debug.Log(
-            $"TEAM {teamId}: PlayerRows found = {rows.Length}"
-        );
-
-        foreach (PlayerRow row in rows)
-        {
-            if (row != null)
-            {
-                Debug.Log(
-                    $"TEAM {teamId}: PlayerRow still exists, clientId = {row.ClientId}"
-                );
-
-                return true;
-            }
-        }
-
-        Debug.Log($"TEAM {teamId}: NO PLAYERS");
-
-        return false;
-}
+        return playersContent
+            .GetComponentsInChildren<PlayerRow>(true)
+            .Length > 0;
+    }
 
     public bool RemovePlayer(ulong clientId)
     {
@@ -75,5 +92,11 @@ public class TeamHeader : MonoBehaviour
         }
 
         return false;
+    }
+
+    private void OnDestroy()
+    {
+        if (MatchStatsManager.Instance != null)
+            MatchStatsManager.Instance.FlagsChanged -= UpdateFlags;
     }
 }
