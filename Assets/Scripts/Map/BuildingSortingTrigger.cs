@@ -4,6 +4,13 @@ public class BuildingSortingTrigger : MonoBehaviour
 {
     private void CheckSorting(Collider2D other, bool behind)
     {
+        ItemSorting item = other.GetComponentInParent<ItemSorting>();
+        if (item != null)
+        {
+            item.SetBehind(behind);
+            return;
+        }
+
         if (other.CompareTag("HeroSorting"))
         {
             HeroSorting hero = other.GetComponentInParent<HeroSorting>();

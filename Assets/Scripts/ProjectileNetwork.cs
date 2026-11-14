@@ -97,15 +97,10 @@ public class ProjectileNetwork : NetworkBehaviour
 
     private void ApplySortingLayer(bool behind)
     {
-        SpriteRenderer[] renderers =
-            GetComponentsInChildren<SpriteRenderer>();
+        ProjectileSorting sorting = GetComponent<ProjectileSorting>();
 
-        foreach (SpriteRenderer renderer in renderers)
-        {
-            renderer.sortingLayerName =
-                behind ? "ProjectileBehind" : "Projectile";
-        }
-
+        if (sorting != null)
+            sorting.SetBehindPlayer(behind);
     }
 
     private void OnBehindPlayerChanged(
@@ -468,7 +463,8 @@ public class ProjectileNetwork : NetworkBehaviour
 
             health.TakeDamage(
                 finalDamage,
-                attackerClientId
+                attackerClientId,
+                DamageSource.Projectile
             );
 
             health.ShowDamageHit(

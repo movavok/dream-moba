@@ -130,6 +130,8 @@ MonoBehaviour:
   interactionName: flag
   interactionOutline: {fileID: 1000000000000000006}
   throwMotion: {fileID: 1108179426851341576}
+  inventoryItem: {fileID: 11400000, guid: a4571bb8ab2848ef9131c43b153e29b3, type: 2}
+  flagTimerPrefab: {fileID: 6695475601118864272, guid: 9df8e63fb38dffd43a105acc53a09b46, type: 3}
 --- !u!114 &1000000000000000006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -180,7 +182,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 0.75
+  m_Radius: 0.35
 --- !u!114 &1108179426851341576
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -8,6 +8,8 @@ Shader "DreamMoba/BehindBuildingPattern"
         _PatternEnabled ("Pattern Enabled", Float) = 1
         _PatternDensity ("Pattern Density", Float) = 6
         _PatternLineWidth ("Pattern Line Width", Range(0.05, 0.5)) = 0.18
+        _PatternSpeed ("Pattern Speed", Float) = 0.35
+        _PatternSoftness ("Pattern Softness", Range(0.001, 0.3)) = 0.06
         _VisibleAlpha ("Visible Alpha", Range(0, 1)) = 0.42
         _GapAlpha ("Gap Alpha", Range(0, 1)) = 0.08
     }
@@ -57,6 +59,8 @@ Shader "DreamMoba/BehindBuildingPattern"
                 float _PatternEnabled;
                 float _PatternDensity;
                 float _PatternLineWidth;
+                float _PatternSpeed;
+                float _PatternSoftness;
                 float _VisibleAlpha;
                 float _GapAlpha;
             CBUFFER_END
@@ -75,14 +79,42 @@ Shader "DreamMoba/BehindBuildingPattern"
                 half spriteAlpha =
                     SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).a;
 
-                float diagonal =
+                float time = _Time.y * _PatternSpeed;
+                float edge = max(0.001, _PatternSoftness);
+
+                float hatchA =
                     frac(
                         (input.uv.x * _PatternDirection + input.uv.y)
                         * _PatternDensity
+                        + time
                     );
 
-                float stripe =
-                    step(_PatternLineWidth, diagonal);
+                float hatchB =
+                    frac(
+                        (input.uv.x * _PatternDirection - input.uv.y)
+                        * _PatternDensity * 1.37
+                        - time * 0.7
+                    );
+
+                float bandA =
+                    smoothstep(
+                        _PatternLineWidth - edge,
+                        _PatternLineWidth + edge,
+                        hatchA
+                    );
+
+                float bandB =
+                    smoothstep(
+                        _PatternLineWidth - edge,
+                        _PatternLineWidth + edge,
+                        hatchB
+                    );
+
+                float stripe = saturate(bandA + bandB * 0.55);
+                float shimmer =
+                    0.85 + 0.15 * sin((input.uv.y + time) * 6.28318);
+
+                stripe *= shimmer;
 
                 half alpha =
                     spriteAlpha

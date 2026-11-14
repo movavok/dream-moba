@@ -68,6 +68,7 @@ public class FlagGameManager : MonoBehaviour
         }
 
         activeFlag.Spawn();
+        activeFlag.GetComponent<FlagObject>()?.SetHomePosition(flagPoint.position);
 
         GameObject deliveryZone = Instantiate(
             deliveryZonePrefab,
@@ -112,20 +113,74 @@ public class FlagGameManager : MonoBehaviour
         if (flag == null || !flag.IsCarriedBy(player))
             return;
 
+        if (!player.GetComponent<Inventory>().RemoveItem(flag.InventoryItem, 1))
+            return;
+
+        Team team = player.GetComponent<Team>();
+        CompleteDelivery(
+            player.OwnerClientId,
+            team != null ? team.TeamId.Value : (short)1,
+            team != null ? team.TeamColor : Color.white
+        );
+    }
+
+    public void TryCompleteThrownDelivery(
+        FlagObject flag,
+        Vector3 previousPosition,
+        Vector3 currentPosition)
+    {
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager == null || !networkManager.IsServer ||
+            deliveryInProgress || flag == null || !flag.HasThrower ||
+            flag.NetworkObject != activeFlag || activeFlag == null ||
+            !activeFlag.IsSpawned || activeDeliveryZone == null ||
+            !activeDeliveryZone.IsSpawned ||
+            (flag.LastThrowerTeamId != 1 && flag.LastThrowerTeamId != 2))
+            return;
+
+        CircleCollider2D zone = activeDeliveryZone.GetComponent<CircleCollider2D>();
+        CircleCollider2D flagCollider = flag.GetComponent<CircleCollider2D>();
+        if (zone == null || flagCollider == null)
+            return;
+
+        Vector2 center = zone.transform.TransformPoint(zone.offset);
+        Vector2 flagOffset = flag.transform.TransformVector(flagCollider.offset);
+        Vector2 from = (Vector2)previousPosition + flagOffset;
+        Vector2 to = (Vector2)currentPosition + flagOffset;
+        Vector2 path = to - from;
+        float t = path.sqrMagnitude > 0f
+            ? Mathf.Clamp01(Vector2.Dot(center - from, path) / path.sqrMagnitude)
+            : 0f;
+        Vector2 closest = from + path * t;
+        float zoneScale = Mathf.Max(
+            Mathf.Abs(zone.transform.lossyScale.x),
+            Mathf.Abs(zone.transform.lossyScale.y));
+        float flagScale = Mathf.Max(
+            Mathf.Abs(flag.transform.lossyScale.x),
+            Mathf.Abs(flag.transform.lossyScale.y));
+        float reach = zone.radius * zoneScale + flagCollider.radius * flagScale;
+
+        if ((center - closest).sqrMagnitude > reach * reach)
+            return;
+
+        CompleteDelivery(
+            flag.LastThrowerClientId,
+            flag.LastThrowerTeamId,
+            flag.LastThrowerTeamColor
+        );
+    }
+
+    private void CompleteDelivery(ulong clientId, short teamId, Color celebrationColor)
+    {
         deliveryInProgress = true;
 
         Debug.Log(
             $"[FlagGameManager] Flag delivered by client " +
-            $"{player.OwnerClientId}."
+            $"{clientId}."
         );
 
-        Team team = player.GetComponent<Team>();
-        Color celebrationColor =
-            team != null ? team.TeamColor : Color.white;
-
-        short teamId = team != null ? team.TeamId.Value : (short)1;
         MatchStatsManager.Instance?.AddFlagDelivery(
-            player.OwnerClientId
+            clientId
         );
         MatchStatsManager.Instance?.AddFlagScore(teamId);
 
@@ -153,7 +208,10 @@ public class FlagGameManager : MonoBehaviour
 
     private IEnumerator DespawnDeliveryZoneAfterEffect()
     {
-        yield return new WaitForSeconds(0.8f);
+        FlagDeliveryZone zone = activeDeliveryZone != null
+            ? activeDeliveryZone.GetComponent<FlagDeliveryZone>() : null;
+        yield return new WaitForSeconds(
+            (zone != null ? zone.AnimationDuration : 0.8f) + 0.2f);
 
         if (activeDeliveryZone != null)
         {

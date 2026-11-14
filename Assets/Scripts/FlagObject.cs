@@ -1,6 +1,8 @@
 using Unity.Netcode;
 using UnityEngine;
 using System.Collections;
+using TMPro;
+using UnityEngine.UI;
 
 public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
 {
@@ -12,6 +14,11 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
     [SerializeField] private string interactionName = "flag";
     [SerializeField] private InteractionOutline interactionOutline;
     [SerializeField] private ItemThrowMotion throwMotion;
+    [SerializeField] private ItemDefinition inventoryItem;
+    [SerializeField] private GameObject flagTimerPrefab;
+    [SerializeField] private Vector3 flagTimerOffset = new Vector3(0f, 0.75f, 0f);
+    [SerializeField] private float flagTimerScale = 0.01f;
+    [SerializeField] private Color urgentTimerColor = new Color(1f, 0.3f, 0.3f, 1f);
 
     private readonly NetworkVariable<bool> pickedUp =
         new NetworkVariable<bool>(
@@ -37,13 +44,31 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server
         );
+    private readonly NetworkVariable<double> returnAtServerTime =
+        new NetworkVariable<double>(
+            -1d,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
 
     private Collider2D interactionCollider;
     private Coroutine carrierRefreshRoutine;
     private Coroutine throwRoutine;
     private Health carrierHealth;
+    private FlagGameManager flagGameManager;
     private Vector3 defaultScale;
     private Quaternion defaultRotation;
+    private Vector3 homePosition;
+    private GameObject flagTimerObject;
+    private TMP_Text flagTimerText;
+    private Color regularTimerColor;
+    private int displayedSeconds = -1;
+    private bool displayedUrgent;
+    private ulong lastThrowerClientId = NoCarrier;
+    private short lastThrowerTeamId;
+    private Color lastThrowerTeamColor;
+    private Vector3 lastDeliveryCheckPosition;
+    [SerializeField] private float returnAfterSeconds = 30f;
 
     public string InteractionVerb => interactionVerb;
     public string InteractionName => interactionName;
@@ -62,7 +87,24 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
         return IsServer &&
             player != null &&
             pickedUp.Value &&
-            carrierClientId.Value == player.OwnerClientId;
+            carrierClientId.Value == player.OwnerClientId &&
+            inventoryItem != null &&
+            player.GetComponent<Inventory>() is Inventory inventory &&
+            inventory.ContainsItem(inventoryItem);
+    }
+
+    public ItemDefinition InventoryItem => inventoryItem;
+    public bool HasThrower => IsServer && lastThrowerClientId != NoCarrier;
+    public ulong LastThrowerClientId => lastThrowerClientId;
+    public short LastThrowerTeamId => lastThrowerTeamId;
+    public Color LastThrowerTeamColor => lastThrowerTeamColor;
+
+    public void SetHomePosition(Vector3 position)
+    {
+        if (!IsServer)
+            return;
+
+        homePosition = position;
     }
 
     public void Throw(
@@ -76,11 +118,21 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
         if (throwMotion == null)
             return;
 
+        if (!player.GetComponent<Inventory>().RemoveItem(inventoryItem, 1))
+            return;
+
+        Team throwerTeam = player.GetComponent<Team>();
+        lastThrowerClientId = player.OwnerClientId;
+        lastThrowerTeamId = throwerTeam != null ? throwerTeam.TeamId.Value : (short)0;
+        lastThrowerTeamColor = throwerTeam != null ? throwerTeam.TeamColor : Color.white;
+        lastDeliveryCheckPosition = player.transform.position;
+
         UnsubscribeFromCarrierDeath();
 
         pickedUp.Value = false;
         carrierClientId.Value = NoCarrier;
         isFlying.Value = true;
+        returnAtServerTime.Value = -1d;
 
         if (throwRoutine != null)
             StopCoroutine(throwRoutine);
@@ -89,7 +141,8 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
             ThrowRoutine(
                 player.transform.position,
                 direction,
-                distanceMultiplier
+                distanceMultiplier,
+                player.transform
             )
         );
     }
@@ -118,6 +171,17 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
         defaultScale = transform.localScale;
         defaultRotation = transform.rotation;
 
+        if (IsServer)
+        {
+            homePosition = transform.position;
+            returnAtServerTime.Value = -1d;
+            lastDeliveryCheckPosition = transform.position;
+            flagGameManager = FindAnyObjectByType<FlagGameManager>();
+        }
+
+        EnsureItemSorting();
+        CreateFlagTimer();
+
         pickedUp.OnValueChanged += OnPickedUpChanged;
         carrierClientId.OnValueChanged += OnCarrierChanged;
         networkClothColor.OnValueChanged += OnClothColorChanged;
@@ -137,8 +201,122 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
 
     private void Update()
     {
+        UpdateFlagTimer();
+
         if (IsServer && pickedUp.Value)
             CheckCarrier();
+
+        if (IsServer && HasThrower && !pickedUp.Value)
+        {
+            if (flagGameManager == null)
+                flagGameManager = FindAnyObjectByType<FlagGameManager>();
+
+            flagGameManager?.TryCompleteThrownDelivery(
+                this, lastDeliveryCheckPosition, transform.position);
+            lastDeliveryCheckPosition = transform.position;
+        }
+
+        if (IsServer && !pickedUp.Value && !isFlying.Value &&
+            returnAtServerTime.Value >= 0d &&
+            NetworkManager.ServerTime.Time >= returnAtServerTime.Value)
+            ReturnHome();
+    }
+
+    private void StartReturnCountdown()
+    {
+        returnAtServerTime.Value =
+            NetworkManager.ServerTime.Time + Mathf.Max(0f, returnAfterSeconds);
+    }
+
+    private void CreateFlagTimer()
+    {
+        if (flagTimerPrefab == null || flagTimerObject != null)
+            return;
+
+        flagTimerObject = Instantiate(flagTimerPrefab, transform);
+        flagTimerObject.name = "FlagReturnTimer";
+        RectTransform rect = flagTimerObject.GetComponent<RectTransform>();
+        if (rect == null)
+        {
+            Debug.LogError("Flag timer prefab needs a RectTransform.", this);
+            Destroy(flagTimerObject);
+            flagTimerObject = null;
+            return;
+        }
+
+        rect.localRotation = Quaternion.identity;
+        rect.localScale = Vector3.one * flagTimerScale;
+        rect.anchoredPosition = Vector2.zero;
+        rect.localPosition = flagTimerOffset;
+
+        Canvas canvas = flagTimerObject.GetComponent<Canvas>();
+        if (canvas == null)
+            canvas = flagTimerObject.AddComponent<Canvas>();
+        canvas.renderMode = RenderMode.WorldSpace;
+        canvas.overrideSorting = true;
+        canvas.sortingLayerName = "ProjectileBehind";
+        canvas.sortingOrder = 10;
+
+        foreach (Graphic graphic in flagTimerObject.GetComponentsInChildren<Graphic>(true))
+            graphic.raycastTarget = false;
+
+        flagTimerText = flagTimerObject.GetComponentInChildren<TMP_Text>(true);
+        if (flagTimerText != null)
+            regularTimerColor = flagTimerText.color;
+
+        flagTimerObject.SetActive(false);
+    }
+
+    private void UpdateFlagTimer()
+    {
+        if (flagTimerObject == null || flagTimerText == null)
+            return;
+
+        bool visible = IsSpawned && !pickedUp.Value && !isFlying.Value &&
+            returnAtServerTime.Value >= 0d;
+        if (flagTimerObject.activeSelf != visible)
+            flagTimerObject.SetActive(visible);
+        if (!visible)
+            return;
+
+        double remaining = Mathf.Max(0f, (float)(returnAtServerTime.Value -
+            NetworkManager.ServerTime.Time));
+        int seconds = Mathf.CeilToInt((float)remaining);
+        if (seconds != displayedSeconds)
+        {
+            flagTimerText.text = seconds.ToString();
+            displayedSeconds = seconds;
+        }
+
+        bool urgent = remaining <= 5d;
+        if (urgent != displayedUrgent)
+        {
+            flagTimerText.color = urgent ? urgentTimerColor : regularTimerColor;
+            displayedUrgent = urgent;
+        }
+    }
+
+    private void EnsureItemSorting()
+    {
+        if (GetComponent<ItemSorting>() == null)
+            gameObject.AddComponent<ItemSorting>();
+    }
+
+    private void ReturnHome()
+    {
+        transform.position = homePosition;
+        transform.rotation = defaultRotation;
+        transform.localScale = defaultScale;
+        returnAtServerTime.Value = -1d;
+        ClearThrower();
+        GetComponent<ItemSorting>()?.SetBehind(false);
+    }
+
+    private void ClearThrower()
+    {
+        lastThrowerClientId = NoCarrier;
+        lastThrowerTeamId = 0;
+        lastDeliveryCheckPosition = transform.position;
     }
 
     public void SetHighlighted(bool highlighted)
@@ -155,6 +333,13 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
         if (!IsServer || !CanInteract(player))
             return;
 
+        Inventory inventory = player.GetComponent<Inventory>();
+        if (inventoryItem == null || inventory == null ||
+            !inventory.TryAdd(inventoryItem, 1))
+            return;
+
+        ClearThrower();
+        returnAtServerTime.Value = -1d;
         Team team = player.GetComponent<Team>();
 
         if (team != null)
@@ -172,6 +357,9 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
 
     public override void OnNetworkDespawn()
     {
+        if (flagTimerObject != null)
+            flagTimerObject.SetActive(false);
+
         HideCarrierVisual(carrierClientId.Value);
 
         if (carrierRefreshRoutine != null)
@@ -232,9 +420,6 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
 
     private void ApplyFlyingState(bool flying)
     {
-        if (interactionCollider != null)
-            interactionCollider.enabled = !flying && !pickedUp.Value;
-
         transform.localScale = flying
             ? defaultScale * 0.8f
             : defaultScale;
@@ -249,7 +434,7 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
             clothRenderer.enabled = !isPickedUp;
 
         if (interactionCollider != null)
-            interactionCollider.enabled = !isPickedUp && !isFlying.Value;
+            interactionCollider.enabled = !isPickedUp;
 
         if (isPickedUp)
         {
@@ -381,15 +566,23 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
 
     private void Drop()
     {
+        if (!IsServer || !pickedUp.Value)
+            return;
+
         Vector3 deathPosition = transform.position;
+
+        NetworkObject carrier = FindPlayerObject(carrierClientId.Value);
+        carrier?.GetComponent<Inventory>()?.RemoveItem(inventoryItem, 1);
 
         if (carrierHealth != null)
             deathPosition = carrierHealth.transform.position;
 
         transform.position = deathPosition;
+        ClearThrower();
         pickedUp.Value = false;
         carrierClientId.Value = NoCarrier;
         isFlying.Value = false;
+        StartReturnCountdown();
         transform.localScale = defaultScale;
         transform.rotation = defaultRotation;
         UnsubscribeFromCarrierDeath();
@@ -398,18 +591,21 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
     private IEnumerator ThrowRoutine(
         Vector3 origin,
         Vector2 direction,
-        float distanceMultiplier)
+        float distanceMultiplier,
+        Transform thrower = null)
     {
         yield return throwMotion.Play(
             origin,
             direction,
-            distanceMultiplier
+            distanceMultiplier,
+            thrower
         );
 
         transform.localScale = defaultScale;
         transform.rotation = defaultRotation;
 
         isFlying.Value = false;
+        StartReturnCountdown();
         throwRoutine = null;
     }
 

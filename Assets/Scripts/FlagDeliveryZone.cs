@@ -18,10 +18,12 @@ public class FlagDeliveryZone : NetworkBehaviour
     private Color zoneInitialColor;
     private float blinkPhase;
     private Coroutine zoneAnimationRoutine;
+    private bool deliveryAnimating;
 
     public float Radius => radius;
     public Transform DeliveryPoint => transform;
     public FlagBlinkSettings BlinkSettings => blinkSettings;
+    public float AnimationDuration => Mathf.Max(0.01f, zoneAnimationDuration);
 
     private void Awake()
     {
@@ -87,40 +89,47 @@ public class FlagDeliveryZone : NetworkBehaviour
 
     private IEnumerator PlayZoneAnimation()
     {
-        if (zoneRenderer == null)
-            yield break;
-
         float elapsed = 0f;
-        zoneRenderer.enabled = true;
+        float duration = AnimationDuration;
+        float indicatorAlpha = indicatorRenderer != null
+            ? indicatorRenderer.color.a : 0f;
+        deliveryAnimating = true;
 
-        while (elapsed < zoneAnimationDuration)
+        if (zoneRenderer != null)
+            zoneRenderer.enabled = true;
+
+        while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
-            float progress = Mathf.Clamp01(
-                elapsed / zoneAnimationDuration
-            );
+            float progress = Mathf.Clamp01(elapsed / duration);
 
-            zoneRenderer.transform.localScale =
-                zoneInitialScale * (1f - progress);
-            Color color = zoneInitialColor;
-            color.a = zoneInitialColor.a * (1f - progress);
-            zoneRenderer.color = color;
-            zoneRenderer.transform.Rotate(
-                0f,
-                0f,
-                360f * Time.deltaTime / zoneAnimationDuration
-            );
+            if (zoneRenderer != null)
+            {
+                zoneRenderer.transform.localScale =
+                    zoneInitialScale * (1f - progress);
+                Color color = zoneInitialColor;
+                color.a = zoneInitialColor.a * (1f - progress);
+                zoneRenderer.color = color;
+                zoneRenderer.transform.Rotate(
+                    0f, 0f, 360f * Time.deltaTime / duration);
+            }
+
+            if (indicatorRenderer != null)
+                SetIndicatorAlpha(indicatorAlpha * (1f - progress));
 
             yield return null;
         }
 
-        zoneRenderer.enabled = false;
+        if (zoneRenderer != null)
+            zoneRenderer.enabled = false;
+        if (indicatorRenderer != null)
+            indicatorRenderer.enabled = false;
         zoneAnimationRoutine = null;
     }
 
     private void UpdateIndicatorBlink()
     {
-        if (indicatorRenderer == null)
+        if (indicatorRenderer == null || deliveryAnimating)
             return;
 
         FlagCarryVisual[] carryVisuals =
@@ -209,6 +218,14 @@ public class FlagDeliveryZone : NetworkBehaviour
     {
         if (!IsServer)
             return;
+
+        FlagObject flag = other.GetComponentInParent<FlagObject>();
+        if (flag != null)
+        {
+            FindAnyObjectByType<FlagGameManager>()?.TryCompleteThrownDelivery(
+                flag, flag.transform.position, flag.transform.position);
+            return;
+        }
 
         PlayerNetwork player = other.GetComponentInParent<PlayerNetwork>();
         if (player == null)
