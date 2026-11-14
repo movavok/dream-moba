@@ -19,7 +19,8 @@ public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     [Header("Tooltip")]
     private string tooltipTitle;
-    private string tooltipDescription;  
+    private string tooltipDescription;
+    private bool pointerInside;
 
     private Sprite normalFrame;
     private Sprite quickCastFrame;
@@ -64,12 +65,39 @@ public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         frame.sprite = sprite;
     }
 
+    public Sprite FrameSprite => frame != null ? frame.sprite : null;
+
+    public void SetKeyColor(Color color)
+    {
+        if (keyText != null)
+            keyText.color = color;
+    }
+
+    public TMP_Text CooldownTextTemplate => cooldownText;
+
+    public void EnsureCooldownText(TMP_Text template)
+    {
+        if (cooldownText != null || cooldownOverlay == null || template == null)
+            return;
+
+        cooldownText = Instantiate(template, cooldownOverlay.transform, false);
+        cooldownText.gameObject.name = "CooldownText";
+        SetReady();
+    }
+
     public void SetIcon(Sprite sprite)
     {
         if (icon == null)
             return;
 
         icon.sprite = sprite;
+        if (sprite != null && icon.color.a == 0f)
+        {
+            Color color = icon.color;
+            color.a = 1f;
+            icon.color = color;
+        }
+        icon.gameObject.SetActive(sprite != null);
     }
 
     public void SetKey(string key)
@@ -227,11 +255,20 @@ public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     {
         tooltipTitle = title;
         tooltipDescription = description;
+
+        if (!pointerInside || HeroHUD.Instance == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(tooltipTitle))
+            HeroHUD.Instance.HideTooltip();
+        else
+            HeroHUD.Instance.ShowTooltip(tooltipTitle, tooltipDescription);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (HeroHUD.Instance == null)
+        pointerInside = true;
+        if (HeroHUD.Instance == null || string.IsNullOrWhiteSpace(tooltipTitle))
             return;
 
         HeroHUD.Instance.ShowTooltip(
@@ -242,10 +279,19 @@ public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
 
     public void OnPointerExit(PointerEventData eventData)
     {
+        pointerInside = false;
         if (HeroHUD.Instance == null)
             return;
 
         HeroHUD.Instance.HideTooltip();
+    }
+
+    private void OnDisable()
+    {
+        if (pointerInside && HeroHUD.Instance != null)
+            HeroHUD.Instance.HideTooltip();
+
+        pointerInside = false;
     }
 
     public void OnPointerClick(PointerEventData eventData)

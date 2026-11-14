@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 862d7e6094476fc4ab69f2505c69c4ac, type: 3}
+  m_Name: FlagItem
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
+  id: flag
+  displayName: Прапор
+  description: "Ключовий предмет матчу. Донесіть прапор на протилежний пірс, щоб здобути очко для команди."
+  icon: {fileID: 4679815505131476315, guid: 6c5256ba1982c4f4289b4442677a7bb5, type: 3}
+  maxStack: 1
+  dropOnDeath: 1
+  throwable: 1
+  worldPrefab: {fileID: 1000000000000000000, guid: 2b6d9f4a1c8e3f5b7a0d2c4e6f8b1a3d, type: 3}
+  normalThrowMultiplier: 1
+  strongThrowMultiplier: 2
+  useAction: {fileID: 0}
+  useCooldown: 0
+  passiveModifiers: []
+  selectedModifiers: []

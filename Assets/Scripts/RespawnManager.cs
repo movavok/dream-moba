@@ -285,6 +285,12 @@ public class RespawnManager : NetworkBehaviour
         ulong clientId,
         Health deadPlayer)
     {
+        Inventory oldInventory = deadPlayer != null
+            ? deadPlayer.GetComponent<Inventory>() : null;
+        InventorySlot[] savedInventory = oldInventory?.CapturePersistentSlots();
+        int savedSelection = oldInventory != null
+            ? oldInventory.SelectedSlot.Value : 0;
+
         // Despawn the dead player object
         if (deadPlayer != null &&
             deadPlayer.NetworkObject != null &&
@@ -364,6 +370,7 @@ public class RespawnManager : NetworkBehaviour
             newPlayer.GetComponent<NetworkObject>();
 
         networkObject.SpawnAsPlayerObject(clientId);
+        newPlayer.GetComponent<Inventory>()?.RestoreSlots(savedInventory, savedSelection);
 
         spectatingTargets.Remove(clientId);
 

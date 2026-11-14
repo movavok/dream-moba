@@ -27,6 +27,10 @@ public class PlayerNetwork : NetworkBehaviour
 
     private Vector2 lastMoveDirection = Vector2.down;
 
+    public Vector2 LastMoveDirection => lastMoveDirection;
+
+    private StatController statController;
+
     private NetworkVariable<Vector2> networkMoveDirection =
     new NetworkVariable<Vector2>(
         Vector2.zero,
@@ -129,6 +133,15 @@ public class PlayerNetwork : NetworkBehaviour
 
         float distanceMultiplier = strongThrow ? 3f : 1f;
 
+        Inventory inventory = GetComponent<Inventory>();
+        if (inventory == null)
+            return;
+
+        int selected = inventory.SelectedSlot.Value;
+        ItemDefinition selectedItem = inventory.GetItem(selected);
+        if (selectedItem == null)
+            return;
+
         foreach (NetworkObject networkObject in
             NetworkManager.Singleton.SpawnManager.SpawnedObjects.Values)
         {
@@ -138,7 +151,8 @@ public class PlayerNetwork : NetworkBehaviour
             foreach (MonoBehaviour component in components)
             {
                 if (component is not ICarriableItem carriable ||
-                    !carriable.IsCarriedBy(this))
+                    !carriable.IsCarriedBy(this) ||
+                    carriable.InventoryItem != selectedItem)
                     continue;
 
                 carriable.Throw(
@@ -150,6 +164,8 @@ public class PlayerNetwork : NetworkBehaviour
                 return;
             }
         }
+
+        inventory.TryThrow(selected, direction, strongThrow);
     }
 
     private InputAction throwAction;
@@ -450,6 +466,11 @@ public class PlayerNetwork : NetworkBehaviour
 
         rb = GetComponent<Rigidbody2D>();
 
+        statController = GetComponent<StatController>();
+
+        if (statController != null)
+            statController.SetHeroData(heroData);
+
         PlayerInput playerInput = GetComponent<PlayerInput>();
         if (playerInput != null)
         {
@@ -499,9 +520,11 @@ public class PlayerNetwork : NetworkBehaviour
         if (heroData == null || rb == null)
             return;
 
-        float speed =
-            heroData.stats.moveSpeed *
-            speedMultiplier;
+        float baseSpeed = statController != null
+            ? statController.Get(StatType.MoveSpeed)
+            : heroData.stats.moveSpeed;
+
+        float speed = baseSpeed * speedMultiplier;
 
         Vector2 moveDirection = moveInput;
 
