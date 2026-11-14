@@ -231,7 +231,7 @@ public class MatchResultsView : MonoBehaviour
         if (personalKillStreakText != null)
         {
             personalKillStreakText.text =
-                $": {GetBestStreak(localPlayer)}";
+                $": {stats.GetBestKillStreak(clientId)}";
         }
     }
 
@@ -254,13 +254,6 @@ public class MatchResultsView : MonoBehaviour
         float control = (float)teamFlags / totalFlags;
 
         return Mathf.RoundToInt(Mathf.Clamp01(control) * 100f);
-    }
-
-    private static int GetBestStreak(PlayerNetwork localPlayer)
-    {
-        PlayerStreak streak = localPlayer.GetComponent<PlayerStreak>();
-
-        return streak != null ? streak.BestStreak : 0;
     }
 
     private static void FillCard(

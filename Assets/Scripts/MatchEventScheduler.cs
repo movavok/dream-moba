@@ -6,7 +6,8 @@ using UnityEngine.Events;
 
 public enum MatchEventType
 {
-    FlagSpawn
+    FlagSpawn,
+    ScarecrowSpawn
 }
 
 [Serializable]

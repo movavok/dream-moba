@@ -10,6 +10,8 @@ public class MatchStatsManager : NetworkBehaviour
 
     private readonly Dictionary<ulong, int> kills = new();
     private readonly Dictionary<ulong, int> deaths = new();
+    private readonly Dictionary<ulong, int> currentKillStreak = new();
+    private readonly Dictionary<ulong, int> bestKillStreak = new();
     private readonly Dictionary<ulong, int> flagsDelivered = new();
     private readonly Dictionary<ulong, int> counters = new();
     private readonly Dictionary<ulong, int> damageDealt = new();
@@ -93,6 +95,8 @@ public class MatchStatsManager : NetworkBehaviour
         {
             kills.TryAdd(clientId, 0);
             deaths.TryAdd(clientId, 0);
+            currentKillStreak.TryAdd(clientId, 0);
+            bestKillStreak.TryAdd(clientId, 0);
             flagsDelivered.TryAdd(clientId, 0);
             counters.TryAdd(clientId, 0);
             damageDealt.TryAdd(clientId, 0);
@@ -134,18 +138,37 @@ public class MatchStatsManager : NetworkBehaviour
 
         kills[clientId]++;
 
+        if (!currentKillStreak.ContainsKey(clientId))
+            currentKillStreak[clientId] = 0;
+
+        currentKillStreak[clientId]++;
+
+        if (!bestKillStreak.ContainsKey(clientId))
+            bestKillStreak[clientId] = 0;
+
+        if (currentKillStreak[clientId] > bestKillStreak[clientId])
+            bestKillStreak[clientId] = currentKillStreak[clientId];
+
         Debug.Log(
             $"[MatchStatsManager] KILL: " +
-            $"{clientId} = {kills[clientId]}"
+            $"{clientId} = {kills[clientId]} | " +
+            $"KillStreak = {currentKillStreak[clientId]} | " +
+            $"BestKillStreak = {bestKillStreak[clientId]}"
         );
 
         // Серверный UI
         StatsChanged?.Invoke(clientId);
 
-        // Синхронизируем только kills
+        // Синхронизируем kills и kill streak
         UpdateClientKillsClientRpc(
             clientId,
             kills[clientId]
+        );
+
+        UpdateClientKillStreakClientRpc(
+            clientId,
+            currentKillStreak[clientId],
+            bestKillStreak[clientId]
         );
     }
 
@@ -165,18 +188,34 @@ public class MatchStatsManager : NetworkBehaviour
 
         deaths[clientId]++;
 
+        if (!currentKillStreak.ContainsKey(clientId))
+            currentKillStreak[clientId] = 0;
+
+        currentKillStreak[clientId] = 0;
+
+        if (!bestKillStreak.ContainsKey(clientId))
+            bestKillStreak[clientId] = 0;
+
         Debug.Log(
             $"[MatchStatsManager] DEATH: " +
-            $"{clientId} = {deaths[clientId]}"
+            $"{clientId} = {deaths[clientId]} | " +
+            $"KillStreak reset. BestKillStreak = " +
+            $"{bestKillStreak[clientId]}"
         );
 
         // Серверный UI
         StatsChanged?.Invoke(clientId);
 
-        // Синхронизируем только deaths
+        // Синхронизируем deaths и сброс kill streak
         UpdateClientDeathsClientRpc(
             clientId,
             deaths[clientId]
+        );
+
+        UpdateClientKillStreakClientRpc(
+            clientId,
+            currentKillStreak[clientId],
+            bestKillStreak[clientId]
         );
     }
 
@@ -190,6 +229,20 @@ public class MatchStatsManager : NetworkBehaviour
     public int GetDeaths(ulong clientId)
     {
         return deaths.TryGetValue(clientId, out int value)
+            ? value
+            : 0;
+    }
+
+    public int GetCurrentKillStreak(ulong clientId)
+    {
+        return currentKillStreak.TryGetValue(clientId, out int value)
+            ? value
+            : 0;
+    }
+
+    public int GetBestKillStreak(ulong clientId)
+    {
+        return bestKillStreak.TryGetValue(clientId, out int value)
             ? value
             : 0;
     }
@@ -220,6 +273,18 @@ public class MatchStatsManager : NetworkBehaviour
             $"[MatchStatsManager] CLIENT DEATH UPDATE: " +
             $"{clientId} = {newDeaths}"
         );
+
+        StatsChanged?.Invoke(clientId);
+    }
+
+    [ClientRpc]
+    private void UpdateClientKillStreakClientRpc(
+        ulong clientId,
+        int current,
+        int best)
+    {
+        currentKillStreak[clientId] = current;
+        bestKillStreak[clientId] = best;
 
         StatsChanged?.Invoke(clientId);
     }

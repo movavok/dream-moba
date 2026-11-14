@@ -5,7 +5,23 @@ using Unity.Cinemachine;
 public class Health : NetworkBehaviour
 {
     public event System.Action Died;
+    public event System.Action<DamageEvent> Damaged;
+    public event System.Action<DamageEvent> DamageFeedback;
     private NetworkVariable<int> currentHealth = new NetworkVariable<int>();
+
+    private NetworkVariable<int> maxHealthOverride =
+        new NetworkVariable<int>(
+            0,
+            NetworkVariableReadPermission.Everyone,
+            NetworkVariableWritePermission.Server
+        );
+
+    private readonly NetworkVariable<int> inventoryMaxHealth = new(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+    private StatController itemStats;
 
     [SerializeField] private HealthFloatingText healthFloatingText;
     [SerializeField] private int standaloneMaxHealth;
@@ -134,14 +150,47 @@ public class Health : NetworkBehaviour
     }
 
     public int CurrentHealth => currentHealth.Value;
-    public int MaxHealth =>
-        playerNetwork != null && playerNetwork.HeroData != null
-            ? playerNetwork.HeroData.stats.maxHealth
-            : standaloneMaxHealth;
+    public int MaxHealth
+    {
+        get
+        {
+            if (inventoryMaxHealth.Value > 0)
+                return inventoryMaxHealth.Value;
+
+            if (playerNetwork != null && playerNetwork.HeroData != null)
+                return playerNetwork.HeroData.stats.maxHealth;
+
+            return maxHealthOverride.Value > 0
+                ? maxHealthOverride.Value
+                : standaloneMaxHealth;
+        }
+    }
+
+    public void SetMaxHealth(int value)
+    {
+        if (!IsServer || value <= 0)
+            return;
+
+        maxHealthOverride.Value = value;
+        currentHealth.Value = value;
+
+        HealthChanged?.Invoke(
+            currentHealth.Value,
+            MaxHealth
+        );
+    }
 
     public override void OnNetworkSpawn()
     {
         playerNetwork = GetComponent<PlayerNetwork>();
+
+        itemStats = GetComponent<StatController>();
+        if (IsServer && itemStats != null)
+        {
+            itemStats.StatsChanged += UpdateInventoryMaxHealth;
+            UpdateInventoryMaxHealth();
+        }
+        inventoryMaxHealth.OnValueChanged += OnInventoryMaxHealthChanged;
 
         if (IsServer)
         {
@@ -149,12 +198,11 @@ public class Health : NetworkBehaviour
 
             if (playerNetwork != null && playerNetwork.HeroData != null)
             {
-                currentHealth.Value =
-                    playerNetwork.HeroData.stats.maxHealth;
+                currentHealth.Value = MaxHealth;
             }
-            else if (standaloneMaxHealth > 0)
+            else if (MaxHealth > 0)
             {
-                currentHealth.Value = standaloneMaxHealth;
+                currentHealth.Value = MaxHealth;
                 spawnProtection.Value = false;
             }
         }
@@ -189,8 +237,28 @@ public class Health : NetworkBehaviour
         );
     }
 
+    private void UpdateInventoryMaxHealth()
+    {
+        if (!IsServer || playerNetwork == null ||
+            playerNetwork.HeroData == null || itemStats == null)
+            return;
+
+        int maximum = Mathf.Max(1, Mathf.RoundToInt(itemStats.Get(StatType.MaxHealth)));
+        inventoryMaxHealth.Value = maximum;
+        if (currentHealth.Value > maximum)
+            currentHealth.Value = maximum;
+    }
+
+    private void OnInventoryMaxHealthChanged(int previous, int current)
+    {
+        HealthChanged?.Invoke(currentHealth.Value, MaxHealth);
+    }
+
     public override void OnNetworkDespawn()
     {
+        if (itemStats != null)
+            itemStats.StatsChanged -= UpdateInventoryMaxHealth;
+        inventoryMaxHealth.OnValueChanged -= OnInventoryMaxHealthChanged;
         currentHealth.OnValueChanged -= OnHealthChanged;
         spawnProtection.OnValueChanged -= OnSpawnProtectionChanged;
 
@@ -220,6 +288,18 @@ public class Health : NetworkBehaviour
     public void TakeDamage(
         int damage,
         ulong attackerClientId)
+    {
+        TakeDamage(
+            damage,
+            attackerClientId,
+            DamageSource.Generic
+        );
+    }
+
+    public void TakeDamage(
+        int damage,
+        ulong attackerClientId,
+        DamageSource source)
     {
         if (!IsServer || !NetworkObject.IsSpawned)
             return;
@@ -258,6 +338,23 @@ public class Health : NetworkBehaviour
             );
         }
 
+        if (appliedDamage > 0)
+        {
+            Damaged?.Invoke(
+                new DamageEvent(
+                    appliedDamage,
+                    attackerClientId,
+                    source
+                )
+            );
+
+            ShowDamageFeedbackClientRpc(
+                appliedDamage,
+                attackerClientId,
+                (byte)source
+            );
+        }
+
         if (!IsAlive())
         {
             if (MatchStatsManager.Instance != null)
@@ -274,9 +371,12 @@ public class Health : NetworkBehaviour
                         OwnerClientId
                     );
 
-                    MatchStatsManager.Instance.AddKill(
-                        attackerClientId
-                    );
+                    if (attackerClientId != OwnerClientId)
+                    {
+                        MatchStatsManager.Instance.AddKill(
+                            attackerClientId
+                        );
+                    }
 
                     FlagCarryVisual flagCarry =
                         GetComponent<FlagCarryVisual>();
@@ -300,6 +400,21 @@ public class Health : NetworkBehaviour
 
             Die();
         }
+    }
+
+    [ClientRpc]
+    private void ShowDamageFeedbackClientRpc(
+        int amount,
+        ulong attackerClientId,
+        byte source)
+    {
+        DamageFeedback?.Invoke(
+            new DamageEvent(
+                amount,
+                attackerClientId,
+                (DamageSource)source
+            )
+        );
     }
 
     [ClientRpc]
