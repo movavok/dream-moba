@@ -17,6 +17,8 @@ public class RespawnManager : NetworkBehaviour
 
     private readonly System.Collections.Generic.Dictionary<ulong, ulong> spectatingTargets =
         new();
+    private int cameraRequestId;
+    private int grayscaleRequestId;
 
     private void Awake()
     {
@@ -112,6 +114,8 @@ public class RespawnManager : NetworkBehaviour
                     TargetClientIds = new[] { clientId }
                 }
             };
+
+        SetDeathGrayscaleClientRpc(true, clientRpcParams);
 
         if (nearestAlly != null)
         {
@@ -239,10 +243,34 @@ public class RespawnManager : NetworkBehaviour
         ulong targetNetworkObjectId,
         ClientRpcParams clientRpcParams = default)
     {
-        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects
-            .TryGetValue(targetNetworkObjectId, out NetworkObject target))
+        int requestId = ++cameraRequestId;
+        StartCoroutine(FollowCameraTargetWhenReady(targetNetworkObjectId, requestId));
+    }
+
+    private IEnumerator FollowCameraTargetWhenReady(ulong targetId, int requestId)
+    {
+        float deadline = Time.realtimeSinceStartup + 10f;
+        while (requestId == cameraRequestId &&
+               Time.realtimeSinceStartup < deadline &&
+               NetworkManager.Singleton != null &&
+               NetworkManager.Singleton.IsListening)
         {
-            PlayerCamera.Instance.FollowPlayer(target.transform);
+            if (PlayerNetwork.LocalPlayer != null &&
+                PlayerNetwork.LocalPlayer.IsSpawned &&
+                PlayerNetwork.LocalPlayer.NetworkObjectId != targetId &&
+                PlayerNetwork.LocalPlayer.GetComponent<Health>() is Health health &&
+                health.IsAlive())
+                yield break;
+
+            if (PlayerCamera.Instance != null && PlayerCamera.Instance.IsReady &&
+                NetworkManager.Singleton.SpawnManager.SpawnedObjects
+                    .TryGetValue(targetId, out NetworkObject target))
+            {
+                PlayerCamera.Instance.TeleportToPlayer(target.transform);
+                yield break;
+            }
+
+            yield return null;
         }
     }
 
@@ -251,7 +279,37 @@ public class RespawnManager : NetworkBehaviour
         Vector3 position,
         ClientRpcParams clientRpcParams = default)
     {
-        PlayerCamera.Instance.MoveToPosition(position);
+        int requestId = ++cameraRequestId;
+        StartCoroutine(MoveCameraWhenReady(position, requestId));
+    }
+
+    private IEnumerator MoveCameraWhenReady(Vector3 position, int requestId)
+    {
+        while (requestId == cameraRequestId &&
+               (PlayerCamera.Instance == null || !PlayerCamera.Instance.IsReady))
+            yield return null;
+
+        if (requestId == cameraRequestId)
+            PlayerCamera.Instance.MoveToPosition(position);
+    }
+
+    [ClientRpc]
+    private void SetDeathGrayscaleClientRpc(
+        bool dead,
+        ClientRpcParams clientRpcParams = default)
+    {
+        int requestId = ++grayscaleRequestId;
+        StartCoroutine(SetGrayscaleWhenReady(dead, requestId));
+    }
+
+    private IEnumerator SetGrayscaleWhenReady(bool dead, int requestId)
+    {
+        while (requestId == grayscaleRequestId &&
+               (PlayerCamera.Instance == null || !PlayerCamera.Instance.IsReady))
+            yield return null;
+
+        if (requestId == grayscaleRequestId)
+            PlayerCamera.Instance.SetDeathGrayscale(dead);
     }
 
     public void PlayerDisconnected(ulong clientId)
@@ -290,6 +348,8 @@ public class RespawnManager : NetworkBehaviour
         InventorySlot[] savedInventory = oldInventory?.CapturePersistentSlots();
         int savedSelection = oldInventory != null
             ? oldInventory.SelectedSlot.Value : 0;
+        Team oldTeam = deadPlayer != null ? deadPlayer.GetComponent<Team>() : null;
+        short savedTeamId = oldTeam != null ? oldTeam.TeamId.Value : (short)0;
 
         // Despawn the dead player object
         if (deadPlayer != null &&
@@ -360,10 +420,19 @@ public class RespawnManager : NetworkBehaviour
         }
 
         // Create a new player object at the respawn point
+        GamePlayerSpawner spawner = GetComponent<GamePlayerSpawner>();
+        Transform playerSpawnPoint = spawner != null
+            ? spawner.GetSpawnPoint(clientId, savedTeamId) : respawnPoint;
+        if (playerSpawnPoint == null)
+        {
+            Debug.LogError($"RespawnManager: No spawn point for client {clientId}.");
+            yield break;
+        }
+
         GameObject newPlayer = Instantiate(
             playerPrefab,
-            respawnPoint.position,
-            respawnPoint.rotation
+            playerSpawnPoint.position,
+            playerSpawnPoint.rotation
         );
 
         NetworkObject networkObject =
@@ -374,15 +443,18 @@ public class RespawnManager : NetworkBehaviour
 
         spectatingTargets.Remove(clientId);
 
+        ClientRpcParams respawnClientRpcParams = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { clientId }
+            }
+        };
+
+        SetDeathGrayscaleClientRpc(false, respawnClientRpcParams);
         SetCameraTargetClientRpc(
             networkObject.NetworkObjectId,
-            new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams
-                {
-                    TargetClientIds = new[] { clientId }
-                }
-            }
+            respawnClientRpcParams
         );
 
         Debug.Log(
