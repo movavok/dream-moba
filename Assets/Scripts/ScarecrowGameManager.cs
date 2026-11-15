@@ -5,6 +5,7 @@ using UnityEngine;
 public class ScarecrowGameManager : NetworkBehaviour
 {
     [SerializeField] private GameObject scarecrowPrefab;
+    [SerializeField] private GameObject corpsePrefab;
     [SerializeField] private Transform spawnPoint;
     [SerializeField] private string spawnPointName = "ScareCrowPoint";
 
@@ -16,6 +17,7 @@ public class ScarecrowGameManager : NetworkBehaviour
     [SerializeField, Min(0)] private int maxHealthIncrement = 50;
 
     private NetworkObject activeScarecrow;
+    private NetworkObject activeCorpse;
     private Health activeScarecrowHealth;
     private int currentMaxHealth;
     private Coroutine respawnCoroutine;
@@ -73,6 +75,7 @@ public class ScarecrowGameManager : NetworkBehaviour
         }
 
         activeScarecrow.Spawn();
+        RemoveCorpse();
 
         activeScarecrowHealth = instance.GetComponent<Health>();
 
@@ -106,10 +109,16 @@ public class ScarecrowGameManager : NetworkBehaviour
 
         if (activeScarecrow != null)
         {
+            Vector3 deathPosition = activeScarecrow.transform.position;
+            Quaternion deathRotation = activeScarecrow.transform.rotation;
+            string corpseVisualId = activeScarecrow
+                .GetComponent<MinibossCorpseSource>()?.CorpseVisualId;
+
             if (activeScarecrow.IsSpawned)
                 activeScarecrow.Despawn(true);
 
             activeScarecrow = null;
+            SpawnCorpse(corpseVisualId, deathPosition, deathRotation);
         }
 
         currentMaxHealth += maxHealthIncrement;
@@ -118,6 +127,56 @@ public class ScarecrowGameManager : NetworkBehaviour
             StopCoroutine(respawnCoroutine);
 
         respawnCoroutine = StartCoroutine(RespawnRoutine());
+    }
+
+    private void SpawnCorpse(
+        string corpseVisualId,
+        Vector3 position,
+        Quaternion rotation)
+    {
+        if (corpsePrefab == null)
+        {
+            Debug.LogError("[ScarecrowGameManager] Corpse prefab is not assigned.");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(corpseVisualId))
+        {
+            Debug.LogError("[ScarecrowGameManager] Scarecrow has no corpse visual ID.");
+            return;
+        }
+
+        GameObject corpse = Instantiate(corpsePrefab, position, rotation);
+        activeCorpse = corpse.GetComponent<NetworkObject>();
+        if (activeCorpse == null)
+        {
+            Debug.LogError("[ScarecrowGameManager] Corpse prefab has no NetworkObject.");
+            Destroy(corpse);
+            return;
+        }
+
+        MinibossCorpseVisual visual = corpse.GetComponent<MinibossCorpseVisual>();
+        if (visual == null)
+        {
+            Debug.LogError("[ScarecrowGameManager] Corpse prefab has no MinibossCorpseVisual.");
+            Destroy(corpse);
+            activeCorpse = null;
+            return;
+        }
+
+        activeCorpse.Spawn();
+        visual.Initialize(corpseVisualId);
+    }
+
+    private void RemoveCorpse()
+    {
+        if (activeCorpse == null)
+            return;
+
+        if (activeCorpse.IsSpawned)
+            activeCorpse.Despawn(true);
+
+        activeCorpse = null;
     }
 
     private IEnumerator RespawnRoutine()
@@ -152,6 +211,17 @@ public class ScarecrowGameManager : NetworkBehaviour
     {
         if (activeScarecrowHealth != null)
             activeScarecrowHealth.Died -= OnScarecrowDied;
+
+        if (IsServer)
+        {
+            if (respawnCoroutine != null)
+            {
+                StopCoroutine(respawnCoroutine);
+                respawnCoroutine = null;
+            }
+
+            RemoveCorpse();
+        }
 
         base.OnNetworkDespawn();
     }
