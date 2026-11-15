@@ -94,6 +94,9 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
     }
 
     public ItemDefinition InventoryItem => inventoryItem;
+    public bool IsCarried => pickedUp.Value;
+    public ulong CarrierClientId => carrierClientId.Value;
+    public Color CarrierTeamColor => networkClothColor.Value;
     public bool HasThrower => IsServer && lastThrowerClientId != NoCarrier;
     public ulong LastThrowerClientId => lastThrowerClientId;
     public short LastThrowerTeamId => lastThrowerTeamId;

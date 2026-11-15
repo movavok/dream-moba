@@ -24,6 +24,8 @@ public class HeroSorting : MonoBehaviour
     private const string SHADOW_LAYER = "Shadow";
     private const string SHADOW_BEHIND_LAYER = "ShadowBehind";
 
+    public SpriteRenderer HeroRenderer => heroRenderer;
+
     private void Awake()
     {
         if (heroRenderer == null)
