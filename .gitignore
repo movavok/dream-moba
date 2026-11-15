@@ -117,3 +117,8 @@ CLAUDE.md
 *.7z
 *.tar
 *.tar.gz
+
+# Local-only planning docs
+Documentation/NEXT_PLAYTEST_PLAN.md
+Documentation/PROJECT_PROGRESS.md
+Documentation/VISIBILITY_MINIMAP_PLAN.md
