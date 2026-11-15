@@ -14,7 +14,13 @@ public class BuildingEnter : MonoBehaviour
         PlayerNetwork player =
             other.GetComponentInParent<PlayerNetwork>();
 
-        if (player == null)
+        if (player == null || player.Body == null)
+            return;
+
+        // Body points to LegsPoint (a child of the solid Body collider), not
+        // to the collider's own transform. Ignore the taller combat hitbox.
+        Collider2D bodyCollider = player.Body.GetComponentInParent<Collider2D>();
+        if (other != bodyCollider)
             return;
 
         player.EnterBuilding(

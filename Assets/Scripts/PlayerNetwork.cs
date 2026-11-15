@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using Unity.Cinemachine;
@@ -21,6 +22,7 @@ public class PlayerNetwork : NetworkBehaviour
     public HeroDefinition HeroData => heroData;
 
     private Rigidbody2D rb;
+    private bool buildingTransitionInProgress;
 
     private Vector2 moveInput;
     private Vector2 lastPosition;
@@ -644,6 +646,15 @@ public class PlayerNetwork : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+        // The server simulates movement and collisions. Remote instances only
+        // follow NetworkTransform; local dynamic physics would fight its updates.
+        if (!IsServer && rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.bodyType = RigidbodyType2D.Kinematic;
+            rb.interpolation = RigidbodyInterpolation2D.None;
+        }
+
         GrassInteractionManager.Instance?.RegisterPlayer(body);
 
         if (heroVisual != null)
@@ -758,6 +769,7 @@ public class PlayerNetwork : NetworkBehaviour
 
         PlayerCamera.Instance.SetImpulseSource(impulseSource);
         PlayerCamera.Instance.FollowPlayer(transform);
+        PlayerCamera.Instance.SetDeathGrayscale(false);
 
         Debug.Log(
             $"[{OwnerClientId}] Camera attached to player " +
@@ -773,6 +785,10 @@ public class PlayerNetwork : NetworkBehaviour
         if (!IsOwner)
             return;
 
+        if (buildingTransitionInProgress)
+            return;
+
+        buildingTransitionInProgress = true;
         StartCoroutine(
             BuildingTransition(
                 targetPosition,
@@ -789,17 +805,6 @@ public class PlayerNetwork : NetworkBehaviour
         BuildingTeleportedClientRpc(targetPosition);
     }
 
-    private IEnumerator TeleportCameraAfterPhysics(
-        Vector3 targetPosition)
-    {
-        yield return new WaitForFixedUpdate();
-        yield return null;
-
-        PlayerCamera.Instance.TeleportToPosition(targetPosition);
-
-        yield return ScreenTransition.Instance.FadeOut();
-    }
-
     [ClientRpc]
     private void BuildingTeleportedClientRpc(Vector3 targetPosition)
     {
@@ -807,8 +812,29 @@ public class PlayerNetwork : NetworkBehaviour
             return;
 
         StartCoroutine(
-            TeleportCameraAfterPhysics(targetPosition)
+            FinishBuildingTransition(targetPosition)
         );
+    }
+
+    private IEnumerator FinishBuildingTransition(Vector3 targetPosition)
+    {
+        // The server's NetworkTransform update can arrive after this RPC.
+        // Put the local owner and camera at the destination before uncovering
+        // the screen, rather than waiting for a physics trigger or interpolation.
+        rb.position = targetPosition;
+        rb.linearVelocity = Vector2.zero;
+        transform.position = targetPosition;
+
+        while (PlayerCamera.Instance == null || !PlayerCamera.Instance.IsReady)
+            yield return null;
+
+        PlayerCamera.Instance.TeleportToPlayer(transform);
+        yield return null;
+
+        if (ScreenTransition.Instance != null)
+            yield return ScreenTransition.Instance.FadeOut();
+
+        buildingTransitionInProgress = false;
     }
 
     public void EnterBuilding(
@@ -828,6 +854,9 @@ public class PlayerNetwork : NetworkBehaviour
         Vector3 targetPosition,
         int soundIndex)
     {
+        while (ScreenTransition.Instance == null)
+            yield return null;
+
         yield return ScreenTransition.Instance.FadeIn();
 
         AudioManager.Instance.PlayBuildingTransition(
@@ -846,5 +875,10 @@ public class PlayerNetwork : NetworkBehaviour
 
         rb.position = position;
         transform.position = position;
+        lastPosition = position;
+
+        NetworkTransform networkTransform = GetComponent<NetworkTransform>();
+        if (networkTransform != null)
+            networkTransform.Teleport(position, transform.rotation, transform.localScale);
     }
 }
