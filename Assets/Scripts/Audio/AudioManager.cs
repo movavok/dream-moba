@@ -5,6 +5,7 @@ public class AudioManager : MonoBehaviour
     public static AudioManager Instance { get; private set; }
 
     [SerializeField] private AudioSource audioSourcePrefab;
+    [SerializeField] private AudioSource buildingTransitionSource;
     [SerializeField] private AudioLibrary globalLibrary;
 
     [Header("Pitch")]
@@ -20,6 +21,9 @@ public class AudioManager : MonoBehaviour
         }
 
         Instance = this;
+
+        if (buildingTransitionSource != null)
+            buildingTransitionSource.spatialBlend = 0f;
     }
 
     public AudioSource PlayAtPosition(
@@ -97,6 +101,19 @@ public class AudioManager : MonoBehaviour
 
         AudioClip clip =
             globalLibrary.buildingTransitions[soundIndex];
+
+        if (clip == null)
+            return;
+
+        if (buildingTransitionSource != null)
+        {
+            buildingTransitionSource.pitch = Random.Range(minPitch, maxPitch);
+            buildingTransitionSource.PlayOneShot(
+                clip,
+                globalLibrary.buildingTransitionVolume
+            );
+            return;
+        }
 
         PlayLocal(
             clip,
