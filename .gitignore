@@ -104,3 +104,16 @@ InitTestScene*.unity*
 
 # Auto-generated cache in Assets folder
 /[Aa]ssets/[Ss]ceneDependencyCache*
+
+# Agent / AI tool files
+AGENTS.md
+.opencode/
+.claude/
+CLAUDE.md
+
+# Archives
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
