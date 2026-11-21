@@ -16,6 +16,8 @@ public class InventoryHUD : MonoBehaviour
     private Inventory inventory;
     private Sprite[] originalFrames;
 
+    public AbilitySlot[] Slots => slots;
+
     private void Awake()
     {
         originalFrames = new Sprite[slots.Length];
@@ -115,6 +117,8 @@ public class InventoryHUD : MonoBehaviour
             bool selected = inventory != null && inventory.SelectedSlot.Value == i;
 
             slot.SetIcon(item != null ? item.icon : null);
+            slot.SetPlaceholder(item != null && item.icon == null &&
+                !string.IsNullOrEmpty(item.id) ? item.id[..1].ToUpperInvariant() : null);
             slot.SetTooltipData(
                 item != null ? item.displayName : null,
                 item != null ? item.description : null

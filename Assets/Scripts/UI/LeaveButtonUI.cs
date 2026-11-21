@@ -25,7 +25,15 @@ public class LeaveButtonUI : MonoBehaviour
 
     private void OnEscape(InputAction.CallbackContext context)
     {
+        if (ContainerUI.Instance != null && ContainerUI.Instance.TryClose())
+            return;
+
         leaveButton.SetActive(!leaveButton.activeSelf);
+    }
+
+    public void HideButton()
+    {
+        leaveButton.SetActive(false);
     }
 
     public async void LeaveGame()

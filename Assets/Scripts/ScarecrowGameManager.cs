@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -16,11 +17,25 @@ public class ScarecrowGameManager : NetworkBehaviour
     [SerializeField, Min(1)] private int initialMaxHealth = 100;
     [SerializeField, Min(0)] private int maxHealthIncrement = 50;
 
+    [Header("Audio")]
+    [SerializeField] private string soundGroup =
+        AudioGroups.MinionBoss("Scarecrow");
+    [SerializeField] private AudioClip deathClip;
+
+    [Header("Rewards")]
+    [SerializeField] private ItemDefinition killRewardItem;
+    [SerializeField, Min(1)] private int killRewardItemCount = 1;
+    [SerializeField, Min(1f)] private float participationWindow = 10f;
+
     private NetworkObject activeScarecrow;
     private NetworkObject activeCorpse;
     private Health activeScarecrowHealth;
     private int currentMaxHealth;
     private Coroutine respawnCoroutine;
+
+    // clientId → server Time.time of their last hit on the active scarecrow.
+    private readonly Dictionary<ulong, float> lastHitTime = new();
+    private ulong lastAttackerClientId = ulong.MaxValue;
 
     public void SpawnScarecrow()
     {
@@ -74,6 +89,8 @@ public class ScarecrowGameManager : NetworkBehaviour
             return;
         }
 
+        lastHitTime.Clear();
+        lastAttackerClientId = ulong.MaxValue;
         activeScarecrow.Spawn();
         RemoveCorpse();
 
@@ -83,6 +100,7 @@ public class ScarecrowGameManager : NetworkBehaviour
         {
             activeScarecrowHealth.SetMaxHealth(currentMaxHealth);
             activeScarecrowHealth.Died += OnScarecrowDied;
+            activeScarecrowHealth.Damaged += OnScarecrowDamaged;
         }
         else
         {
@@ -97,13 +115,26 @@ public class ScarecrowGameManager : NetworkBehaviour
         );
     }
 
+    private void OnScarecrowDamaged(DamageEvent damageEvent)
+    {
+        // Health raises Damaged before Died, including for the lethal hit.
+        // Keep an unowned final hit unowned rather than crediting an older hit.
+        lastAttackerClientId = damageEvent.AttackerClientId;
+        // Record the timestamp for every attacker; ulong.MaxValue is "no owner".
+        if (damageEvent.AttackerClientId != ulong.MaxValue)
+            lastHitTime[damageEvent.AttackerClientId] = Time.time;
+    }
+
     private void OnScarecrowDied()
     {
         if (!IsServer)
             return;
 
         if (activeScarecrowHealth != null)
+        {
             activeScarecrowHealth.Died -= OnScarecrowDied;
+            activeScarecrowHealth.Damaged -= OnScarecrowDamaged;
+        }
 
         activeScarecrowHealth = null;
 
@@ -114,6 +145,8 @@ public class ScarecrowGameManager : NetworkBehaviour
             string corpseVisualId = activeScarecrow
                 .GetComponent<MinibossCorpseSource>()?.CorpseVisualId;
 
+            PlayDeathSoundClientRpc(deathPosition);
+
             if (activeScarecrow.IsSpawned)
                 activeScarecrow.Despawn(true);
 
@@ -121,12 +154,76 @@ public class ScarecrowGameManager : NetworkBehaviour
             SpawnCorpse(corpseVisualId, deathPosition, deathRotation);
         }
 
+        GrantKillRewards();
+        lastHitTime.Clear();
+        lastAttackerClientId = ulong.MaxValue;
+
         currentMaxHealth += maxHealthIncrement;
 
         if (respawnCoroutine != null)
             StopCoroutine(respawnCoroutine);
 
         respawnCoroutine = StartCoroutine(RespawnRoutine());
+    }
+
+    private void GrantKillRewards()
+    {
+        NetworkManager network = NetworkManager.Singleton;
+        if (!IsServer || network == null || lastAttackerClientId == ulong.MaxValue)
+            return;
+
+        TeamManager teams = GetComponent<TeamManager>();
+        if (teams == null)
+            teams = FindAnyObjectByType<TeamManager>();
+        if (teams == null)
+            return;
+
+        short winningTeamId = teams.GetTeamId(lastAttackerClientId);
+        if (winningTeamId <= 0)
+            return;
+
+        // Only recent attackers from the last-hitter's team receive rewards.
+        float cutoff = Time.time - participationWindow;
+        var participants = new List<ulong>();
+
+        foreach (ulong clientId in
+            network.ConnectedClientsIds)
+        {
+            if (teams.GetTeamId(clientId) == winningTeamId &&
+                lastHitTime.TryGetValue(clientId, out float t) && t >= cutoff)
+                participants.Add(clientId);
+        }
+
+        if (participants.Count == 0)
+            return;
+
+        // Gold reward for all participants (no kill-bonus distinction).
+        EconomyManager.Instance?.RewardScarecrowKill(participants);
+
+        // Item reward: one killRewardItem per participant into their inventory.
+        if (killRewardItem == null || killRewardItemCount <= 0 ||
+            RespawnManager.Instance == null)
+            return;
+
+        foreach (ulong clientId in participants)
+            RespawnManager.Instance.GrantItemToClient(
+                clientId,
+                killRewardItem,
+                killRewardItemCount);
+    }
+
+    [ClientRpc]
+    private void PlayDeathSoundClientRpc(Vector3 position)
+    {
+        if (deathClip == null || AudioManager.Instance == null)
+            return;
+
+        AudioManager.Instance.PlaySound(
+            soundGroup,
+            SoundKeys.Death,
+            deathClip,
+            position
+        );
     }
 
     private void SpawnCorpse(
@@ -210,7 +307,10 @@ public class ScarecrowGameManager : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         if (activeScarecrowHealth != null)
+        {
             activeScarecrowHealth.Died -= OnScarecrowDied;
+            activeScarecrowHealth.Damaged -= OnScarecrowDamaged;
+        }
 
         if (IsServer)
         {

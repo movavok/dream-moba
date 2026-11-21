@@ -10,8 +10,11 @@ public class InteractionDetector : MonoBehaviour
 
     private PlayerNetwork player;
     private InputAction interactAction;
+
     private IInteractable currentInteractable;
     private NetworkObject currentNetworkObject;
+    private IInteractable currentHighlighted;
+    private IInteractable currentPrompted;
 
     private void Awake()
     {
@@ -47,28 +50,87 @@ public class InteractionDetector : MonoBehaviour
 
     private void UpdateCurrentInteractable()
     {
-        NetworkObject nearestNetworkObject;
-        IInteractable nearest =
-            FindNearestInteractable(out nearestNetworkObject);
+        FindNearestInteractables(
+            out IInteractable available,
+            out NetworkObject availableNetworkObject,
+            out IInteractable nearest);
 
-        if (nearest == currentInteractable)
+        if (nearest != currentHighlighted)
+        {
+            currentHighlighted?.SetHighlighted(false);
+            currentHighlighted = nearest;
+            currentHighlighted?.SetHighlighted(true);
+        }
+
+        currentInteractable = available;
+        currentNetworkObject = availableNetworkObject;
+
+        if (available == null)
+        {
+            if (currentPrompted != null)
+            {
+                currentPrompted = null;
+                InteractionPrompt.Hide();
+            }
+
+            return;
+        }
+
+        if (available == currentPrompted)
             return;
 
-        currentInteractable?.SetHighlighted(false);
-        currentInteractable = nearest;
-        currentNetworkObject = nearestNetworkObject;
-        currentInteractable?.SetHighlighted(true);
+        currentPrompted = available;
+        InteractionPrompt.Show(
+            available,
+            GetKeyboardBindingDisplayString()
+        );
+    }
 
-        if (currentInteractable == null)
-            InteractionPrompt.Hide();
-        else
+    private void FindNearestInteractables(
+        out IInteractable available,
+        out NetworkObject availableNetworkObject,
+        out IInteractable nearest)
+    {
+        available = null;
+        availableNetworkObject = null;
+        nearest = null;
+
+        float availableDistance = float.MaxValue;
+        float nearestDistance = float.MaxValue;
+
+        Collider2D[] hits = Physics2D.OverlapCircleAll(
+            transform.position,
+            interactionRadius,
+            interactionLayers
+        );
+
+        foreach (Collider2D hit in hits)
         {
-            string binding = GetKeyboardBindingDisplayString();
+            IInteractable interactable = FindInteractable(hit);
+            if (interactable == null)
+                continue;
 
-            InteractionPrompt.Show(
-                currentInteractable,
-                binding
-            );
+            NetworkObject networkObject =
+                hit.GetComponentInParent<NetworkObject>();
+            if (networkObject == null)
+                continue;
+
+            float distance =
+                (hit.transform.position - transform.position).sqrMagnitude;
+
+            if (distance < nearestDistance)
+            {
+                nearest = interactable;
+                nearestDistance = distance;
+            }
+
+            if (distance < availableDistance &&
+                interactable.CanInteract(player))
+            {
+                available = interactable;
+                availableNetworkObject = networkObject;
+                availableDistance = distance;
+            }
         }
     }
 
@@ -103,44 +165,6 @@ public class InteractionDetector : MonoBehaviour
         return "F";
     }
 
-    private IInteractable FindNearestInteractable(
-        out NetworkObject nearestNetworkObject)
-    {
-        nearestNetworkObject = null;
-        Collider2D[] hits = Physics2D.OverlapCircleAll(
-            transform.position,
-            interactionRadius,
-            interactionLayers
-        );
-
-        IInteractable nearest = null;
-        float nearestDistance = float.MaxValue;
-
-        foreach (Collider2D hit in hits)
-        {
-            IInteractable interactable = FindInteractable(hit);
-            NetworkObject networkObject =
-                hit.GetComponentInParent<NetworkObject>();
-
-            if (interactable == null ||
-                networkObject == null ||
-                !interactable.CanInteract(player))
-                continue;
-
-            float distance =
-                (hit.transform.position - transform.position).sqrMagnitude;
-
-            if (distance >= nearestDistance)
-                continue;
-
-            nearest = interactable;
-            nearestNetworkObject = networkObject;
-            nearestDistance = distance;
-        }
-
-        return nearest;
-    }
-
     private IInteractable FindInteractable(Collider2D hit)
     {
         MonoBehaviour[] components =
@@ -157,9 +181,11 @@ public class InteractionDetector : MonoBehaviour
 
     private void OnDisable()
     {
-        currentInteractable?.SetHighlighted(false);
+        currentHighlighted?.SetHighlighted(false);
+        currentHighlighted = null;
         currentInteractable = null;
         currentNetworkObject = null;
+        currentPrompted = null;
         InteractionPrompt.Hide();
     }
 

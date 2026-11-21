@@ -186,6 +186,18 @@ public class Inventory : NetworkBehaviour
             ? selection : 0;
     }
 
+    // Called only after ContainerInventory has validated both sides on the server.
+    public void ApplyContainerTransfer(InventorySlot[] result)
+    {
+        if (!IsServer || result == null || result.Length != SlotCount ||
+            slots.Count != SlotCount)
+            return;
+
+        for (int i = 0; i < SlotCount; i++)
+            if (!slots[i].Equals(result[i]))
+                slots[i] = result[i];
+    }
+
     private void DropItemsOnDeath()
     {
         // Items with their own world lifecycle (the flag) remove themselves
@@ -246,9 +258,9 @@ public class Inventory : NetworkBehaviour
     }
 
     [ServerRpc]
-    public void RequestUseServerRpc()
+    public void RequestUseServerRpc(int slot)
     {
-        TryUse(selectedSlot.Value);
+        TryUse(slot);
     }
 
     public bool TryAdd(ItemDefinition definition, int amount)
@@ -417,6 +429,11 @@ public class Inventory : NetworkBehaviour
             cooldownEnds[slot] = NetworkManager.ServerTime.Time + definition.useCooldown;
 
         ItemUsedClientRpc(slot);
+
+        int itemIndex = database != null ? database.GetIndex(definition) : -1;
+        if (itemIndex >= 0)
+            PlayItemUseSoundClientRpc(itemIndex);
+
         return true;
     }
 
@@ -425,6 +442,22 @@ public class Inventory : NetworkBehaviour
     {
         if (IsOwner)
             ItemUsed?.Invoke(slot);
+    }
+
+    [ClientRpc]
+    private void PlayItemUseSoundClientRpc(int itemIndex)
+    {
+        ItemDefinition definition = database != null
+            ? database.GetByIndex(itemIndex)
+            : null;
+
+        if (definition == null || definition.useAction == null)
+            return;
+
+        definition.useAction.PlayUseSound(
+            transform,
+            definition.AudioGroup
+        );
     }
 
     public bool TryThrow(int slot, Vector2 direction, bool strongThrow)

@@ -184,6 +184,11 @@ public class FlagGameManager : MonoBehaviour
         );
         MatchStatsManager.Instance?.AddFlagScore(teamId);
 
+        EconomyManager.Instance?.RewardTeamFlagDelivery(
+            teamId,
+            clientId
+        );
+
         FlagDeliveryZone deliveryZone =
             activeDeliveryZone != null
                 ? activeDeliveryZone.GetComponent<FlagDeliveryZone>()

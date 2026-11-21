@@ -10,6 +10,7 @@ public class WorldItem : NetworkBehaviour, IInteractable
     [SerializeField] private string interactionName = "item";
     [SerializeField] private InteractionOutline interactionOutline;
     [SerializeField] private ItemThrowMotion throwMotion;
+    [SerializeField] private SpriteRenderer visual;
 
     private readonly NetworkVariable<bool> isFlying = new(
         false,
@@ -42,6 +43,9 @@ public class WorldItem : NetworkBehaviour, IInteractable
 
         if (interactionOutline == null)
             interactionOutline = GetComponent<InteractionOutline>();
+
+        if (interactionOutline != null && visual != null)
+            interactionOutline.Configure(visual);
 
         defaultScale = transform.localScale;
         defaultRotation = transform.rotation;

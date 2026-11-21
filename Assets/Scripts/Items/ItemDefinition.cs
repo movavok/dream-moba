@@ -19,6 +19,9 @@ public class ItemDefinition : ScriptableObject
     [Header("Death")]
     public bool dropOnDeath;
 
+    [Header("Containers")]
+    public bool allowInContainers = true;
+
     [Header("Throw")]
     public bool throwable;
     public GameObject worldPrefab;
@@ -38,4 +41,8 @@ public class ItemDefinition : ScriptableObject
     public StatModifier[] selectedModifiers;
 
     public bool IsStackable => maxStack > 1;
+
+    public string AudioGroup =>
+        AudioGroups.Item(
+            string.IsNullOrEmpty(id) ? name : id);
 }

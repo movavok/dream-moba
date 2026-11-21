@@ -21,6 +21,7 @@ public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     private string tooltipTitle;
     private string tooltipDescription;
     private bool pointerInside;
+    private TMP_Text placeholderText;
 
     private Sprite normalFrame;
     private Sprite quickCastFrame;
@@ -98,6 +99,35 @@ public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
             icon.color = color;
         }
         icon.gameObject.SetActive(sprite != null);
+    }
+
+    public void SetPlaceholder(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            if (placeholderText != null)
+                placeholderText.gameObject.SetActive(false);
+            return;
+        }
+
+        if (placeholderText == null)
+        {
+            GameObject label = new GameObject("Item Initial",
+                typeof(RectTransform), typeof(TextMeshProUGUI));
+            label.transform.SetParent(transform, false);
+            RectTransform rect = (RectTransform)label.transform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.sizeDelta = Vector2.zero;
+            placeholderText = label.GetComponent<TMP_Text>();
+            placeholderText.font = TMP_Settings.defaultFontAsset;
+            placeholderText.fontSize = 28f;
+            placeholderText.alignment = TextAlignmentOptions.Center;
+            placeholderText.raycastTarget = false;
+        }
+
+        placeholderText.text = text;
+        placeholderText.gameObject.SetActive(true);
     }
 
     public void SetKey(string key)

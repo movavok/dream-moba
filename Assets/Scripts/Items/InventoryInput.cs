@@ -30,6 +30,6 @@ public class InventoryInput : MonoBehaviour
             inventory.SelectSlot(3);
 
         if (keyboard.spaceKey.wasPressedThisFrame)
-            inventory.RequestUseServerRpc();
+            inventory.RequestUseServerRpc(inventory.SelectedSlot.Value);
     }
 }

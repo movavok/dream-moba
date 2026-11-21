@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections;
+using System.Collections.Generic;
 
 public class RespawnManager : NetworkBehaviour
 {
@@ -11,6 +12,11 @@ public class RespawnManager : NetworkBehaviour
 
     [SerializeField] private float respawnTime = 5f;
     [SerializeField] private GameObject deathVisualPrefab;
+
+    [Header("Respawn Reward")]
+    [SerializeField] private ItemDefinition respawnItem;
+    [SerializeField, Min(1)] private int respawnItemCount = 1;
+    [SerializeField] private ContainerInventory[] teamBackpacks;
 
     private readonly System.Collections.Generic.Dictionary<ulong, NetworkObject> deathVisuals =
         new();
@@ -439,7 +445,9 @@ public class RespawnManager : NetworkBehaviour
             newPlayer.GetComponent<NetworkObject>();
 
         networkObject.SpawnAsPlayerObject(clientId);
-        newPlayer.GetComponent<Inventory>()?.RestoreSlots(savedInventory, savedSelection);
+        Inventory newInventory = newPlayer.GetComponent<Inventory>();
+        newInventory?.RestoreSlots(savedInventory, savedSelection);
+        GrantRespawnItem(newInventory, savedTeamId);
 
         spectatingTargets.Remove(clientId);
 
@@ -460,5 +468,68 @@ public class RespawnManager : NetworkBehaviour
         Debug.Log(
             "Player " + clientId + " respawned."
         );
+    }
+
+    private void GrantRespawnItem(Inventory inventory, short teamId)
+    {
+        if (respawnItem == null || respawnItemCount <= 0)
+            return;
+
+        if (inventory != null && inventory.TryAdd(respawnItem, respawnItemCount))
+            return;
+
+        GetTeamBackpack(teamId)?.TryAdd(respawnItem, respawnItemCount);
+    }
+
+
+    // Grants an item to a connected client: tries the player's live inventory
+    // first, then falls back to the team backpack. Reuses GetTeamBackpack.
+    public void GrantItemToClient(ulong clientId, ItemDefinition item, int count)
+    {
+        if (!IsServer || item == null || count <= 0 ||
+            NetworkManager.Singleton == null)
+            return;
+
+        Inventory inventory = null;
+        NetworkObject playerObj =
+            NetworkManager.Singleton.SpawnManager
+                .GetPlayerNetworkObject(clientId);
+
+        if (playerObj != null)
+            inventory = playerObj.GetComponent<Inventory>();
+
+        if (inventory != null && inventory.TryAdd(item, count))
+            return;
+
+        TeamManager teamMgr = GetComponent<TeamManager>();
+        short teamId = teamMgr != null
+            ? teamMgr.GetTeamId(clientId)
+            : (short)0;
+
+        GetTeamBackpack(teamId)?.TryAdd(item, count);
+    }
+
+    private ContainerInventory GetTeamBackpack(short teamId)
+    {
+        if (teamId <= 0 || teamBackpacks == null || teamBackpacks.Length == 0)
+            return null;
+
+        TeamManager teamManager = GetComponent<TeamManager>();
+        if (teamManager == null || NetworkManager.Singleton == null)
+            return null;
+
+        List<short> activeTeamIds = new() { teamId };
+        foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            short id = teamManager.GetTeamId(clientId);
+            if (id > 0 && !activeTeamIds.Contains(id))
+                activeTeamIds.Add(id);
+        }
+
+        activeTeamIds.Sort();
+        int backpackIndex = activeTeamIds.IndexOf(teamId);
+        return backpackIndex >= 0 && backpackIndex < teamBackpacks.Length
+            ? teamBackpacks[backpackIndex]
+            : null;
     }
 }

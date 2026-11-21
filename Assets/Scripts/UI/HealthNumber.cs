@@ -17,12 +17,18 @@ public class HealthNumber : MonoBehaviour
 
     public void Setup(
         int amount,
-        Color color)
+        Color color,
+        string source = null)
     {
-        text.text =
+        string sign =
             amount > 0
-                ? $"+{amount}"
-                : amount.ToString();
+                ? "+"
+                : "";
+
+        text.text =
+            string.IsNullOrEmpty(source)
+                ? $"{sign}{amount}"
+                : $"{sign}{amount} ({source})";
 
         text.color = color;
     }

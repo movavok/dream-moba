@@ -239,9 +239,19 @@ public class PlayerNetwork : NetworkBehaviour
         if (!IsOwner || !IsSpawned)
             return;
 
-        isAttacking = value.isPressed;
+        isAttacking = value.isPressed &&
+            (ContainerUI.Instance == null || !ContainerUI.Instance.IsOpen);
 
         SetAttackingServerRpc(isAttacking);
+    }
+
+    public void CancelAttackForUI()
+    {
+        if (!IsOwner || !IsSpawned)
+            return;
+
+        isAttacking = false;
+        SetAttackingServerRpc(false);
     }
 
     // Aim input

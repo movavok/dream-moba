@@ -18,6 +18,7 @@ MonoBehaviour:
   icon: {fileID: 4679815505131476315, guid: 6c5256ba1982c4f4289b4442677a7bb5, type: 3}
   maxStack: 1
   dropOnDeath: 1
+  allowInContainers: 0
   throwable: 1
   worldPrefab: {fileID: 1000000000000000000, guid: 2b6d9f4a1c8e3f5b7a0d2c4e6f8b1a3d, type: 3}
   normalThrowMultiplier: 1

@@ -75,3 +75,7 @@ MonoBehaviour:
   playerPrefab: {fileID: 7869603720132464616, guid: c910fd23f540078468e0b70b514a6108, type: 3}
   respawnPoint: {fileID: 0}
   respawnTime: 5
+  deathVisualPrefab: {fileID: 0}
+  respawnItem: {fileID: 11400000, guid: b25708a55cc74e6c94cfe517b7cd0bd0, type: 2}
+  respawnItemCount: 1
+  teamBackpacks: []
