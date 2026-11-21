@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[DefaultExecutionOrder(200)]
 public class GuitaristAura : MonoBehaviour, IAbilityVisual
 {
     private HeroVisual heroVisual;

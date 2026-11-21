@@ -5,6 +5,7 @@ public class HeroSorting : MonoBehaviour
     [SerializeField] private SpriteRenderer heroRenderer;
     [SerializeField] private SpriteRenderer shadowRenderer;
     [SerializeField] private SpriteRenderer behindOutline;
+    [SerializeField] private Transform sortPoint;
 
     private Team team;
     private DeathVisual deathVisual;
@@ -36,6 +37,12 @@ public class HeroSorting : MonoBehaviour
 
         team = GetComponentInParent<Team>();
         deathVisual = GetComponentInParent<DeathVisual>();
+
+        PlayerNetwork player = GetComponentInParent<PlayerNetwork>();
+        Transform feet = sortPoint != null ? sortPoint :
+            player != null ? player.Body : null;
+        if (heroRenderer != null)
+            WorldYSort.Configure(gameObject, feet, heroRenderer, heroRenderer);
     }
 
     private void OnEnable()

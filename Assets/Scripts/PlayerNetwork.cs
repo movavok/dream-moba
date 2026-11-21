@@ -22,6 +22,7 @@ public class PlayerNetwork : NetworkBehaviour
     public HeroDefinition HeroData => heroData;
 
     private Rigidbody2D rb;
+    private PlayerInput playerInput;
     private bool buildingTransitionInProgress;
 
     private Vector2 moveInput;
@@ -483,7 +484,7 @@ public class PlayerNetwork : NetworkBehaviour
         if (statController != null)
             statController.SetHeroData(heroData);
 
-        PlayerInput playerInput = GetComponent<PlayerInput>();
+        playerInput = GetComponent<PlayerInput>();
         if (playerInput != null)
         {
             throwAction = playerInput.actions.FindAction(
@@ -656,6 +657,11 @@ public class PlayerNetwork : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+        // PlayerInput pairs local devices and manages action maps. Remote hero
+        // replicas must not participate in that local input/device lifecycle.
+        if (playerInput != null)
+            playerInput.enabled = IsClient && IsOwner;
+
         // The server simulates movement and collisions. Remote instances only
         // follow NetworkTransform; local dynamic physics would fight its updates.
         if (!IsServer && rb != null)
@@ -707,6 +713,10 @@ public class PlayerNetwork : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        // Release devices before a replacement hero is spawned on respawn.
+        if (playerInput != null)
+            playerInput.enabled = false;
+
         if (LocalPlayer == this)
         {
             LocalPlayer = null;

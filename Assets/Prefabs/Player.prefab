@@ -53,11 +53,11 @@ AudioSource:
   Spatialize: 0
   SpatializePostEffects: 0
   Priority: 128
-  DopplerLevel: 1
+  DopplerLevel: 0
   MinDistance: 5
   MaxDistance: 20
   Pan2D: 0
-  rolloffMode: 1
+  rolloffMode: 0
   BypassEffects: 0
   BypassListenerEffects: 0
   BypassReverbZones: 0
@@ -65,23 +65,32 @@ AudioSource:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
-      time: 0
+      time: 0.25
       value: 1
-      inSlope: 0
-      outSlope: 0
+      inSlope: -4.0016
+      outSlope: -4.0016
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 0.5245514
+      value: 0.30545807
+      inSlope: -1.0004
+      outSlope: -1.0004
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
     - serializedVersion: 3
       time: 1
-      value: 0
-      inSlope: 0
-      outSlope: 0
+      value: 0.0028076172
+      inSlope: -0.2501
+      outSlope: -0.2501
       tangentMode: 0
       weightedMode: 0
-      inWeight: 0.33333334
-      outWeight: 0.33333334
+      inWeight: 0
+      outWeight: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
@@ -237,7 +246,7 @@ Transform:
   m_GameObject: {fileID: 982534767079661132}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.8, z: 0}
+  m_LocalPosition: {x: 0, y: -0.938, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -991,7 +1000,7 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    ImpulseDuration: 0.05
+    ImpulseDuration: 0.16
     ImpulseType: 2
     DissipationRate: 0.25
     RawSignal: {fileID: 0}
@@ -1117,8 +1126,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   health: {fileID: 4358954668334114696}
-  sources: 0200000001000000
-  damageMultiplier: 2
+  sources: 020000000100000000000000
+  damageMultiplier: 1
 --- !u!1 &7869603720132464616
 GameObject:
   m_ObjectHideFlags: 0
@@ -1143,6 +1152,7 @@ GameObject:
   - component: {fileID: 4418126354132710016}
   - component: {fileID: 608649215324937352}
   - component: {fileID: 9000000000000000001}
+  - component: {fileID: 9000000000000000104}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1150,6 +1160,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &9000000000000000104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7869603720132464616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f421866280a34542abe070c7c05a8aa8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::HeroEffectVisuals
+  effects:
+  - source: {fileID: 11400000, guid: 3d1f116da6a5427c8f6af65b86cc95a1, type: 2}
+    prefab: {fileID: 5132178953236233099, guid: cf68316e9d95b29499c54728dd50a224, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
 --- !u!4 &8561917045426891098
 Transform:
   m_ObjectHideFlags: 0
@@ -1187,7 +1213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3917688828
+  GlobalObjectIdHash: 1819122899
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -1216,11 +1242,11 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
   AutoOwnerAuthorityTickOffset: 1
-  PositionInterpolationType: 1
+  PositionInterpolationType: 0
   RotationInterpolationType: 0
   ScaleInterpolationType: 0
   PositionLerpSmoothing: 1
-  PositionMaxInterpolationTime: 0.1
+  PositionMaxInterpolationTime: 0.05
   RotationLerpSmoothing: 1
   RotationMaxInterpolationTime: 0.1
   ScaleLerpSmoothing: 0
@@ -1274,7 +1300,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 976b4f50574ac4b4799f4a4e3a69fafc, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatController
   heroData: {fileID: 11400000, guid: 6a395871ea5672241b53416c3278df0e, type: 2}
 --- !u!114 &9000000000000000102
@@ -1287,7 +1313,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bb1fec0189a270f41a5e138fe04000d5, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Inventory
   ShowTopMostFoldoutHeaderGroup: 1
   database: {fileID: 11400000, guid: 52fd788f283d4e43b2d2ffcb4f665121, type: 2}
@@ -1302,7 +1328,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f3bd35877864e3147940e4c41a9b9823, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InventoryInput
 --- !u!114 &-2084083740058303644
 MonoBehaviour:
@@ -1410,6 +1436,8 @@ MonoBehaviour:
   standaloneMaxHealth: 0
   respawnOnDeath: 1
   standardRegenEnabled: 1
+  damageClips: []
+  audioGroup: 
 --- !u!114 &6821608293737209610
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1470,6 +1498,7 @@ MonoBehaviour:
   heroRenderer: {fileID: 1877963979028858135}
   shadowRenderer: {fileID: 7131984431244636473}
   behindOutline: {fileID: 4070049852060033095}
+  sortPoint: {fileID: 7257965903156679887}
 --- !u!114 &9000000000000000001
 MonoBehaviour:
   m_ObjectHideFlags: 0

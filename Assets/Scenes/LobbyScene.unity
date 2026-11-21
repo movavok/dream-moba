@@ -5255,7 +5255,7 @@ MonoBehaviour:
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: f328b679409dd6447a63cbf3a68a9faf, type: 2}
-    TickRate: 64
+    TickRate: 50
     ClientConnectionBufferTimeout: 10
     ConnectionApproval: 0
     ConnectionData: 
@@ -5582,7 +5582,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 636, y: -0.0000101625565}
+  m_AnchoredPosition: {x: 636, y: 0.000027585922}
   m_SizeDelta: {x: 1272, y: 712}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1695122481

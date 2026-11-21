@@ -1,10 +1,13 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class VolumeUI : MonoBehaviour
 {
     [SerializeField] private Slider volumeSlider;
     [SerializeField] private Animator animator;
+    [SerializeField, Range(0f, 1f)] private float defaultVolume = 0.5f;
 
     [SerializeField] private UnityEngine.UI.Image volumeIcon;
 
@@ -21,6 +24,8 @@ public class VolumeUI : MonoBehaviour
 
     private void Start()
     {
+        AudioListener.volume = defaultVolume;
+
         if (volumeSlider != null)
         {
             volumeSlider.value = AudioListener.volume;
@@ -96,6 +101,23 @@ public class VolumeUI : MonoBehaviour
             AudioListener.volume <= 0f
                 ? volumeMutedSprite
                 : volumeOnSprite;
+    }
+
+    private void Update()
+    {
+        if (volumeSlider == null || EventSystem.current == null)
+            return;
+
+        if (EventSystem.current.currentSelectedGameObject != volumeSlider.gameObject)
+            return;
+
+        // Slider keeps UI focus after a click and would take WASD/arrow
+        // "move" input as value changes. Drop focus once the mouse is released.
+        bool mouseHeld =
+            Mouse.current != null && Mouse.current.leftButton.isPressed;
+
+        if (!mouseHeld)
+            EventSystem.current.SetSelectedGameObject(null);
     }
 
     private void OnDestroy()

@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 1000000000000000009}
   - component: {fileID: 8526115268165914908}
   - component: {fileID: 1000000000000000090}
+  - component: {fileID: 1000000000000000091}
   m_Layer: 0
   m_Name: Scarecrow
   m_TagString: HeroSorting
@@ -25,6 +26,25 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1000000000000000091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b77e942ed2b43f8b1e0535417134bca, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::WorldYSort
+  sortPoint: {fileID: 7498993074283073008}
+  anchorRenderer: {fileID: 1000000000000010015}
+  visualRenderers:
+  - {fileID: 1000000000000010015}
+  sortingGroup: {fileID: 0}
+  setWorldLayer: 0
+  groundOffset: 0
 --- !u!4 &1000000000000000001
 Transform:
   m_ObjectHideFlags: 0
@@ -167,6 +187,11 @@ MonoBehaviour:
   standaloneMaxHealth: 100
   respawnOnDeath: 0
   standardRegenEnabled: 0
+  damageClips:
+  - {fileID: 8300000, guid: 1c11cf2210751d048aa87c0137861a78, type: 3}
+  - {fileID: 8300000, guid: 7a88668dc294c584d8718189426fe32d, type: 3}
+  - {fileID: 8300000, guid: 7235aeb83f69de84c87e9b8215c2ac74, type: 3}
+  audioGroup: MinionBoss/Scarecrow
 --- !u!114 &1000000000000000004
 MonoBehaviour:
   m_ObjectHideFlags: 0

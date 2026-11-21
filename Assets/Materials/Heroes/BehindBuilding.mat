@@ -54,11 +54,20 @@ Material:
     m_Ints: []
     m_Floats:
     - _EnableExternalAlpha: 0
+    - _GapAlpha: 0.08
+    - _PatternDensity: 6
+    - _PatternDirection: 1
+    - _PatternEnabled: 1
+    - _PatternLineWidth: 0.18
+    - _PatternSoftness: 0.06
+    - _PatternSpeed: 0.35
+    - _VisibleAlpha: 0.42
     - _ZWrite: 0
     m_Colors:
     - White: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
+    - _TeamColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
 --- !u!114 &4135189279326822286
