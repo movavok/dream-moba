@@ -28,6 +28,12 @@ public class Health : NetworkBehaviour
     [SerializeField] private bool respawnOnDeath = true;
     [SerializeField] private bool standardRegenEnabled = true;
 
+    [Header("Audio")]
+    [Tooltip("If set, replaces the global damage-taken sounds for this object. One is picked at random per hit.")]
+    [SerializeField] private AudioClip[] damageClips;
+    [Tooltip("Volume group for this object's sounds, e.g. Hero/Guitarist, MinionBoss/Scarecrow, Creep/Melee. Leave empty on players to use the hero group; otherwise Global is used.")]
+    [SerializeField] private string audioGroup;
+
     private const float REGEN_DELAY = 3f;
     private const float REGEN_INTERVAL = 1f;
     private const int REGEN_AMOUNT = 10;
@@ -114,39 +120,32 @@ public class Health : NetworkBehaviour
         Vector2 hitPosition,
         float damage)
     {
-        if (damageHitEffect == null)
-            return;
-
         float radius = Mathf.Lerp(
             0.15f,
             0.5f,
             Mathf.Clamp01(damage / 100f)
         );
 
-        damageHitEffect.SetHit(
+        damageHitEffect?.SetHit(
             hitPosition,
             radius,
             damage
         );
 
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlayDamageTaken(
-                hitPosition
-            );
-        }
+    }
 
-        if (damageHitFeedback != null)
-        {
-            damageHitFeedback.Shake(damage);
-        }
+    private string ResolveAudioGroup()
+    {
+        if (!string.IsNullOrEmpty(audioGroup))
+            return audioGroup;
 
-        if (playerNetwork != null &&
-            IsOwner &&
-            PlayerCamera.Instance != null)
-        {
-            PlayerCamera.Instance.Shake(damage);
-        }
+        if (playerNetwork == null)
+            playerNetwork = GetComponent<PlayerNetwork>();
+
+        if (playerNetwork != null && playerNetwork.HeroData != null)
+            return playerNetwork.HeroData.AudioGroup;
+
+        return AudioGroups.Global;
     }
 
     public int CurrentHealth => currentHealth.Value;
@@ -340,6 +339,14 @@ public class Health : NetworkBehaviour
 
         if (appliedDamage > 0)
         {
+            // Send feedback while the object is still spawned. Damaged handlers
+            // can despawn a miniboss immediately on a lethal hit.
+            ShowDamageFeedbackClientRpc(
+                appliedDamage,
+                attackerClientId,
+                (byte)source
+            );
+
             Damaged?.Invoke(
                 new DamageEvent(
                     appliedDamage,
@@ -348,11 +355,6 @@ public class Health : NetworkBehaviour
                 )
             );
 
-            ShowDamageFeedbackClientRpc(
-                appliedDamage,
-                attackerClientId,
-                (byte)source
-            );
         }
 
         if (!IsAlive())
@@ -408,6 +410,22 @@ public class Health : NetworkBehaviour
         ulong attackerClientId,
         byte source)
     {
+        // Damage audio belongs to actual health loss, not to the optional hit
+        // visual. This also covers reflected and other non-projectile damage.
+        if (AudioManager.Instance != null)
+        {
+            if (damageClips != null && damageClips.Length > 0)
+            {
+                AudioManager.Instance.PlayRandomClip(
+                    ResolveAudioGroup(), SoundKeys.CustomDamage,
+                    damageClips, transform.position);
+            }
+            else
+            {
+                AudioManager.Instance.PlayDamageTaken(transform.position);
+            }
+        }
+
         DamageFeedback?.Invoke(
             new DamageEvent(
                 amount,
@@ -415,6 +433,15 @@ public class Health : NetworkBehaviour
                 (DamageSource)source
             )
         );
+
+        damageHitFeedback?.Shake(amount);
+        if ((DamageSource)source != DamageSource.Projectile)
+        {
+            // Reflected damage has no projectile impact callback of its own.
+            float radius = Mathf.Lerp(0.15f, 0.5f, Mathf.Clamp01(amount / 100f));
+            damageHitEffect?.SetHit(transform.position, radius, amount);
+        }
+
     }
 
     [ClientRpc]

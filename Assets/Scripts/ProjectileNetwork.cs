@@ -461,15 +461,16 @@ public class ProjectileNetwork : NetworkBehaviour
             bool targetWasProtected =
                 health.IsSpawnProtected;
 
+            // A lethal TakeDamage may despawn the target synchronously.
+            health.ShowDamageHit(
+                hitPosition,
+                finalDamage
+            );
+
             health.TakeDamage(
                 finalDamage,
                 attackerClientId,
                 DamageSource.Projectile
-            );
-
-            health.ShowDamageHit(
-                hitPosition,
-                finalDamage
             );
 
             PlayHitSoundClientRpc(

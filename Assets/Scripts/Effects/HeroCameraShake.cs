@@ -35,7 +35,7 @@ public class HeroCameraShake : MonoBehaviour
         if (PlayerCamera.Instance == null)
             return;
 
-        PlayerCamera.Instance.Shake(
+        PlayerCamera.Instance.ShowDamageFeedback(
             damageEvent.Amount * damageMultiplier
         );
     }

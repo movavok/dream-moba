@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f8a1c7d9e2b4a60b5c8d3e7f1a29406, type: 3}
+  m_Name: AudioVolumeSettings
+  m_EditorClassIdentifier: Assembly-CSharp::AudioVolumeSettings
+  groups:
+  - group: Global
+    entries:
+    - key: DamageTaken
+      volume: 0.34
+    - key: CustomDamage
+      volume: 1
+    - key: BuildingTransition
+      volume: 1
+  - group: Hero/Guitarist
+    entries:
+    - key: BasicAttack
+      volume: 0.15
+    - key: AttackHit
+      volume: 0.65
+    - key: Ability1
+      volume: 0.125
+    - key: Ability2
+      volume: 0.135
+    - key: Death
+      volume: 0.3
+    - key: Respawn
+      volume: 1
+    - key: CustomDamage
+      volume: 1
+  - group: Item/energy_drink
+    entries:
+    - key: ItemUse
+      volume: 0.2
+  - group: MinionBoss/Scarecrow
+    entries:
+    - key: CustomDamage
+      volume: 0.2
+    - key: Death
+      volume: 0.4
+  - group: Creep/Melee
+    entries:
+    - key: CustomDamage
+      volume: 1
+    - key: Death
+      volume: 1

@@ -15,6 +15,14 @@ public class PlayerCamera : MonoBehaviour
     [SerializeField] private Collider2D mapBounds;
     [SerializeField, Min(0f)] private float deathColorFadeDuration = 0.5f;
 
+    [Header("Damage Screen Feedback")]
+    [SerializeField, Min(1f)] private float damageForFullFeedback = 100f;
+    [SerializeField, Range(0f, 0.25f)] private float maxDamageZoom = 0.065f;
+    [SerializeField, Min(0f)] private float maxDamageShake = 0.15f;
+    [SerializeField, Range(0f, 1f)] private float maxDamageVignette = 0.4f;
+    [SerializeField, Min(0.01f)] private float damageFeedbackDuration = 0.55f;
+    [SerializeField] private Color damageVignetteColor = new(0.65f, 0f, 0f, 1f);
+
     private Transform followedTarget;
     private Collider2D currentBounds;
     private VolumeProfile deathProfile;
@@ -22,6 +30,10 @@ public class PlayerCamera : MonoBehaviour
     private Coroutine deathColorRoutine;
     private AudioListener cameraListener;
     private AudioListener playerListener;
+    private DamageScreenVignette damageVignette;
+    private DamageCameraPulse damageCameraPulse;
+    private float damagePeak;
+    private float damageStartedAt;
 
     public bool IsReady => virtualCamera != null;
     public bool IsInBuilding => followedTarget != null &&
@@ -63,9 +75,41 @@ public class PlayerCamera : MonoBehaviour
         volume.isGlobal = true;
         volume.priority = 100f;
         deathProfile = ScriptableObject.CreateInstance<VolumeProfile>();
-        volume.sharedProfile = deathProfile;
+        // Keep the mutable profile as the Volume's actual runtime instance.
+        // Accessing Volume.profile must not clone a stale shared-profile copy.
+        volume.profile = deathProfile;
         deathColor = deathProfile.Add<ColorAdjustments>();
         deathColor.saturation.Override(0f);
+        if (virtualCamera != null)
+        {
+            damageVignette = GetComponent<DamageScreenVignette>();
+            if (damageVignette == null)
+                damageVignette = gameObject.AddComponent<DamageScreenVignette>();
+        }
+
+        // This is an effect on the output camera, not a virtual-camera lens
+        // override: the latter is overwritten by PixelPerfectCamera at render.
+        damageCameraPulse = GetComponent<DamageCameraPulse>();
+        if (damageCameraPulse == null)
+            damageCameraPulse = gameObject.AddComponent<DamageCameraPulse>();
+
+        if (virtualCamera != null)
+        {
+            Camera output = GetComponent<Camera>();
+            if (output != null)
+            {
+                var cameraData = output.GetUniversalAdditionalCameraData();
+                cameraData.renderPostProcessing = true;
+                cameraData.volumeLayerMask |= 1 << gameObject.layer;
+                output.SetVolumeFrameworkUpdateMode(VolumeFrameworkUpdateMode.EveryFrame);
+            }
+
+            if (virtualCamera.GetComponent<CinemachineImpulseListener>() == null)
+            {
+                var listener = virtualCamera.gameObject.AddComponent<CinemachineImpulseListener>();
+                listener.Use2DDistance = true;
+            }
+        }
 
         Debug.Log(
             $"PlayerCamera Awake: {gameObject.name}, " +
@@ -75,10 +119,15 @@ public class PlayerCamera : MonoBehaviour
 
     public void Shake(float damage)
     {
+        if (impulseSource == null && PlayerNetwork.LocalPlayer != null)
+            impulseSource = PlayerNetwork.LocalPlayer.GetComponentInChildren<CinemachineImpulseSource>();
         if (impulseSource == null)
             return;
 
-        float strength = Mathf.Clamp(damage / 100f, 0.005f, 0.025f);
+        float strength = Mathf.Clamp01(damage / Mathf.Max(1f, damageForFullFeedback)) *
+            maxDamageShake;
+        if (strength <= 0f)
+            return;
 
         float angle = Random.Range(0f, Mathf.PI * 2f);
 
@@ -113,11 +162,56 @@ public class PlayerCamera : MonoBehaviour
 
     private void LateUpdate()
     {
+        UpdateDamageScreen();
         if (followedTarget != null)
         {
             RefreshBounds(followedTarget.position);
             UpdateListenerPosition(followedTarget.position);
         }
+    }
+
+    public void ShowDamageFeedback(float damage)
+    {
+        if (damage <= 0f)
+            return;
+
+        Shake(damage);
+        damageCameraPulse?.SubscribeAfterPixelPerfect();
+        float strength = Mathf.Clamp01(damage / Mathf.Max(1f, damageForFullFeedback));
+        // New hits refresh the fade without letting a weak hit cancel a strong one.
+        damagePeak = Mathf.Max(CurrentDamageStrength(), strength);
+        damageStartedAt = Time.unscaledTime;
+        UpdateDamageScreen();
+    }
+
+    [ContextMenu("Test Damage Feedback/10 Damage (Play Mode)")]
+    private void TestSmallDamageFeedback()
+    {
+        if (Application.isPlaying)
+            ShowDamageFeedback(10f);
+    }
+
+    [ContextMenu("Test Damage Feedback/100 Damage (Play Mode)")]
+    private void TestFullDamageFeedback()
+    {
+        if (Application.isPlaying)
+            ShowDamageFeedback(100f);
+    }
+
+    private float CurrentDamageStrength()
+    {
+        float t = Mathf.Clamp01((Time.unscaledTime - damageStartedAt) /
+            Mathf.Max(0.01f, damageFeedbackDuration));
+        return damagePeak * (1f - Mathf.SmoothStep(0f, 1f, t));
+    }
+
+    private void UpdateDamageScreen()
+    {
+        float strength = CurrentDamageStrength();
+        if (damageCameraPulse != null)
+            damageCameraPulse.ZoomFraction = strength * maxDamageZoom;
+        if (damageVignette != null)
+            damageVignette.SetIntensity(strength * maxDamageVignette, damageVignetteColor);
     }
 
     private void UpdateListenerPosition(Vector3 position)
@@ -145,6 +239,8 @@ public class PlayerCamera : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (damageCameraPulse != null)
+            damageCameraPulse.ZoomFraction = 0f;
         if (Instance == this)
             Instance = null;
 

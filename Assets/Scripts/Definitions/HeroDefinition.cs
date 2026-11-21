@@ -34,4 +34,8 @@ public class HeroDefinition : ScriptableObject
 
     [Header("Audio")]
     public HeroAudioDefinition audio;
+
+    public string AudioGroup =>
+        AudioGroups.Hero(
+            string.IsNullOrEmpty(id) ? name : id);
 }

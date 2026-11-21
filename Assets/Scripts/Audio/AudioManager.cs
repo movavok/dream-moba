@@ -7,6 +7,7 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource audioSourcePrefab;
     [SerializeField] private AudioSource buildingTransitionSource;
     [SerializeField] private AudioLibrary globalLibrary;
+    [SerializeField] private AudioVolumeSettings volumeSettings;
 
     [Header("Pitch")]
     [SerializeField] private float minPitch = 0.95f;
@@ -24,6 +25,65 @@ public class AudioManager : MonoBehaviour
 
         if (buildingTransitionSource != null)
             buildingTransitionSource.spatialBlend = 0f;
+    }
+
+    public float GetVolume(string group, string sound)
+    {
+        return volumeSettings != null
+            ? volumeSettings.GetVolume(group, sound)
+            : 1f;
+    }
+
+    public AudioSource PlaySound(
+        string group,
+        string sound,
+        AudioClip clip,
+        Vector3 position)
+    {
+        return PlayAtPosition(
+            clip,
+            position,
+            GetVolume(group, sound)
+        );
+    }
+
+    public AudioSource PlaySoundFollowing(
+        string group,
+        string sound,
+        AudioClip clip,
+        Transform follow)
+    {
+        if (clip == null || follow == null)
+            return null;
+
+        if (audioSourcePrefab == null)
+        {
+            Debug.LogError(
+                "AudioManager: AudioSource Prefab is not assigned!"
+            );
+
+            return null;
+        }
+
+        AudioSource source =
+            Instantiate(audioSourcePrefab);
+
+        source.transform.SetParent(follow, false);
+        source.transform.localPosition = Vector3.zero;
+
+        source.spatialBlend = 1f;
+        source.volume = GetVolume(group, sound);
+        source.pitch = Random.Range(minPitch, maxPitch);
+        source.clip = clip;
+
+        source.Play();
+
+        Destroy(
+            source.gameObject,
+            clip.length + 0.1f
+        );
+
+        return source;
     }
 
     public AudioSource PlayAtPosition(
@@ -70,22 +130,27 @@ public class AudioManager : MonoBehaviour
         if (globalLibrary == null)
             return;
 
-        if (globalLibrary.damageTaken == null ||
-            globalLibrary.damageTaken.Length == 0)
+        PlayRandomClip(
+            AudioGroups.Global,
+            SoundKeys.DamageTaken,
+            globalLibrary.damageTaken,
+            position
+        );
+    }
+
+    public void PlayRandomClip(
+        string group,
+        string sound,
+        AudioClip[] clips,
+        Vector3 position)
+    {
+        if (clips == null || clips.Length == 0)
             return;
 
-        AudioClip clip =
-            globalLibrary.damageTaken[
-                Random.Range(
-                    0,
-                    globalLibrary.damageTaken.Length
-                )
-            ];
-
         PlayAtPosition(
-            clip,
+            clips[Random.Range(0, clips.Length)],
             position,
-            globalLibrary.damageTakenVolume
+            GetVolume(group, sound)
         );
     }
 
@@ -105,19 +170,24 @@ public class AudioManager : MonoBehaviour
         if (clip == null)
             return;
 
+        float volume = GetVolume(
+            AudioGroups.Global,
+            SoundKeys.BuildingTransition
+        );
+
         if (buildingTransitionSource != null)
         {
             buildingTransitionSource.pitch = Random.Range(minPitch, maxPitch);
             buildingTransitionSource.PlayOneShot(
                 clip,
-                globalLibrary.buildingTransitionVolume
+                volume
             );
             return;
         }
 
         PlayLocal(
             clip,
-            globalLibrary.buildingTransitionVolume
+            volume
         );
     }
 

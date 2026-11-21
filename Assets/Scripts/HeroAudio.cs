@@ -77,26 +77,30 @@ public class HeroAudio : MonoBehaviour
         AudioClip clip =
             clips[Random.Range(0, clips.Length)];
 
-        AudioManager.Instance.PlayAtPosition(
+        AudioManager manager = AudioManager.Instance;
+
+        if (manager == null)
+            return;
+
+        manager.PlaySound(
+            AudioGroup,
+            SoundKeys.Death,
             clip,
-            transform.position,
-            heroData.audio.deathVolume
+            transform.position
         );
     }
 
     private void OnAttackUsed()
     {
-        PlayRandom(
-            heroData != null
+        AudioClip[] clips =
+            heroData != null && heroData.audio != null
                 ? heroData.audio.basicAttack
-                : null,
-            heroData != null
-                ? heroData.audio.basicAttackVolume
-                : 1f
-        );
+                : null;
+
+        PlayRandom(clips);
     }
 
-    private void PlayRandom(AudioClip[] clips, float volume)
+    private void PlayRandom(AudioClip[] clips)
     {
         if (audioSource == null)
             return;
@@ -110,7 +114,10 @@ public class HeroAudio : MonoBehaviour
         audioSource.pitch =
             Random.Range(0.95f, 1.05f);
 
-        audioSource.PlayOneShot(clip, volume);
+        audioSource.PlayOneShot(
+            clip,
+            Volume(SoundKeys.BasicAttack)
+        );
     }
 
     public void PlayAttackHit(
@@ -126,24 +133,6 @@ public class HeroAudio : MonoBehaviour
         );
     }
 
-    private void PlayRandomAtPosition(
-        AudioClip[] clips,
-        Vector2 position,
-        float volume)
-    {
-        if (clips == null || clips.Length == 0)
-            return;
-
-        AudioClip clip =
-            clips[Random.Range(0, clips.Length)];
-
-        AudioManager.Instance.PlayAtPosition(
-            clip,
-            position,
-            volume
-        );
-    }
-
     public AudioClip[] GetAttackHitClips()
     {
         if (heroData == null || heroData.audio == null)
@@ -152,23 +141,15 @@ public class HeroAudio : MonoBehaviour
         return heroData.audio.attackHit;
     }
 
-    public float AttackHitVolume
-    {
-        get
-        {
-            if (heroData == null || heroData.audio == null)
-                return 1f;
-
-            return heroData.audio.attackHitVolume;
-        }
-    }
+    public float AttackHitVolume =>
+        Volume(SoundKeys.AttackHit);
 
     public AudioSource PlayClipAtPosition(
         AudioClip clip,
         Vector2 position,
         float volume)
     {
-        if (clip == null)
+        if (clip == null || AudioManager.Instance == null)
             return null;
 
         return AudioManager.Instance.PlayAtPosition(
@@ -212,16 +193,8 @@ public class HeroAudio : MonoBehaviour
         return heroData.audio.ability1;
     }
 
-    public float Ability1Volume
-    {
-        get
-        {
-            if (heroData == null || heroData.audio == null)
-                return 1f;
-
-            return heroData.audio.ability1Volume;
-        }
-    }
+    public float Ability1Volume =>
+        Volume(SoundKeys.Ability1);
 
     public AudioClip[] GetAbility2Clips()
     {
@@ -231,14 +204,20 @@ public class HeroAudio : MonoBehaviour
         return heroData.audio.ability2;
     }
 
-    public float Ability2Volume
-    {
-        get
-        {
-            if (heroData == null || heroData.audio == null)
-                return 1f;
+    public float Ability2Volume =>
+        Volume(SoundKeys.Ability2);
 
-            return heroData.audio.ability2Volume;
-        }
+    private string AudioGroup =>
+        heroData != null
+            ? heroData.AudioGroup
+            : AudioGroups.Global;
+
+    private float Volume(string sound)
+    {
+        AudioManager manager = AudioManager.Instance;
+
+        return manager != null
+            ? manager.GetVolume(AudioGroup, sound)
+            : 1f;
     }
 }
