@@ -9,6 +9,14 @@ using UnityEngine.SceneManagement;
 
 public class NetworkSessionManager : MonoBehaviour
 {
+    public enum ConnectionMode { Relay, DirectLocalhost }
+
+    [Header("Connection (Host)")]
+    [SerializeField] private ConnectionMode connectionMode = ConnectionMode.Relay;
+
+    [Header("Relay")]
+    [Tooltip("Empty uses Unity QoS auto-selection. Set an available region ID before creating a new room to compare latency.")]
+    [SerializeField] private string relayRegionOverride = "";
 
     private LobbyLoadingUI loadingUI;
 
@@ -139,10 +147,13 @@ public class NetworkSessionManager : MonoBehaviour
 
             IsSessionOperationInProgress = true;
 
-            SessionOptions options = new SessionOptions
-            {
-                MaxPlayers = 6
-            }.WithRelayNetwork();
+            await InitializeServices();
+            SessionOptions options = new SessionOptions { MaxPlayers = 6 };
+            if (connectionMode == ConnectionMode.DirectLocalhost)
+                options.WithDirectNetwork("127.0.0.1", "127.0.0.1", 7777);
+            else
+                options.WithRelayNetwork(string.IsNullOrWhiteSpace(relayRegionOverride)
+                    ? null : relayRegionOverride.Trim());
 
             CurrentSession =
                 await MultiplayerService.Instance.CreateSessionAsync(options);
@@ -192,6 +203,7 @@ public class NetworkSessionManager : MonoBehaviour
 
             roomCode = roomCode.Trim().ToUpper();
 
+            await InitializeServices();
             JoinSessionOptions options = new JoinSessionOptions();
 
             CurrentSession =

@@ -5273,6 +5273,7 @@ MonoBehaviour:
     NetworkTopology: 0
     UseCMBService: 0
     AutoSpawnPlayerPrefabClientSide: 1
+    NetworkMessageMetrics: 1
     NetworkProfilingMetrics: 1
     OldPrefabList: []
   RunInBackground: 1
@@ -5582,7 +5583,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 636, y: 0.000027585922}
+  m_AnchoredPosition: {x: 636, y: 0.000035337347}
   m_SizeDelta: {x: 1272, y: 712}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1695122481
@@ -7298,6 +7299,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35569bb0148007241a972f55df5cd431, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkSessionManager
+  connectionMode: 0
+  relayRegionOverride: 
 --- !u!1001 &7176947639781363038
 PrefabInstance:
   m_ObjectHideFlags: 0

@@ -4,6 +4,14 @@ using Unity.Netcode;
 public class Team : NetworkBehaviour
 {
     [SerializeField] private TeamDefinition teamDefinition;
+    private TeamManager cachedManager;
+
+    private TeamManager GetTeamManager()
+    {
+        if (cachedManager == null)
+            cachedManager = FindAnyObjectByType<TeamManager>();
+        return cachedManager;
+    }
 
     public NetworkVariable<short> TeamId =
         new NetworkVariable<short>(
@@ -42,7 +50,7 @@ public class Team : NetworkBehaviour
     {
         get
         {
-            TeamManager manager = FindAnyObjectByType<TeamManager>();
+            TeamManager manager = GetTeamManager();
 
             if (manager == null)
                 return "Unknown Team";
@@ -60,7 +68,7 @@ public class Team : NetworkBehaviour
     {
         get
         {
-            TeamManager manager = FindAnyObjectByType<TeamManager>();
+            TeamManager manager = GetTeamManager();
 
             if (manager == null)
                 return Color.white;
@@ -82,7 +90,7 @@ public class Team : NetworkBehaviour
             return;
 
         TeamManager teamManager =
-            FindAnyObjectByType<TeamManager>();
+            GetTeamManager();
 
         if (teamManager == null)
         {

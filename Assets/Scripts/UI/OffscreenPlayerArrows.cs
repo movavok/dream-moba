@@ -65,9 +65,10 @@ public class OffscreenPlayerArrows : MonoBehaviour
             return;
 
         short localTeam = teams.GetTeamId(network.LocalClientId);
-        foreach (PlayerNetwork player in FindObjectsByType<PlayerNetwork>())
+        foreach (NetworkObject source in network.SpawnManager.SpawnedObjectsList)
         {
-            if (!player.IsSpawned || player.OwnerClientId == network.LocalClientId ||
+            if (!source.TryGetComponent(out PlayerNetwork player) ||
+                !source.gameObject.activeInHierarchy || player.OwnerClientId == network.LocalClientId ||
                 player.GetComponent<Team>() is not Team team)
                 continue;
 

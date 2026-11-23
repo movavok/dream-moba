@@ -22,6 +22,9 @@ public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
     private string tooltipDescription;
     private bool pointerInside;
     private TMP_Text placeholderText;
+    private enum LabelMode { None, Seconds, Tenths, Charge }
+    private LabelMode labelMode;
+    private int labelValue = -1, labelMaximum = -1;
 
     private Sprite normalFrame;
     private Sprite quickCastFrame;
@@ -155,15 +158,7 @@ public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         cooldownOverlay.gameObject.SetActive(true);
         cooldownOverlay.fillAmount = progress;
 
-        if (cooldownText != null)
-        {
-            cooldownText.gameObject.SetActive(true);
-
-            if (remaining < 1f)
-                cooldownText.text = remaining.ToString("0.0");
-            else
-                cooldownText.text = Mathf.CeilToInt(remaining).ToString();
-        }
+        SetTimerText(remaining);
     }
 
     public void SetActiveTime(float remaining, float duration)
@@ -184,19 +179,30 @@ public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         cooldownOverlay.gameObject.SetActive(true);
         cooldownOverlay.fillAmount = progress;
 
-        if (cooldownText != null)
-        {
-            cooldownText.gameObject.SetActive(true);
+        SetTimerText(remaining);
+    }
 
-            if (remaining < 1f)
-                cooldownText.text = remaining.ToString("0.0");
-            else
-                cooldownText.text = Mathf.CeilToInt(remaining).ToString();
-        }
+    private void SetTimerText(float remaining)
+    {
+        if (cooldownText == null)
+            return;
+        cooldownText.gameObject.SetActive(true);
+        LabelMode mode = remaining < 1f ? LabelMode.Tenths : LabelMode.Seconds;
+        int value = mode == LabelMode.Tenths
+            ? Mathf.RoundToInt(remaining * 10f) : Mathf.CeilToInt(remaining);
+        if (labelMode == mode && labelValue == value)
+            return;
+        labelMode = mode;
+        labelValue = value;
+        if (mode == LabelMode.Tenths)
+            cooldownText.SetText("{0:0.0}", value * 0.1f);
+        else
+            cooldownText.SetText("{0}", value);
     }
 
     public void SetReady()
     {
+        labelMode = LabelMode.None;
         if (cooldownOverlay != null)
         {
             cooldownOverlay.fillAmount = 0f;
@@ -232,13 +238,20 @@ public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         {
             cooldownText.gameObject.SetActive(showText);
 
-            if (showText)
-                cooldownText.text = $"{current}/{maximum}";
+            if (showText && (labelMode != LabelMode.Charge ||
+                labelValue != current || labelMaximum != maximum))
+            {
+                labelMode = LabelMode.Charge;
+                labelValue = current;
+                labelMaximum = maximum;
+                cooldownText.SetText("{0}/{1}", current, maximum);
+            }
         }
     }
 
     public void SetBlocked()
     {
+        labelMode = LabelMode.None;
         if (cooldownOverlay != null)
         {
             cooldownOverlay.gameObject.SetActive(true);

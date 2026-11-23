@@ -31,6 +31,8 @@ public class HealthBar : MonoBehaviour
     private Health health;
     private Team team;
     private PlayerStreak streak;
+    private PlayerNetwork player;
+    private int displayedStreak = int.MinValue;
 
     private float displayedDamageHealth;
 
@@ -39,6 +41,7 @@ public class HealthBar : MonoBehaviour
         health = GetComponentInParent<Health>();
         team = GetComponentInParent<Team>();
         streak = GetComponentInParent<PlayerStreak>();
+        player = GetComponentInParent<PlayerNetwork>();
 
         if (health == null)
             Debug.LogError("HealthBar: Health not found!");
@@ -46,7 +49,7 @@ public class HealthBar : MonoBehaviour
         if (team == null)
             Debug.LogError("HealthBar: Team not found!");
 
-        if (streak == null)
+        if (streak == null && (streakIndicator != null || streakText != null))
             Debug.LogError("HealthBar: PlayerStreak not found!");
     }
 
@@ -74,8 +77,10 @@ public class HealthBar : MonoBehaviour
     private void OnDestroy()
     {
         if (health != null)
+        {
             health.HealthChanged -= OnHealthChanged;
             health.SpawnProtectionChanged -= OnSpawnProtectionChanged;
+        }
     }
 
     private void OnSpawnProtectionChanged(bool protectedState)
@@ -106,8 +111,7 @@ public class HealthBar : MonoBehaviour
 
         if (healthText != null)
         {
-            healthText.text =
-                $"<color=#FF8A8A><b>{newHealth}</b></color>";
+            healthText.SetText("<color=#ff5252><b>{0}</b></color>", newHealth);
         }
     }
 
@@ -118,31 +122,16 @@ public class HealthBar : MonoBehaviour
         UpdateStreak();
     }
 
-    private Team FindLocalPlayerTeam()
-    {
-        PlayerNetwork[] players =
-            FindObjectsByType<PlayerNetwork>();
-
-        foreach (PlayerNetwork player in players)
-        {
-            if (player.IsOwner)
-                return player.GetComponent<Team>();
-        }
-
-        return null;
-    }
-
     private bool IsAlly()
     {
-        PlayerNetwork player = GetComponentInParent<PlayerNetwork>();
-
         if (player == null)
             return false;
 
         if (player.IsOwner)
             return false;
 
-        Team ownTeam = FindLocalPlayerTeam();
+        Team ownTeam = PlayerNetwork.LocalPlayer != null
+            ? PlayerNetwork.LocalPlayer.GetComponent<Team>() : null;
 
         if (ownTeam == null || team == null)
             return false;
@@ -201,12 +190,6 @@ public class HealthBar : MonoBehaviour
             damageFill.fillAmount =
                 Mathf.Clamp01(displayedDamageHealth / maxHealth);
         }
-
-        if (healthText != null)
-        {
-            healthText.text =
-                $"<color=#ff5252><b>{health.CurrentHealth}</b></color>";
-        }
     }
 
     private void UpdateTeam()
@@ -224,12 +207,13 @@ public class HealthBar : MonoBehaviour
 
         int value = streak.Streak;
 
-        if (streakText != null)
+        if (streakText != null && displayedStreak != value)
         {
+            displayedStreak = value;
             streakText.gameObject.SetActive(value > 0);
 
             if (value > 0)
-                streakText.text = $"<color=#fc9025><b>{value}</b></color>";
+                streakText.SetText("<color=#fc9025><b>{0}</b></color>", value);
         }
 
         if (streakIndicator != null)
@@ -253,8 +237,6 @@ public class HealthBar : MonoBehaviour
 
     private bool IsOwnPlayer()
     {
-        PlayerNetwork player = GetComponentInParent<PlayerNetwork>();
-
         if (player == null)
             return false;
 

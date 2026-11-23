@@ -16,6 +16,8 @@ public class TeamCameraViews : NetworkBehaviour
     private readonly Dictionary<ulong, float> lastSeen = new();
     private float nextReport;
     private bool hadLocalPlayer;
+    private TeamManager teams;
+    private readonly List<ulong> recipients = new(6);
 
     public IEnumerable<ulong> Reporters => views.Keys;
 
@@ -112,12 +114,13 @@ public class TeamCameraViews : NetworkBehaviour
             return;
 
         ulong sender = rpc.Receive.SenderClientId;
-        TeamManager teams = FindAnyObjectByType<TeamManager>();
+        if (teams == null)
+            teams = FindAnyObjectByType<TeamManager>();
         if (teams == null)
             return;
 
         short teamId = teams.GetTeamId(sender);
-        List<ulong> recipients = new();
+        recipients.Clear();
         foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
             if (clientId != sender && teams.GetTeamId(clientId) == teamId)
                 recipients.Add(clientId);

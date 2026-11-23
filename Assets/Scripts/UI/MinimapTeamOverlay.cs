@@ -18,6 +18,8 @@ public class MinimapTeamOverlay : MonoBehaviour
         public RectTransform[] edges = new RectTransform[4];
         public Vector2 lastOutdoorPosition;
         public bool hasOutdoorPosition;
+        public bool dotVisible;
+        public bool frameVisible;
     }
 
     private readonly Dictionary<ulong, Marker> markers = new();
@@ -72,9 +74,8 @@ public class MinimapTeamOverlay : MonoBehaviour
         short localTeam = teams.GetTeamId(localId);
         foreach (Marker marker in markers.Values)
         {
-            marker.dot.gameObject.SetActive(false);
-            foreach (RectTransform edge in marker.edges)
-                edge.gameObject.SetActive(false);
+            marker.dotVisible = false;
+            marker.frameVisible = false;
         }
 
         TeamCameraViews views = TeamCameraViews.Instance;
@@ -86,9 +87,10 @@ public class MinimapTeamOverlay : MonoBehaviour
                     ShowFrame(clientId, allyFrameColor, views);
         }
 
-        foreach (PlayerNetwork player in FindObjectsByType<PlayerNetwork>())
+        foreach (NetworkObject source in network.SpawnManager.SpawnedObjectsList)
         {
-            if (!player.IsSpawned || player.GetComponent<Team>() is not Team team)
+            if (!source.TryGetComponent(out PlayerNetwork player) ||
+                !source.gameObject.activeInHierarchy || player.GetComponent<Team>() is not Team team)
                 continue;
 
             bool ally = team.TeamId.Value == localTeam;
@@ -109,11 +111,20 @@ public class MinimapTeamOverlay : MonoBehaviour
                 marker.hasOutdoorPosition = true;
             }
 
-            marker.dot.gameObject.SetActive(true);
+            marker.dotVisible = true;
             marker.dot.anchoredPosition = WorldToMap(inside && marker.hasOutdoorPosition
                 ? marker.lastOutdoorPosition : position);
             marker.dotImage.sprite = inside ? null : circleSprite;
             marker.dotImage.color = team.TeamColor;
+        }
+
+        foreach (Marker marker in markers.Values)
+        {
+            if (marker.dot.gameObject.activeSelf != marker.dotVisible)
+                marker.dot.gameObject.SetActive(marker.dotVisible);
+            foreach (RectTransform edge in marker.edges)
+                if (edge.gameObject.activeSelf != marker.frameVisible)
+                    edge.gameObject.SetActive(marker.frameVisible);
         }
     }
 
@@ -132,6 +143,7 @@ public class MinimapTeamOverlay : MonoBehaviour
         Vector2 max = WorldToMap(new Vector2(view.xMax, view.yMax));
         float t = frameThickness;
         Marker marker = GetMarker(clientId);
+        marker.frameVisible = true;
         SetEdge(marker.edges[0], new Vector2(min.x, min.y), new Vector2(max.x - min.x, t), color);
         SetEdge(marker.edges[1], new Vector2(min.x, max.y - t), new Vector2(max.x - min.x, t), color);
         SetEdge(marker.edges[2], new Vector2(min.x, min.y), new Vector2(t, max.y - min.y), color);
@@ -179,7 +191,6 @@ public class MinimapTeamOverlay : MonoBehaviour
 
     private static void SetEdge(RectTransform edge, Vector2 position, Vector2 size, Color color)
     {
-        edge.gameObject.SetActive(true);
         edge.anchoredPosition = position;
         edge.sizeDelta = size;
         edge.GetComponent<Image>().color = color;

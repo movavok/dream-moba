@@ -19,7 +19,7 @@ public class PlayerCamera : MonoBehaviour
     [SerializeField, Min(1f)] private float damageForFullFeedback = 100f;
     [SerializeField, Range(0f, 0.25f)] private float maxDamageZoom = 0.065f;
     [SerializeField, Min(0f)] private float maxDamageShake = 0.15f;
-    [SerializeField, Range(0f, 1f)] private float maxDamageVignette = 0.4f;
+    [SerializeField, Range(0f, 1f)] private float maxDamageVignette = 0.55f;
     [SerializeField, Min(0.01f)] private float damageFeedbackDuration = 0.55f;
     [SerializeField] private Color damageVignetteColor = new(0.65f, 0f, 0f, 1f);
 

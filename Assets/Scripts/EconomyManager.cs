@@ -103,7 +103,7 @@ public class EconomyManager : NetworkBehaviour
             lastGold[entry.clientId] = entry.gold;
 
         if (goldIncomeLabel != null)
-            goldIncomeLabel.text = "+0/сек";
+            goldIncomeLabel.text = "+0/с";
 
         UpdateHUD(NetworkManager.Singleton != null
             ? NetworkManager.Singleton.LocalClientId
@@ -330,7 +330,7 @@ public class EconomyManager : NetworkBehaviour
             "0.#",
             System.Globalization.CultureInfo.InvariantCulture);
 
-        goldIncomeLabel.text = $"+{rate}/сек";
+        goldIncomeLabel.text = $"+{rate}/с";
     }
 
     [ClientRpc]

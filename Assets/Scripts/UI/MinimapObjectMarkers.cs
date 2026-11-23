@@ -17,10 +17,13 @@ public class MinimapObjectMarkers : MonoBehaviour
         public NetworkObject source;
         public RectTransform rect;
         public Image image;
+        public bool visible;
     }
 
     private readonly Dictionary<ulong, Icon> icons = new();
     private readonly List<ulong> expired = new();
+    private readonly List<SpriteRenderer> visualRenderers = new();
+    private TeamManager teams;
     private MinimapTeamOverlay map;
     private Sprite triangle;
     private Sprite cross;
@@ -45,56 +48,58 @@ public class MinimapObjectMarkers : MonoBehaviour
     private void LateUpdate()
     {
         foreach (Icon icon in icons.Values)
-            icon.rect.gameObject.SetActive(false);
+            icon.visible = false;
 
         TeamCameraViews vision = TeamCameraViews.Instance;
         NetworkManager network = NetworkManager.Singleton;
         if (vision != null && network != null && network.IsListening)
         {
-            foreach (WorldItem item in FindObjectsByType<WorldItem>())
-                if (item.IsSpawned && TryGetVisualBounds(item, out Bounds bounds) &&
-                    vision.IsVisible(bounds))
-                    Show(item.NetworkObject, item.transform.position,
+            if (teams == null)
+                teams = FindAnyObjectByType<TeamManager>();
+            Team localTeam = PlayerNetwork.LocalPlayer != null
+                ? PlayerNetwork.LocalPlayer.GetComponent<Team>() : null;
+            short ownId = teams != null ? teams.GetTeamId(network.LocalClientId)
+                : localTeam != null ? localTeam.TeamId.Value : (short)0;
+
+            foreach (NetworkObject source in network.SpawnManager.SpawnedObjectsList)
+            {
+                if (!source.gameObject.activeInHierarchy)
+                    continue;
+
+                if (source.TryGetComponent(out WorldItem item) &&
+                    TryGetVisualBounds(item, out Bounds itemBounds) &&
+                    vision.IsVisible(itemBounds))
+                    Show(source, item.transform.position,
                         map.CircleSprite, itemColor, itemSize);
 
-            foreach (MinibossCorpseSource boss in FindObjectsByType<MinibossCorpseSource>())
-            {
-                NetworkObject source = boss.GetComponent<NetworkObject>();
-                Health health = boss.GetComponent<Health>();
-                if (source != null && source.IsSpawned && health != null &&
-                    health.IsAlive() && TryGetVisualBounds(boss, out Bounds bounds) &&
-                    vision.IsVisible(bounds))
+                if (source.TryGetComponent(out MinibossCorpseSource boss) &&
+                    source.TryGetComponent(out Health health) && health.IsAlive() &&
+                    TryGetVisualBounds(boss, out Bounds bossBounds) &&
+                    vision.IsVisible(bossBounds))
                     Show(source, boss.transform.position, cross, bossColor, bossSize);
-            }
 
-            foreach (FlagObject flag in FindObjectsByType<FlagObject>())
-            {
-                if (!flag.IsSpawned)
+                if (!source.TryGetComponent(out FlagObject flag))
                     continue;
 
                 if (!flag.IsCarried)
                 {
                     if (TryGetVisualBounds(flag, out Bounds bounds) && vision.IsVisible(bounds))
-                        Show(flag.NetworkObject, flag.transform.position,
-                            triangle, itemColor, flagSize);
+                        Show(source, flag.transform.position, triangle, itemColor, flagSize);
                     continue;
                 }
 
-                foreach (PlayerNetwork player in FindObjectsByType<PlayerNetwork>())
+                foreach (NetworkObject candidate in network.SpawnManager.SpawnedObjectsList)
                 {
-                    if (!player.IsSpawned || player.OwnerClientId != flag.CarrierClientId)
+                    if (!candidate.gameObject.activeInHierarchy ||
+                        !candidate.TryGetComponent(out PlayerNetwork player) ||
+                        player.OwnerClientId != flag.CarrierClientId)
                         continue;
 
                     Team team = player.GetComponent<Team>();
-                    Team localTeam = PlayerNetwork.LocalPlayer != null
-                        ? PlayerNetwork.LocalPlayer.GetComponent<Team>() : null;
-                    TeamManager teams = FindAnyObjectByType<TeamManager>();
-                    short ownId = teams != null ? teams.GetTeamId(network.LocalClientId)
-                        : localTeam != null ? localTeam.TeamId.Value : (short)0;
                     bool ally = team != null && team.TeamId.Value == ownId;
                     if (ally || (TryGetVisualBounds(player, out Bounds bounds) &&
                                  vision.IsVisible(bounds)))
-                        Show(flag.NetworkObject, player.transform.position,
+                        Show(source, player.transform.position,
                             triangle, flag.CarrierTeamColor, flagSize);
                     break;
                 }
@@ -103,8 +108,12 @@ public class MinimapObjectMarkers : MonoBehaviour
 
         expired.Clear();
         foreach (var pair in icons)
+        {
             if (pair.Value.source == null || !pair.Value.source.IsSpawned)
                 expired.Add(pair.Key);
+            else if (pair.Value.rect.gameObject.activeSelf != pair.Value.visible)
+                pair.Value.rect.gameObject.SetActive(pair.Value.visible);
+        }
         foreach (ulong id in expired)
         {
             if (icons[id].rect != null)
@@ -134,18 +143,19 @@ public class MinimapObjectMarkers : MonoBehaviour
             icons[source.NetworkObjectId] = icon;
         }
 
-        icon.rect.gameObject.SetActive(true);
+        icon.visible = true;
         icon.rect.anchoredPosition = map.WorldToMap(world);
         icon.rect.sizeDelta = new Vector2(size, size);
         icon.image.sprite = sprite;
         icon.image.color = color;
     }
 
-    private static bool TryGetVisualBounds(Component source, out Bounds bounds)
+    private bool TryGetVisualBounds(Component source, out Bounds bounds)
     {
         bounds = default;
         bool found = false;
-        foreach (SpriteRenderer renderer in source.GetComponentsInChildren<SpriteRenderer>())
+        source.GetComponentsInChildren(false, visualRenderers);
+        foreach (SpriteRenderer renderer in visualRenderers)
         {
             if (!renderer.enabled || renderer.sprite == null)
                 continue;
