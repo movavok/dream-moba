@@ -18,7 +18,6 @@ GameObject:
   - component: {fileID: 1000000000000000009}
   - component: {fileID: 8526115268165914908}
   - component: {fileID: 1000000000000000090}
-  - component: {fileID: 1000000000000000091}
   m_Layer: 0
   m_Name: Scarecrow
   m_TagString: HeroSorting
@@ -26,25 +25,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1000000000000000091
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000000000000000000}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b77e942ed2b43f8b1e0535417134bca, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::WorldYSort
-  sortPoint: {fileID: 7498993074283073008}
-  anchorRenderer: {fileID: 1000000000000010015}
-  visualRenderers:
-  - {fileID: 1000000000000010015}
-  sortingGroup: {fileID: 0}
-  setWorldLayer: 0
-  groundOffset: 0
 --- !u!4 &1000000000000000001
 Transform:
   m_ObjectHideFlags: 0
@@ -66,19 +46,6 @@ Transform:
   - {fileID: 4162472148257596034}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1000000000000000090
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1000000000000000000}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0b7041ca6e254469a3bf6101208947dd, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::MinibossCorpseSource
-  corpseVisualId: scarecrow
 --- !u!114 &1000000000000000008
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -187,6 +154,7 @@ MonoBehaviour:
   standaloneMaxHealth: 100
   respawnOnDeath: 0
   standardRegenEnabled: 0
+  burnParticlesPrefab: {fileID: 929596891041536053, guid: 90e8aea4797097545b319bc013158ffd, type: 3}
   damageClips:
   - {fileID: 8300000, guid: 1c11cf2210751d048aa87c0137861a78, type: 3}
   - {fileID: 8300000, guid: 7a88668dc294c584d8718189426fe32d, type: 3}
@@ -298,6 +266,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DamageReflector
   reflectFraction: 1
   health: {fileID: 1000000000000000003}
+--- !u!114 &1000000000000000090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b7041ca6e254469a3bf6101208947dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MinibossCorpseSource
+  corpseVisualId: scarecrow
 --- !u!1 &1000000000000010016
 GameObject:
   m_ObjectHideFlags: 0
@@ -327,7 +308,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1000000000000020011}
   m_Father: {fileID: 1000000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &1000000000000010015
@@ -390,6 +372,113 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
   m_BlendShapeWeights: []
+--- !u!1 &1000000000000020010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1000000000000020011}
+  - component: {fileID: 1000000000000020012}
+  - component: {fileID: 1000000000000020013}
+  m_Layer: 0
+  m_Name: HitMask
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1000000000000020011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000020010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1000000000000010014}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!331 &1000000000000020012
+SpriteMask:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000020010}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 4294967295
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 15d0c3709176029428a0da2f8cecf0b5, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 3517886557842293546, guid: 1a73de4965e4af748ad0019ab2d70c9a, type: 3}
+  m_MaskAlphaCutoff: 0.2
+  m_FrontSortingLayerID: 1303551995
+  m_BackSortingLayerID: -1442130259
+  m_FrontSortingLayer: 14
+  m_BackSortingLayer: 12
+  m_FrontSortingOrder: 0
+  m_BackSortingOrder: 0
+  m_IsCustomRangeActive: 1
+  m_SpriteSortPoint: 0
+  m_MaskSource: 0
+--- !u!114 &1000000000000020013
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000020010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccaba75aaaffcbe44aa8221223914c3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DamageMaskController
+  heroVisual: {fileID: 0}
+  visual: {fileID: 1000000000000010015}
+  spriteMask: {fileID: 1000000000000020012}
 --- !u!1 &2236628700208818298
 GameObject:
   m_ObjectHideFlags: 0
@@ -941,6 +1030,18 @@ PrefabInstance:
     - target: {fileID: 5862603851775281960, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
       propertyPath: m_SortingLayerID
       value: -1768546611
+      objectReference: {fileID: 0}
+    - target: {fileID: 6196160828801772878, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: 2073d2329e275df4f9dc13b1415a52d7, type: 2}
+    - target: {fileID: 6196160828801772878, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 7533972399218729949, guid: 2073d2329e275df4f9dc13b1415a52d7, type: 2}
+    - target: {fileID: 6196160828801772878, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6727879443828895873, guid: 6d080d1910b2102469826ce84a29a559, type: 3}
       propertyPath: streakText

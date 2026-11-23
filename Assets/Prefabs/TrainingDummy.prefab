@@ -153,6 +153,7 @@ MonoBehaviour:
   standaloneMaxHealth: 1000
   respawnOnDeath: 0
   standardRegenEnabled: 0
+  burnParticlesPrefab: {fileID: 929596891041536053, guid: 90e8aea4797097545b319bc013158ffd, type: 3}
 --- !u!114 &1000000000000000004
 MonoBehaviour:
   m_ObjectHideFlags: 0

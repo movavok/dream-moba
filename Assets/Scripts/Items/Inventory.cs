@@ -205,27 +205,18 @@ public class Inventory : NetworkBehaviour
         for (int i = 0; i < slots.Count; i++)
         {
             ItemDefinition item = GetItem(i);
-            if (item == null || !item.dropOnDeath || item.worldPrefab == null)
+            if (item == null || !item.dropOnDeath || item.worldPrefab == null ||
+                item.worldPrefab.GetComponent<WorldItem>() == null)
                 continue;
 
-            int count = slots[i].count;
-            NetworkObject prefabObject = item.worldPrefab.GetComponent<NetworkObject>();
-            WorldItem prefabItem = item.worldPrefab.GetComponent<WorldItem>();
-            if (prefabObject == null || prefabItem == null ||
-                prefabItem.Definition != item || prefabItem.Count != 1)
-            {
-                Debug.LogError($"[Inventory] Invalid death drop prefab for '{item.id}'.");
-                continue;
-            }
+            int dropped = WorldItem.DropAndThrow(
+                item,
+                slots[i].count,
+                transform
+            );
 
-            for (int n = 0; n < count; n++)
-            {
-                GameObject dropped = Instantiate(item.worldPrefab,
-                    transform.position, Quaternion.identity);
-                dropped.GetComponent<NetworkObject>().Spawn();
-            }
-
-            TryRemove(i, count);
+            if (dropped > 0)
+                TryRemove(i, dropped);
         }
     }
 

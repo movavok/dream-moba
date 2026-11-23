@@ -3,6 +3,7 @@ using UnityEngine;
 public class DamageMaskController : MonoBehaviour
 {
     [SerializeField] private HeroVisual heroVisual;
+    [SerializeField] private SpriteRenderer visual;
     [SerializeField] private SpriteMask spriteMask;
 
     private Sprite lastSprite;
@@ -14,14 +15,17 @@ public class DamageMaskController : MonoBehaviour
 
         if (heroVisual == null)
             heroVisual = GetComponentInParent<HeroVisual>();
+
+        if (visual == null && heroVisual != null)
+            visual = heroVisual.SpriteRenderer;
     }
 
     private void LateUpdate()
     {
-        if (heroVisual == null || spriteMask == null)
+        if (visual == null || spriteMask == null)
             return;
 
-        Sprite currentSprite = heroVisual.SpriteRenderer.sprite;
+        Sprite currentSprite = visual.sprite;
 
         if (currentSprite == null || currentSprite == lastSprite)
             return;

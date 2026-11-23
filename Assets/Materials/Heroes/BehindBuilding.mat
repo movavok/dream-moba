@@ -55,11 +55,8 @@ Material:
     m_Floats:
     - _EnableExternalAlpha: 0
     - _GapAlpha: 0.08
-    - _PatternDensity: 6
     - _PatternDirection: 1
     - _PatternEnabled: 1
-    - _PatternLineWidth: 0.18
-    - _PatternSoftness: 0.06
     - _PatternSpeed: 0.35
     - _VisibleAlpha: 0.42
     - _ZWrite: 0

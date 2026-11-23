@@ -26,6 +26,11 @@ public class ItemThrowMotion : MonoBehaviour
     [SerializeField] private float bounceDuration = 0.16f;
     [SerializeField] private float bounceHeight = 0.08f;
 
+    public static Vector2 RandomDropDirection()
+    {
+        return Quaternion.Euler(0f, 0f, Random.Range(0, 8) * 45f) * Vector2.right;
+    }
+
     public IEnumerator Play(
         Vector3 origin,
         Vector2 direction,

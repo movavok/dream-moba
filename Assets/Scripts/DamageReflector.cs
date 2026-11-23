@@ -5,6 +5,19 @@ public class DamageReflector : MonoBehaviour
 {
     [SerializeField, Range(0f, 2f)] private float reflectFraction = 1f;
     [SerializeField] private Health health;
+    private Health nextNonPlayerAttacker;
+
+    public void SetNextNonPlayerAttacker(Health attacker)
+    {
+        if (health != null && health.IsServer)
+            nextNonPlayerAttacker = attacker;
+    }
+
+    public void ClearNextNonPlayerAttacker(Health attacker)
+    {
+        if (nextNonPlayerAttacker == attacker)
+            nextNonPlayerAttacker = null;
+    }
 
     private void Awake()
     {
@@ -26,6 +39,8 @@ public class DamageReflector : MonoBehaviour
 
     private void OnDamaged(DamageEvent damageEvent)
     {
+        Health nonPlayer = nextNonPlayerAttacker;
+        nextNonPlayerAttacker = null;
         if (health == null || !health.IsServer)
             return;
 
@@ -35,8 +50,8 @@ public class DamageReflector : MonoBehaviour
         if (damageEvent.Amount <= 0 || reflectFraction <= 0f)
             return;
 
-        Health attackerHealth =
-            FindPlayerHealth(damageEvent.AttackerClientId);
+        Health attackerHealth = nonPlayer != null
+            ? nonPlayer : FindPlayerHealth(damageEvent.AttackerClientId);
 
         if (attackerHealth == null || attackerHealth == health)
             return;
@@ -48,6 +63,14 @@ public class DamageReflector : MonoBehaviour
             )
         );
 
+        // The reflection has no projectile collision point. Use the attacker's
+        // visible sprite instead of its ground-level root for the hit particles.
+        SpriteRenderer attackerVisual = attackerHealth.GetComponent<HeroSorting>()?.HeroRenderer;
+        if (attackerVisual == null)
+            attackerVisual = attackerHealth.GetComponentInChildren<SpriteRenderer>();
+        Vector2 hitPosition = attackerVisual != null
+            ? attackerVisual.bounds.center : attackerHealth.transform.position;
+        attackerHealth.ShowDamageHit(hitPosition, reflected);
         attackerHealth.TakeDamage(
             reflected,
             damageEvent.AttackerClientId,

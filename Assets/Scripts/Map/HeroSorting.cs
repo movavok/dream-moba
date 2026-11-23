@@ -5,7 +5,6 @@ public class HeroSorting : MonoBehaviour
     [SerializeField] private SpriteRenderer heroRenderer;
     [SerializeField] private SpriteRenderer shadowRenderer;
     [SerializeField] private SpriteRenderer behindOutline;
-    [SerializeField] private Transform sortPoint;
 
     private Team team;
     private DeathVisual deathVisual;
@@ -18,6 +17,8 @@ public class HeroSorting : MonoBehaviour
         Shader.PropertyToID("_PatternDirection");
     private static readonly int PatternEnabledID =
         Shader.PropertyToID("_PatternEnabled");
+    private static readonly int PatternSpeedID =
+        Shader.PropertyToID("_PatternSpeed");
 
     private const string HERO_LAYER = "Hero";
     private const string HERO_BEHIND_LAYER = "HeroBehind";
@@ -37,12 +38,14 @@ public class HeroSorting : MonoBehaviour
 
         team = GetComponentInParent<Team>();
         deathVisual = GetComponentInParent<DeathVisual>();
-
-        PlayerNetwork player = GetComponentInParent<PlayerNetwork>();
-        Transform feet = sortPoint != null ? sortPoint :
-            player != null ? player.Body : null;
-        if (heroRenderer != null)
-            WorldYSort.Configure(gameObject, feet, heroRenderer, heroRenderer);
+        if (behindOutline != null &&
+            (deathVisual != null || GetComponent<MinibossCorpseVisual>() != null))
+        {
+            var mpb = new MaterialPropertyBlock();
+            behindOutline.GetPropertyBlock(mpb);
+            mpb.SetFloat(PatternSpeedID, 0f);
+            behindOutline.SetPropertyBlock(mpb);
+        }
     }
 
     private void OnEnable()

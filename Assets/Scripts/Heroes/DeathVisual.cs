@@ -8,6 +8,7 @@ public class DeathVisual : NetworkBehaviour
     [SerializeField] private SpriteLibrary spriteLibrary;
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private SpriteRenderer behindOutline;
+    private TeamManager teamManager;
 
     private NetworkVariable<short> teamId =
         new NetworkVariable<short>(
@@ -22,13 +23,14 @@ public class DeathVisual : NetworkBehaviour
     {
         get
         {
-            TeamManager manager = FindAnyObjectByType<TeamManager>();
+            if (teamManager == null)
+                teamManager = FindAnyObjectByType<TeamManager>();
 
-            if (manager == null)
+            if (teamManager == null)
                 return Color.white;
 
             TeamDefinition.TeamData data =
-                manager.GetTeamData(teamId.Value);
+                teamManager.GetTeamData(teamId.Value);
 
             return data != null
                 ? data.color

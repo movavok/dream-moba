@@ -6,10 +6,7 @@ Shader "DreamMoba/BehindBuildingPattern"
         _TeamColor ("Team Color", Color) = (1, 1, 1, 1)
         _PatternDirection ("Pattern Direction", Float) = 1
         _PatternEnabled ("Pattern Enabled", Float) = 1
-        _PatternDensity ("Pattern Density", Float) = 6
-        _PatternLineWidth ("Pattern Line Width", Range(0.05, 0.5)) = 0.18
         _PatternSpeed ("Pattern Speed", Float) = 0.35
-        _PatternSoftness ("Pattern Softness", Range(0.001, 0.3)) = 0.06
         _VisibleAlpha ("Visible Alpha", Range(0, 1)) = 0.42
         _GapAlpha ("Gap Alpha", Range(0, 1)) = 0.08
     }
@@ -48,6 +45,7 @@ Shader "DreamMoba/BehindBuildingPattern"
                 float4 positionCS : SV_POSITION;
                 float4 color : COLOR;
                 float2 uv : TEXCOORD0;
+                float2 localPosition : TEXCOORD1;
             };
 
             TEXTURE2D(_MainTex);
@@ -57,10 +55,7 @@ Shader "DreamMoba/BehindBuildingPattern"
                 float4 _TeamColor;
                 float _PatternDirection;
                 float _PatternEnabled;
-                float _PatternDensity;
-                float _PatternLineWidth;
                 float _PatternSpeed;
-                float _PatternSoftness;
                 float _VisibleAlpha;
                 float _GapAlpha;
             CBUFFER_END
@@ -71,6 +66,7 @@ Shader "DreamMoba/BehindBuildingPattern"
                 output.positionCS = TransformObjectToHClip(input.positionOS);
                 output.color = input.color;
                 output.uv = input.uv;
+                output.localPosition = input.positionOS.xy;
                 return output;
             }
 
@@ -79,42 +75,13 @@ Shader "DreamMoba/BehindBuildingPattern"
                 half spriteAlpha =
                     SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).a;
 
-                float time = _Time.y * _PatternSpeed;
-                float edge = max(0.001, _PatternSoftness);
-
-                float hatchA =
-                    frac(
-                        (input.uv.x * _PatternDirection + input.uv.y)
-                        * _PatternDensity
-                        + time
-                    );
-
-                float hatchB =
-                    frac(
-                        (input.uv.x * _PatternDirection - input.uv.y)
-                        * _PatternDensity * 1.37
-                        - time * 0.7
-                    );
-
-                float bandA =
-                    smoothstep(
-                        _PatternLineWidth - edge,
-                        _PatternLineWidth + edge,
-                        hatchA
-                    );
-
-                float bandB =
-                    smoothstep(
-                        _PatternLineWidth - edge,
-                        _PatternLineWidth + edge,
-                        hatchB
-                    );
-
-                float stripe = saturate(bandA + bandB * 0.55);
-                float shimmer =
-                    0.85 + 0.15 * sin((input.uv.y + time) * 6.28318);
-
-                stripe *= shimmer;
+                // Sprite art is 16 pixels per world unit. Quantize in local space
+                // so atlas UVs and differently sized animation frames cannot skew
+                // the diagonal. Advance one whole pixel at a time, downward.
+                float2 pixel = floor(input.localPosition * 16.0);
+                float shift = floor(_Time.y * _PatternSpeed * 16.0);
+                float stripe = 1.0 - step(2.0,
+                    frac((pixel.x * _PatternDirection + pixel.y + shift) / 8.0) * 8.0);
 
                 half alpha =
                     spriteAlpha

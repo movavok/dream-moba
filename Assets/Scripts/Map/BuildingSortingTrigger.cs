@@ -16,7 +16,11 @@ public class BuildingSortingTrigger : MonoBehaviour
             HeroSorting hero = other.GetComponentInParent<HeroSorting>();
 
             if (hero != null)
-                hero.SetBehind(behind);
+            {
+                BoarAI boar = other.GetComponentInParent<BoarAI>();
+                if (boar != null) boar.SetBehind(behind);
+                else hero.SetBehind(behind);
+            }
 
             return;
         }

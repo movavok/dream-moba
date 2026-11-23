@@ -88,7 +88,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 1
+  m_PresetInfoIsWorld: 0
 --- !u!114 &6501291741108556864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -121,15 +121,15 @@ MonoBehaviour:
   healthFill: {fileID: 8283414110724228518}
   damageFill: {fileID: 5697413334137589525}
   healthText: {fileID: 6196160828801772878}
+  border: {fileID: 0}
+  normalBorder: {fileID: 0}
+  spawnProtectionBorder: {fileID: 0}
   teamIndicator: {fileID: 5569234703513445671}
   streakIndicator: {fileID: 4988280217790146951}
   streakText: {fileID: 7317011648039262519}
   ownHealthColor: {r: 0.36037737, g: 1, b: 0.3603774, a: 1}
   allyHealthColor: {r: 0, g: 1, b: 1, a: 1}
   enemyHealthColor: {r: 0.98490566, g: 0.31777143, b: 0.31777143, a: 1}
-  team1Color: {r: 0.3467783, g: 0.34677824, b: 0.9622642, a: 1}
-  team2Color: {r: 1, g: 0.33773577, b: 0.33773577, a: 1}
-  team3Color: {r: 0.7105018, g: 0.36403698, b: 0.93207544, a: 1}
   damageSpeed: 5
 --- !u!1 &3266686075278117211
 GameObject:
@@ -189,7 +189,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

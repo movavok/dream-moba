@@ -30,6 +30,13 @@ public class ItemDefinition : ScriptableObject
     [Min(0f)]
     public float strongThrowMultiplier = 2f;
 
+    [Header("Cooking")]
+    public bool canBeCooked;
+    public ItemDefinition cookedResult;
+    [Min(0.1f)] public float cookingDuration = 8f;
+    public Sprite cookingRawSprite;
+    public Sprite cookingResultSprite;
+
     [Header("Use")]
     public ItemUseAction useAction;
     [Min(0f)] public float useCooldown;

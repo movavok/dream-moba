@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 using Unity.Cinemachine;
@@ -22,11 +23,23 @@ public class Health : NetworkBehaviour
         NetworkVariableWritePermission.Server
     );
     private StatController itemStats;
+    private int permanentMaxHealthBonus;
 
     [SerializeField] private HealthFloatingText healthFloatingText;
     [SerializeField] private int standaloneMaxHealth;
     [SerializeField] private bool respawnOnDeath = true;
     [SerializeField] private bool standardRegenEnabled = true;
+    [SerializeField] private ParticleSystem burnParticlesPrefab;
+
+    private readonly NetworkVariable<double> burningUntil = new(0);
+    private ParticleSystem burnParticles;
+    private ParticleSystemRenderer burnRenderer;
+    private SpriteRenderer burnAnchor;
+    private readonly Collider2D[] burnHits = new Collider2D[16];
+    private Collider2D[] ownHitboxes;
+    private readonly HashSet<Health> ignitedTargets = new();
+    private double nextBurnTick;
+    private float nextSpreadScan;
 
     [Header("Audio")]
     [Tooltip("If set, replaces the global damage-taken sounds for this object. One is picked at random per hit.")]
@@ -60,6 +73,13 @@ public class Health : NetworkBehaviour
     
     private void Awake()
     {
+        Collider2D[] colliders = GetComponentsInChildren<Collider2D>();
+        var hitboxes = new List<Collider2D>();
+        foreach (Collider2D collider in colliders)
+            if (collider.gameObject.layer == 7 && collider.isTrigger)
+                hitboxes.Add(collider);
+        ownHitboxes = hitboxes.ToArray();
+
         damageHitEffect = GetComponentInChildren<DamageHitEffect>();
         damageHitFeedback = GetComponentInChildren<DamageHitFeedback>();
 
@@ -69,6 +89,9 @@ public class Health : NetworkBehaviour
 
     private void Update()
     {
+        if (IsServer && IsSpawned && burningUntil.Value > 0)
+            UpdateBurning();
+
         if (!IsServer || !standardRegenEnabled)
             return;
 
@@ -97,6 +120,15 @@ public class Health : NetworkBehaviour
 
             ShowHealthNumberClientRpc(REGEN_AMOUNT);
         }
+    }
+
+    private void LateUpdate()
+    {
+        if (burnRenderer == null || burnAnchor == null) return;
+        if (burnRenderer.sortingLayerID != burnAnchor.sortingLayerID)
+            burnRenderer.sortingLayerID = burnAnchor.sortingLayerID;
+        if (burnRenderer.sortingOrder != burnAnchor.sortingOrder + 1)
+            burnRenderer.sortingOrder = burnAnchor.sortingOrder + 1;
     }
 
     public void ShowDamageHit(
@@ -149,6 +181,7 @@ public class Health : NetworkBehaviour
     }
 
     public int CurrentHealth => currentHealth.Value;
+    public int PermanentMaxHealthBonus => permanentMaxHealthBonus;
     public int MaxHealth
     {
         get
@@ -179,8 +212,31 @@ public class Health : NetworkBehaviour
         );
     }
 
+    // Server-owned match progress; RespawnManager transfers it to the replacement hero.
+    public void RestorePermanentMaxHealthBonus(int total)
+    {
+        if (!IsServer || total < 0 || GetComponent<PlayerNetwork>() == null)
+            return;
+
+        permanentMaxHealthBonus = total;
+        UpdateInventoryMaxHealth();
+        if (IsSpawned && IsAlive())
+            currentHealth.Value = MaxHealth;
+    }
+
+    public void AddPermanentMaxHealth(int amount)
+    {
+        if (!IsServer || amount <= 0 || GetComponent<PlayerNetwork>() == null)
+            return;
+
+        permanentMaxHealthBonus += amount;
+        UpdateInventoryMaxHealth();
+    }
+
     public override void OnNetworkSpawn()
     {
+        burningUntil.OnValueChanged += OnBurningChanged;
+        OnBurningChanged(0, burningUntil.Value);
         playerNetwork = GetComponent<PlayerNetwork>();
 
         itemStats = GetComponent<StatController>();
@@ -242,7 +298,8 @@ public class Health : NetworkBehaviour
             playerNetwork.HeroData == null || itemStats == null)
             return;
 
-        int maximum = Mathf.Max(1, Mathf.RoundToInt(itemStats.Get(StatType.MaxHealth)));
+        int maximum = Mathf.Max(1, Mathf.RoundToInt(itemStats.Get(StatType.MaxHealth)) +
+            permanentMaxHealthBonus);
         inventoryMaxHealth.Value = maximum;
         if (currentHealth.Value > maximum)
             currentHealth.Value = maximum;
@@ -255,6 +312,9 @@ public class Health : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        burningUntil.OnValueChanged -= OnBurningChanged;
+        StopBurningVisual();
+        ignitedTargets.Clear();
         if (itemStats != null)
             itemStats.StatsChanged -= UpdateInventoryMaxHealth;
         inventoryMaxHealth.OnValueChanged -= OnInventoryMaxHealthChanged;
@@ -262,6 +322,97 @@ public class Health : NetworkBehaviour
         spawnProtection.OnValueChanged -= OnSpawnProtectionChanged;
 
         base.OnNetworkDespawn();
+    }
+
+    // Fire is server-owned; particle simulation on a client is only cosmetic.
+    public void Ignite()
+    {
+        if (!IsServer || !IsSpawned || !IsAlive() || spawnProtection.Value)
+            return;
+
+        double now = NetworkManager.ServerTime.Time;
+        if (burningUntil.Value >= now + 4d)
+            return;
+
+        if (burningUntil.Value <= now)
+            nextBurnTick = now + 1d;
+        burningUntil.Value = now + 5d;
+    }
+
+    private void OnBurningChanged(double previous, double current)
+    {
+        if (current <= 0 || !IsAlive())
+        {
+            StopBurningVisual();
+            return;
+        }
+        if (burnParticles != null || burnParticlesPrefab == null ||
+            (IsServer && !IsClient))
+            return;
+
+        burnAnchor = GetComponent<HeroSorting>()?.HeroRenderer;
+        Transform anchor = burnAnchor != null ? burnAnchor.transform : transform;
+        burnParticles = Instantiate(burnParticlesPrefab, anchor);
+        burnParticles.transform.localPosition = Vector3.zero;
+        burnParticles.transform.localRotation = Quaternion.identity;
+        burnRenderer = burnParticles.GetComponent<ParticleSystemRenderer>();
+        burnParticles.Play();
+    }
+
+    private void StopBurningVisual()
+    {
+        if (burnParticles != null)
+            Destroy(burnParticles.gameObject);
+        burnParticles = null;
+        burnRenderer = null;
+        burnAnchor = null;
+    }
+
+    private void UpdateBurning()
+    {
+        double now = NetworkManager.ServerTime.Time;
+        if (!IsAlive())
+        {
+            burningUntil.Value = 0;
+            ignitedTargets.Clear();
+            return;
+        }
+
+        if (now >= nextBurnTick && nextBurnTick <= burningUntil.Value)
+        {
+            nextBurnTick = now + 1d;
+            TakeDamage(10, ulong.MaxValue);
+            if (!IsAlive()) return;
+        }
+
+        if (now >= burningUntil.Value)
+        {
+            burningUntil.Value = 0;
+            ignitedTargets.Clear();
+            return;
+        }
+
+        if (Time.time < nextSpreadScan)
+            return;
+
+        nextSpreadScan = Time.time + 0.1f;
+        var filter = new ContactFilter2D();
+        filter.SetLayerMask(1 << 7); // PlayerHitbox, not the body collider.
+        filter.useTriggers = true;
+        foreach (Collider2D hitbox in ownHitboxes)
+        {
+            if (hitbox == null || !hitbox.enabled) continue;
+            int hitCount = hitbox.Overlap(filter, burnHits);
+            for (int j = 0; j < hitCount; j++)
+            {
+                Collider2D hit = burnHits[j];
+                if (hit == null || !hit.isTrigger) continue;
+                Health other = hit.GetComponentInParent<Health>();
+                if (other != null && other != this && other.IsAlive() &&
+                    ignitedTargets.Add(other))
+                    other.Ignite();
+            }
+        }
     }
 
     public void DisableSpawnProtection()
@@ -328,6 +479,7 @@ public class Health : NetworkBehaviour
         ShowHealthNumberClientRpc(-damage);
 
         if (appliedDamage > 0 &&
+            attackerClientId != ulong.MaxValue &&
             attackerClientId != OwnerClientId &&
             MatchStatsManager.Instance != null)
         {
@@ -435,9 +587,11 @@ public class Health : NetworkBehaviour
         );
 
         damageHitFeedback?.Shake(amount);
-        if ((DamageSource)source != DamageSource.Projectile)
+        if ((DamageSource)source != DamageSource.Projectile &&
+            (DamageSource)source != DamageSource.Reflect)
         {
-            // Reflected damage has no projectile impact callback of its own.
+            // Projectile and reflection impacts are sent before TakeDamage so
+            // their visuals also survive a lethal hit.
             float radius = Mathf.Lerp(0.15f, 0.5f, Mathf.Clamp01(amount / 100f));
             damageHitEffect?.SetHit(transform.position, radius, amount);
         }

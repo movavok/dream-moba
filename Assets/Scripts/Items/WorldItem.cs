@@ -98,6 +98,61 @@ public class WorldItem : NetworkBehaviour, IInteractable
         NetworkObject.Despawn(true);
     }
 
+    public static int DropAndThrow(
+        ItemDefinition item,
+        int count,
+        Transform origin)
+    {
+        if (item == null || count <= 0 || origin == null ||
+            item.worldPrefab == null ||
+            NetworkManager.Singleton == null ||
+            !NetworkManager.Singleton.IsServer)
+            return 0;
+
+        GameObject prefab = item.worldPrefab;
+        WorldItem prefabItem = prefab.GetComponent<WorldItem>();
+
+        if (prefab.GetComponent<NetworkObject>() == null ||
+            prefabItem == null || prefabItem.Definition != item ||
+            prefabItem.Count != 1)
+        {
+            Debug.LogError(
+                $"[WorldItem] Invalid drop prefab for '{item.id}'.",
+                prefab
+            );
+
+            return 0;
+        }
+
+        int dropped = 0;
+
+        for (int i = 0; i < count; i++)
+        {
+            GameObject worldObject = Instantiate(
+                prefab,
+                origin.position,
+                Quaternion.identity
+            );
+
+            if (worldObject.GetComponent<ItemThrowMotion>() == null)
+                worldObject.AddComponent<ItemThrowMotion>();
+
+            worldObject.GetComponent<NetworkObject>().Spawn();
+
+            Vector2 direction = ItemThrowMotion.RandomDropDirection();
+
+            worldObject.GetComponent<WorldItem>().ThrowFrom(
+                origin,
+                direction,
+                item.normalThrowMultiplier
+            );
+
+            dropped++;
+        }
+
+        return dropped;
+    }
+
     public void ThrowFrom(
         Transform origin,
         Vector2 direction,
