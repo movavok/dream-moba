@@ -352,6 +352,8 @@ public class RespawnManager : NetworkBehaviour
         Inventory oldInventory = deadPlayer != null
             ? deadPlayer.GetComponent<Inventory>() : null;
         InventorySlot[] savedInventory = oldInventory?.CapturePersistentSlots();
+        int savedPermanentHealthBonus = deadPlayer != null
+            ? deadPlayer.PermanentMaxHealthBonus : 0;
         int savedSelection = oldInventory != null
             ? oldInventory.SelectedSlot.Value : 0;
         Team oldTeam = deadPlayer != null ? deadPlayer.GetComponent<Team>() : null;
@@ -445,6 +447,7 @@ public class RespawnManager : NetworkBehaviour
             newPlayer.GetComponent<NetworkObject>();
 
         networkObject.SpawnAsPlayerObject(clientId);
+        newPlayer.GetComponent<Health>()?.RestorePermanentMaxHealthBonus(savedPermanentHealthBonus);
         Inventory newInventory = newPlayer.GetComponent<Inventory>();
         newInventory?.RestoreSlots(savedInventory, savedSelection);
         GrantRespawnItem(newInventory, savedTeamId);

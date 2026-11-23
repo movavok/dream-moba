@@ -22,6 +22,7 @@ public class PlayerNetwork : NetworkBehaviour
     public HeroDefinition HeroData => heroData;
 
     private Rigidbody2D rb;
+    private BoarKnockback boarKnockback;
     private PlayerInput playerInput;
     private bool buildingTransitionInProgress;
 
@@ -97,8 +98,8 @@ public class PlayerNetwork : NetworkBehaviour
             !interactable.CanInteract(this))
             return;
 
-        if (Vector2.Distance(transform.position, target.transform.position) >
-            1.75f)
+        InteractionDetector detector = GetComponent<InteractionDetector>();
+        if (detector == null || !detector.IsWithinInteractionRange(target, interactable))
             return;
 
         interactable.Interact(this);
@@ -243,6 +244,9 @@ public class PlayerNetwork : NetworkBehaviour
         isAttacking = value.isPressed &&
             (ContainerUI.Instance == null || !ContainerUI.Instance.IsOpen);
 
+        if (isAttacking)
+            SendAimIfChanged(true);
+
         SetAttackingServerRpc(isAttacking);
     }
 
@@ -258,6 +262,9 @@ public class PlayerNetwork : NetworkBehaviour
     // Aim input
     private Camera mainCamera;
     private Vector2 mousePosition;
+    private Vector2 lastSentAim;
+    private double nextAimSendTime;
+    private bool hasSentAim;
 
     public void OnAim(InputValue value)
     {
@@ -265,13 +272,38 @@ public class PlayerNetwork : NetworkBehaviour
         return;
 
         mousePosition = value.Get<Vector2>();
+    }
 
-        Camera cam = GetMainCamera();
+    private void LateUpdate()
+    {
+        if (IsOwner && IsSpawned)
+            SendAimIfChanged(false);
+    }
 
-        if (cam == null)
+    private void SendAimIfChanged(bool force)
+    {
+        double now = Time.unscaledTimeAsDouble;
+        if (!force && now < nextAimSendTime)
             return;
 
-        SetAimDirectionServerRpc(GetAimDirection());
+        // Recalculate against the current camera, even when the mouse has not moved.
+        if (Mouse.current != null)
+            mousePosition = Mouse.current.position.ReadValue();
+        if (GetMainCamera() == null)
+            return;
+
+        Vector2 direction = GetAimDirection();
+        if (direction.sqrMagnitude < 0.0001f)
+            return;
+
+        nextAimSendTime = now + 1.0 / 30.0;
+        if (!force && hasSentAim && Vector2.Angle(lastSentAim, direction) < 0.5f)
+            return;
+
+        lastSentAim = direction;
+        hasSentAim = true;
+        // Keep reliable ordering with attack/movement input. Only the rate changes.
+        SetAimDirectionServerRpc(direction);
     }
 
     private NetworkVariable<bool> projectileTrailActive =
@@ -478,6 +510,7 @@ public class PlayerNetwork : NetworkBehaviour
             animator = GetComponentInChildren<Animator>();
 
         rb = GetComponent<Rigidbody2D>();
+        boarKnockback = GetComponent<BoarKnockback>();
 
         statController = GetComponent<StatController>();
 
@@ -541,7 +574,9 @@ public class PlayerNetwork : NetworkBehaviour
 
         Vector2 moveDirection = moveInput;
 
-        rb.linearVelocity = moveDirection * speed;
+        Vector2 velocity = moveDirection * speed;
+        rb.linearVelocity = boarKnockback != null
+            ? boarKnockback.Apply(velocity) : velocity;
 
         Vector2 actualMovement =
             rb.position - lastPosition;
@@ -576,15 +611,16 @@ public class PlayerNetwork : NetworkBehaviour
     // Server simulation
     private float nextAttackTime;
 
-    private NetworkVariable<float> attackCooldownRemaining =
-        new NetworkVariable<float>(
-            0f,
+    private NetworkVariable<double> attackCooldownEndsAt =
+        new NetworkVariable<double>(
+            0d,
             NetworkVariableReadPermission.Everyone,
             NetworkVariableWritePermission.Server
         );
 
     public float AttackCooldownRemaining =>
-        attackCooldownRemaining.Value;
+        IsSpawned ? Mathf.Max(0f,
+            (float)(attackCooldownEndsAt.Value - NetworkManager.ServerTime.Time)) : 0f;
 
     public float AttackCooldownDuration =>
         heroData != null ? heroData.attack.cooldown : 0f;
@@ -598,10 +634,11 @@ public class PlayerNetwork : NetworkBehaviour
 
             if (isAttacking && Time.time >= nextAttackTime)
             {
-                nextAttackTime =
-                    Time.time +
-                    heroData.attack.cooldown *
-                    (1 / attackCooldownMultiplier);
+                float cooldown = heroData.attack.cooldown / attackCooldownMultiplier;
+                nextAttackTime = Time.time + cooldown;
+                // Replicate the deadline once per attack, not a changing float
+                // every frame. Clients use NGO's synchronized server clock.
+                attackCooldownEndsAt.Value = NetworkManager.ServerTime.Time + cooldown;
 
                 ShootProjectile(aimDirection, moveInput);
 
@@ -617,12 +654,6 @@ public class PlayerNetwork : NetworkBehaviour
 
                 AttackUsedClientRpc();
             }
-
-            attackCooldownRemaining.Value =
-                Mathf.Max(
-                    0f,
-                    nextAttackTime - Time.time
-                );
         }
 
         UpdateAnimator();

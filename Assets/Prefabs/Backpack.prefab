@@ -148,7 +148,8 @@ MonoBehaviour:
   initialSlots:
   - item: {fileID: 11400000, guid: b25708a55cc74e6c94cfe517b7cd0bd0, type: 2}
     count: 1
-  interactionRange: 1.75
+  - item: {fileID: 11400000, guid: 9e4e88bc558e4acdace7e14cf602046b, type: 2}
+    count: 1
 --- !u!1 &1000000000000000010
 GameObject:
   m_ObjectHideFlags: 0

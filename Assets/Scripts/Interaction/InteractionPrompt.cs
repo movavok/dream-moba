@@ -43,9 +43,10 @@ public class InteractionPrompt : MonoBehaviour
         if (instance.promptTarget == null)
             return;
 
-        instance.promptText.text =
-            $"[{binding}] - {interactable.InteractionVerb} " +
-            interactable.InteractionName;
+        instance.promptText.text = interactable is IDynamicInteractionPrompt dynamicPrompt
+            ? dynamicPrompt.GetPromptText(binding)
+            : $"[{binding}] - {interactable.InteractionVerb} " +
+              interactable.InteractionName;
         instance.promptText.transform.position =
             instance.promptTarget.position + instance.worldOffset;
         instance.promptText.gameObject.SetActive(true);

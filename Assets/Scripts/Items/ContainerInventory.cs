@@ -17,7 +17,6 @@ public class ContainerInventory : NetworkBehaviour
     [SerializeField] private ContainerPanelView panelPrefab;
     [SerializeField, Min(1)] private int capacity = 4;
     [SerializeField] private StartingSlot[] initialSlots;
-    [SerializeField, Min(0.1f)] private float interactionRange = 1.75f;
 
     private readonly NetworkList<InventorySlot> slots = new();
     private static readonly Dictionary<ulong, ContainerInventory> OpenByClient = new();
@@ -25,7 +24,13 @@ public class ContainerInventory : NetworkBehaviour
     public NetworkList<InventorySlot> Slots => slots;
     public ItemDatabase Database => database;
     public ContainerPanelView PanelPrefab => panelPrefab;
-    public float InteractionRange => interactionRange;
+    public bool IsPlayerInInteractionRange(PlayerNetwork player)
+    {
+        return player != null &&
+            player.GetComponent<InteractionDetector>() is InteractionDetector detector &&
+            GetComponent<ContainerInteractable>() is ContainerInteractable interactable &&
+            detector.IsWithinInteractionRange(NetworkObject, interactable);
+    }
 
     public override void OnNetworkSpawn()
     {
@@ -178,7 +183,7 @@ public class ContainerInventory : NetworkBehaviour
     {
         return IsSpawned && player != null && player.IsSpawned &&
             player.GetComponent<Health>() is Health health && health.IsAlive() &&
-            Vector2.Distance(player.transform.position, transform.position) <= interactionRange;
+            IsPlayerInInteractionRange(player);
     }
 
     private static bool TryFit(InventorySlot[] target, int itemIndex, int amount,

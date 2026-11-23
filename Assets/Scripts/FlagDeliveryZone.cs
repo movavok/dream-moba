@@ -132,14 +132,16 @@ public class FlagDeliveryZone : NetworkBehaviour
         if (indicatorRenderer == null || deliveryAnimating)
             return;
 
-        FlagCarryVisual[] carryVisuals =
-            FindObjectsByType<FlagCarryVisual>();
+        NetworkManager network = NetworkManager.Singleton;
+        if (network == null || !network.IsListening)
+            return;
         float nearestDistance = float.PositiveInfinity;
         bool hasCarrier = false;
 
-        foreach (FlagCarryVisual carryVisual in carryVisuals)
+        foreach (NetworkObject source in network.SpawnManager.SpawnedObjectsList)
         {
-            if (carryVisual == null || !carryVisual.IsCarrying)
+            if (!source.gameObject.activeInHierarchy ||
+                !source.TryGetComponent(out FlagCarryVisual carryVisual) || !carryVisual.IsCarrying)
                 continue;
 
             float distance = Vector2.Distance(

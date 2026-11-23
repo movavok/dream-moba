@@ -11,6 +11,7 @@ public class FlagCarryVisual : MonoBehaviour
 
     private bool isCarrying;
     private float blinkPhase;
+    private FlagDeliveryZone deliveryZone;
 
     public bool IsCarrying => isCarrying;
     public FlagBlinkSettings BlinkSettings => blinkSettings;
@@ -68,8 +69,9 @@ public class FlagCarryVisual : MonoBehaviour
         if (!isCarrying || visualObject == null)
             return;
 
-        FlagDeliveryZone zone =
-            FindAnyObjectByType<FlagDeliveryZone>();
+        if (deliveryZone == null)
+            deliveryZone = FindAnyObjectByType<FlagDeliveryZone>();
+        FlagDeliveryZone zone = deliveryZone;
 
         FlagBlinkSettings activeSettings =
             zone != null ? zone.BlinkSettings : blinkSettings;

@@ -30,8 +30,7 @@ public class ContainerUI : MonoBehaviour
         if (container == null || container.PanelPrefab == null ||
             container.PanelPrefab.SlotCount != container.Slots.Count ||
             PlayerNetwork.LocalPlayer == null ||
-            Vector2.Distance(PlayerNetwork.LocalPlayer.transform.position,
-                container.transform.position) > container.InteractionRange)
+            !container.IsPlayerInInteractionRange(PlayerNetwork.LocalPlayer))
         {
             container?.CloseForLocalPlayer();
             return;
@@ -98,8 +97,7 @@ public class ContainerUI : MonoBehaviour
         PlayerNetwork player = PlayerNetwork.LocalPlayer;
         if (player == null || !player.IsSpawned ||
             player.GetComponent<Health>() is not Health health || !health.IsAlive() ||
-            Vector2.Distance(player.transform.position, opened.transform.position) >
-                opened.InteractionRange)
+            !opened.IsPlayerInInteractionRange(player))
             Close();
     }
 

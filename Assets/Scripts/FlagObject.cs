@@ -572,23 +572,40 @@ public class FlagObject : NetworkBehaviour, IInteractable, ICarriableItem
         if (!IsServer || !pickedUp.Value)
             return;
 
-        Vector3 deathPosition = transform.position;
-
         NetworkObject carrier = FindPlayerObject(carrierClientId.Value);
+        Transform dropOrigin = carrierHealth != null
+            ? carrierHealth.transform : carrier != null ? carrier.transform : null;
+        Vector3 deathPosition = dropOrigin != null
+            ? dropOrigin.position : transform.position;
         carrier?.GetComponent<Inventory>()?.RemoveItem(inventoryItem, 1);
-
-        if (carrierHealth != null)
-            deathPosition = carrierHealth.transform.position;
 
         transform.position = deathPosition;
         ClearThrower();
         pickedUp.Value = false;
         carrierClientId.Value = NoCarrier;
-        isFlying.Value = false;
-        StartReturnCountdown();
-        transform.localScale = defaultScale;
-        transform.rotation = defaultRotation;
         UnsubscribeFromCarrierDeath();
+
+        if (throwMotion != null && dropOrigin != null)
+        {
+            isFlying.Value = true;
+            returnAtServerTime.Value = -1d;
+            if (throwRoutine != null)
+                StopCoroutine(throwRoutine);
+
+            throwRoutine = StartCoroutine(ThrowRoutine(
+                deathPosition,
+                ItemThrowMotion.RandomDropDirection(),
+                inventoryItem != null ? inventoryItem.normalThrowMultiplier : 1f,
+                dropOrigin
+            ));
+        }
+        else
+        {
+            isFlying.Value = false;
+            StartReturnCountdown();
+            transform.localScale = defaultScale;
+            transform.rotation = defaultRotation;
+        }
     }
 
     private IEnumerator ThrowRoutine(

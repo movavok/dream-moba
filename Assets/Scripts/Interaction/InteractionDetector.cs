@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(PlayerNetwork))]
 public class InteractionDetector : MonoBehaviour
@@ -15,6 +16,24 @@ public class InteractionDetector : MonoBehaviour
     private NetworkObject currentNetworkObject;
     private IInteractable currentHighlighted;
     private IInteractable currentPrompted;
+    private readonly List<Collider2D> hits = new(16);
+    private readonly List<MonoBehaviour> interactionComponents = new(16);
+
+    // Use the same physics query as the local highlight/prompt when the server
+    // validates an interaction or a container transfer.
+    public bool IsWithinInteractionRange(NetworkObject target, IInteractable interactable)
+    {
+        if (target == null || interactable == null)
+            return false;
+
+        QueryNearbyColliders();
+        foreach (Collider2D hit in hits)
+            if (hit.GetComponentInParent<NetworkObject>() == target &&
+                ReferenceEquals(FindInteractable(hit), interactable))
+                return true;
+
+        return false;
+    }
 
     private void Awake()
     {
@@ -76,7 +95,8 @@ public class InteractionDetector : MonoBehaviour
             return;
         }
 
-        if (available == currentPrompted)
+        if (available == currentPrompted &&
+            available is not IDynamicInteractionPrompt)
             return;
 
         currentPrompted = available;
@@ -98,11 +118,7 @@ public class InteractionDetector : MonoBehaviour
         float availableDistance = float.MaxValue;
         float nearestDistance = float.MaxValue;
 
-        Collider2D[] hits = Physics2D.OverlapCircleAll(
-            transform.position,
-            interactionRadius,
-            interactionLayers
-        );
+        QueryNearbyColliders();
 
         foreach (Collider2D hit in hits)
         {
@@ -132,6 +148,14 @@ public class InteractionDetector : MonoBehaviour
                 availableDistance = distance;
             }
         }
+    }
+
+    private void QueryNearbyColliders()
+    {
+        ContactFilter2D filter = new ContactFilter2D();
+        filter.SetLayerMask(interactionLayers);
+        filter.useTriggers = Physics2D.queriesHitTriggers;
+        Physics2D.OverlapCircle(transform.position, interactionRadius, filter, hits);
     }
 
     private string GetKeyboardBindingDisplayString()
@@ -167,10 +191,8 @@ public class InteractionDetector : MonoBehaviour
 
     private IInteractable FindInteractable(Collider2D hit)
     {
-        MonoBehaviour[] components =
-            hit.GetComponentsInParent<MonoBehaviour>();
-
-        foreach (MonoBehaviour component in components)
+        hit.GetComponentsInParent(false, interactionComponents);
+        foreach (MonoBehaviour component in interactionComponents)
         {
             if (component is IInteractable interactable)
                 return interactable;
