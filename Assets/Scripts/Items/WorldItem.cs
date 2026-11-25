@@ -11,12 +11,19 @@ public class WorldItem : NetworkBehaviour, IInteractable
     [SerializeField] private InteractionOutline interactionOutline;
     [SerializeField] private ItemThrowMotion throwMotion;
     [SerializeField] private SpriteRenderer visual;
+    [SerializeField] private bool consumeOnThrow;
 
     private readonly NetworkVariable<bool> isFlying = new(
         false,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
+    private readonly NetworkVariable<int> instanceCharges = new(0);
+    private readonly NetworkVariable<bool> spentOnThrow = new(false);
+    public void SetCharges(int value)
+    {
+        if (IsServer && IsSpawned) instanceCharges.Value = Mathf.Max(0, value);
+    }
 
     private Collider2D interactionCollider;
     private Coroutine throwRoutine;
@@ -24,9 +31,11 @@ public class WorldItem : NetworkBehaviour, IInteractable
     private Quaternion defaultRotation;
 
     public ItemDefinition Definition => definition;
+    public Sprite WorldSprite => visual != null ? visual.sprite : null;
     public int Count => count;
     public bool IsFlying => isFlying.Value;
     public bool IsLanded => !isFlying.Value;
+    public bool WasConsumedByThrow => spentOnThrow.Value;
 
     public string InteractionVerb => interactionVerb;
     public string InteractionName => interactionName;
@@ -71,12 +80,12 @@ public class WorldItem : NetworkBehaviour, IInteractable
     {
         return player != null &&
             player.IsSpawned &&
-            !isFlying.Value;
+            !isFlying.Value && !spentOnThrow.Value;
     }
 
     public void SetHighlighted(bool highlighted)
     {
-        if (isFlying.Value)
+        if (isFlying.Value || spentOnThrow.Value)
             return;
 
         interactionOutline?.SetHighlighted(highlighted);
@@ -92,7 +101,7 @@ public class WorldItem : NetworkBehaviour, IInteractable
         if (inventory == null)
             return;
 
-        if (!inventory.TryAdd(definition, count))
+        if (!inventory.TryAdd(definition, count, instanceCharges.Value))
             return;
 
         NetworkObject.Despawn(true);
@@ -101,7 +110,8 @@ public class WorldItem : NetworkBehaviour, IInteractable
     public static int DropAndThrow(
         ItemDefinition item,
         int count,
-        Transform origin)
+        Transform origin,
+        int charges = 0)
     {
         if (item == null || count <= 0 || origin == null ||
             item.worldPrefab == null ||
@@ -138,6 +148,9 @@ public class WorldItem : NetworkBehaviour, IInteractable
                 worldObject.AddComponent<ItemThrowMotion>();
 
             worldObject.GetComponent<NetworkObject>().Spawn();
+            if (item.maxCharges > 0)
+                worldObject.GetComponent<WorldItem>().SetCharges(
+                    i == 0 && charges > 0 ? charges : item.maxCharges);
 
             Vector2 direction = ItemThrowMotion.RandomDropDirection();
 
@@ -175,6 +188,13 @@ public class WorldItem : NetworkBehaviour, IInteractable
             StopCoroutine(throwRoutine);
 
         isFlying.Value = true;
+        IThrownItemImpact impact = GetComponent<IThrownItemImpact>();
+        if (impact != null || consumeOnThrow)
+            spentOnThrow.Value = true;
+        if (impact != null)
+        {
+            impact.OnThrowStart(origin);
+        }
 
         throwRoutine = StartCoroutine(
             ThrowRoutine(
@@ -196,8 +216,11 @@ public class WorldItem : NetworkBehaviour, IInteractable
             origin,
             direction,
             distanceMultiplier,
-            ignoreRoot
+            ignoreRoot,
+            GetComponent<IThrownItemImpact>()
         );
+
+        if (this == null || !IsSpawned) yield break;
 
         transform.localScale = defaultScale;
         transform.rotation = defaultRotation;

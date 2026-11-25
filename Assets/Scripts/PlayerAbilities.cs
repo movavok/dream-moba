@@ -238,7 +238,7 @@ public class PlayerAbilities : NetworkBehaviour
 
     private void UseAbility1()
     {
-        if (!IsServer)
+        if (!IsServer || playerNetwork.IsStunned)
             return;
 
         if (ability1 == null)
@@ -260,7 +260,7 @@ public class PlayerAbilities : NetworkBehaviour
 
     private void UseAbility2()
     {
-        if (!IsServer)
+        if (!IsServer || playerNetwork.IsStunned)
             return;
 
         if (ability2 == null)
@@ -475,7 +475,13 @@ public class PlayerAbilities : NetworkBehaviour
         ability1?.Update();
         ability2?.Update();
 
-        UpdateQuickCast();
+        if (playerNetwork.IsStunned)
+        {
+            ability1WasUsable = false;
+            ability2WasUsable = false;
+        }
+        else
+            UpdateQuickCast();
 
         if (ability1 != null)
         {

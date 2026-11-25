@@ -46,7 +46,8 @@ public class ContainerInventory : NetworkBehaviour
                 ? initialSlots[i].count : 0;
             int index = database != null ? database.GetIndex(item) : -1;
             slots.Add(index >= 0 && count > 0
-                ? new InventorySlot(index, Mathf.Min(count, Mathf.Max(1, item.maxStack)))
+                ? new InventorySlot(index, Mathf.Min(count,
+                    Mathf.Max(1, item.maxStack)), item.maxCharges)
                 : InventorySlot.Empty);
         }
     }
@@ -142,11 +143,13 @@ public class ContainerInventory : NetworkBehaviour
         int amount = wholeStack ? taken.count : 1;
         int preferred = fromContainer && selectedPlayerSlot >= 0 &&
             selectedPlayerSlot < Inventory.SlotCount ? selectedPlayerSlot : -1;
-        if (!TryFit(target, taken.itemIndex, amount, Mathf.Max(1, item.maxStack), preferred))
+        if (!Inventory.TryFit(target, taken.itemIndex, amount,
+            item, preferred, taken.charges))
             return;
 
         source[sourceIndex] = taken.count > amount
-            ? new InventorySlot(taken.itemIndex, taken.count - amount) : InventorySlot.Empty;
+            ? new InventorySlot(taken.itemIndex, taken.count - amount,
+                item.maxCharges > 0 ? item.maxCharges : taken.charges) : InventorySlot.Empty;
 
         // Both copies have passed validation. No await/yield occurs between these writes.
         inventory.ApplyContainerTransfer(playerCopy);
@@ -164,12 +167,11 @@ public class ContainerInventory : NetworkBehaviour
         int index = database.GetIndex(definition);
         if (index < 0)
             return false;
-
         InventorySlot[] copy = new InventorySlot[slots.Count];
         for (int i = 0; i < copy.Length; i++)
             copy[i] = slots[i];
 
-        if (!TryFit(copy, index, amount, Mathf.Max(1, definition.maxStack), -1))
+        if (!Inventory.TryFit(copy, index, amount, definition, -1, definition.maxCharges))
             return false;
 
         for (int i = 0; i < copy.Length; i++)
@@ -183,36 +185,8 @@ public class ContainerInventory : NetworkBehaviour
     {
         return IsSpawned && player != null && player.IsSpawned &&
             player.GetComponent<Health>() is Health health && health.IsAlive() &&
+            !health.IsStunned &&
             IsPlayerInInteractionRange(player);
     }
 
-    private static bool TryFit(InventorySlot[] target, int itemIndex, int amount,
-        int stackLimit, int preferred)
-    {
-        if (preferred >= 0 && preferred < target.Length)
-            AddTo(preferred);
-        for (int i = 0; i < target.Length && amount > 0; i++)
-            if (i != preferred && !target[i].IsEmpty && target[i].itemIndex == itemIndex)
-                AddTo(i);
-        for (int i = 0; i < target.Length && amount > 0; i++)
-            if (i != preferred && target[i].IsEmpty)
-                AddTo(i);
-
-        return amount == 0;
-
-        void AddTo(int index)
-        {
-            InventorySlot slot = target[index];
-            if (!slot.IsEmpty && slot.itemIndex != itemIndex)
-                return;
-
-            int existing = slot.IsEmpty ? 0 : slot.count;
-            int added = Mathf.Min(amount, Mathf.Max(0, stackLimit - existing));
-            if (added > 0)
-            {
-                target[index] = new InventorySlot(itemIndex, existing + added);
-                amount -= added;
-            }
-        }
-    }
 }

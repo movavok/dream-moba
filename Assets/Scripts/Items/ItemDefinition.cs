@@ -9,12 +9,18 @@ public class ItemDefinition : ScriptableObject
     [Header("Identity")]
     public string id;
     public string displayName;
+    public Color nameColor = Color.white;
     [TextArea] public string description;
     public Sprite icon;
 
     [Header("Stacking")]
     [Min(1)]
     public int maxStack = 10;
+
+    [Header("Charges (0 = ordinary stack)")]
+    [Min(0)] public int maxCharges;
+    public bool blocksBasicAttacks;
+    public bool ignitesBasicAttacks;
 
     [Header("Death")]
     public bool dropOnDeath;
@@ -48,6 +54,13 @@ public class ItemDefinition : ScriptableObject
     public StatModifier[] selectedModifiers;
 
     public bool IsStackable => maxStack > 1;
+
+    public string ColoredDisplayName => string.IsNullOrEmpty(displayName)
+        ? displayName
+        : $"<color=#{ColorUtility.ToHtmlStringRGBA(nameColor)}>{displayName}</color>";
+
+    public string GetTooltipName(InventorySlot slot) => maxCharges > 0 && !slot.IsEmpty
+        ? $"{ColoredDisplayName} ({slot.charges})" : ColoredDisplayName;
 
     public string AudioGroup =>
         AudioGroups.Item(

@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 862d7e6094476fc4ab69f2505c69c4ac, type: 3}
+  m_Name: Lighter
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
+  id: lighter
+  displayName: "\u0417\u0430\u043f\u0430\u043b\u044c\u043d\u0438\u0447\u043a\u0430"
+  nameColor: {r: 1, g: 0.65, b: 0.25, a: 1}
+  description: "\u041d\u0430\u0441\u0442\u0443\u043f\u043d\u0456 <b>5 \u0431\u0430\u0437\u043e\u0432\u0438\u0445 \u0430\u0442\u0430\u043a</b> \u043f\u0456\u0434\u043f\u0430\u043b\u044e\u044e\u0442\u044c \u0446\u0456\u043b\u044c."
+  icon: {fileID: 5455720244891028765, guid: 9868b7d7230d2084aadfc0dd26ca0373, type: 3}
+  maxStack: 10
+  maxCharges: 5
+  blocksBasicAttacks: 0
+  ignitesBasicAttacks: 1
+  dropOnDeath: 0
+  allowInContainers: 1
+  throwable: 0
+  worldPrefab: {fileID: 1000000000000000000, guid: 4ac51000000000000000000000000022, type: 3}
+  normalThrowMultiplier: 1
+  strongThrowMultiplier: 2
+  canBeCooked: 0
+  cookedResult: {fileID: 0}
+  cookingDuration: 8
+  cookingRawSprite: {fileID: 0}
+  cookingResultSprite: {fileID: 0}
+  useAction: {fileID: 0}
+  useCooldown: 0
+  passiveModifiers: []
+  selectedModifiers: []

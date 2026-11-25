@@ -14,17 +14,25 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
   id: energy_drink
   displayName: "\u0415\u043D\u0435\u0440\u0433\u0435\u0442\u0438\u043A"
+  nameColor: {r: 0.41960785, g: 0.81960785, b: 0.4, a: 1}
   description: "\u0417\u0431\u0456\u043B\u044C\u0448\u0443\u0454 \u0448\u0432\u0438\u0434\u043A\u0456\u0441\u0442\u044C
-    \u0440\u0443\u0445\u0443 \u043D\u0430 15% \u043F\u0440\u043E\u0442\u044F\u0433\u043E\u043C
-    15 \u0441\u0435\u043A\u0443\u043D\u0434 \u043F\u0456\u0441\u043B\u044F \u0432\u0438\u043A\u043E\u0440\u0438\u0441\u0442\u0430\u043D\u043D\u044F."
+    \u0440\u0443\u0445\u0443 \u043D\u0430 <color=#5599FF><b>25%</b></color> \u043D\u0430
+    10 \u0441."
   icon: {fileID: -9198062948555106279, guid: 8d3a2db3c4aae1540b2e334183ecdad3, type: 3}
   maxStack: 10
+  maxCharges: 0
+  blocksBasicAttacks: 0
   dropOnDeath: 0
   allowInContainers: 1
   throwable: 1
   worldPrefab: {fileID: 1000000000000000000, guid: 2add884c79de4ef69bfd1c6cbb470999, type: 3}
   normalThrowMultiplier: 1
   strongThrowMultiplier: 2
+  canBeCooked: 0
+  cookedResult: {fileID: 0}
+  cookingDuration: 8
+  cookingRawSprite: {fileID: 0}
+  cookingResultSprite: {fileID: 0}
   useAction: {fileID: 11400000, guid: 3d1f116da6a5427c8f6af65b86cc95a1, type: 2}
   useCooldown: 0
   passiveModifiers: []

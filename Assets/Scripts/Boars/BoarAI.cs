@@ -209,7 +209,8 @@ public sealed class BoarAI : NetworkBehaviour
             facingLeft.Value = horizontal < 0f;
     }
 
-    private bool CanBlink => networkState.Value == State.Wander && !moving.Value;
+    private bool CanBlink => networkState.Value == State.Wander && !moving.Value &&
+        (health == null || !health.IsStunned);
 
     private void PlayAnimation(string state)
     {
@@ -265,6 +266,21 @@ public sealed class BoarAI : NetworkBehaviour
         if (IsSpawned && IsClient) UpdateVisual();
         if (!IsServer || !IsSpawned || forest == null || dying || !health.IsAlive()) return;
         Regenerate();
+        if (health.IsStunned)
+        {
+            if (networkState.Value == State.Charge) StopCharge();
+            if (networkState.Value == State.Charge || networkState.Value == State.Windup ||
+                networkState.Value == State.Alert)
+                EnterWander();
+            return;
+        }
+        if (health.HasSightBlockingStatus)
+        {
+            if (networkState.Value == State.Charge) StopCharge();
+            if (target != null || networkState.Value == State.Alert ||
+                networkState.Value == State.Windup || networkState.Value == State.Charge)
+                EnterWander();
+        }
         if (health.CurrentHealth < health.MaxHealth * fleeThreshold &&
             networkState.Value != State.Flee && networkState.Value != State.Dead &&
             networkState.Value != State.Stunned)
@@ -272,7 +288,7 @@ public sealed class BoarAI : NetworkBehaviour
             EnterFlee();
         }
 
-        if (networkState.Value == State.Wander && Time.time >= nextDetection &&
+        if (!health.HasSightBlockingStatus && networkState.Value == State.Wander && Time.time >= nextDetection &&
             Time.time >= cooldownUntil && health.CurrentHealth >= health.MaxHealth * fleeThreshold)
         {
             nextDetection = Time.time + detectionInterval;
@@ -298,6 +314,19 @@ public sealed class BoarAI : NetworkBehaviour
     private void FixedUpdate()
     {
         if (!IsServer || !IsSpawned || forest == null || dying || !health.IsAlive()) return;
+        if (health.IsStunned)
+        {
+            Stop();
+            if (moving.Value) moving.Value = false;
+            return;
+        }
+        if (health.HasSightBlockingStatus &&
+            (networkState.Value == State.Alert || networkState.Value == State.Windup ||
+             networkState.Value == State.Charge))
+        {
+            if (networkState.Value == State.Charge) StopCharge();
+            EnterWander();
+        }
         switch (networkState.Value)
         {
             case State.Wander:
@@ -566,6 +595,7 @@ public sealed class BoarAI : NetworkBehaviour
         lethalAttacker = hit.Source == DamageSource.Reflect ? ulong.MaxValue : hit.AttackerClientId;
         ResetRegeneration();
         if (!health.IsAlive() || networkState.Value == State.Stunned) return;
+        if (health.HasSightBlockingStatus) return;
         if (networkState.Value == State.Charge &&
             health.CurrentHealth >= health.MaxHealth * fleeThreshold) return;
         if (hit.AttackerClientId != ulong.MaxValue && NetworkManager.ConnectedClients.TryGetValue(hit.AttackerClientId, out NetworkClient client) && client.PlayerObject != null)

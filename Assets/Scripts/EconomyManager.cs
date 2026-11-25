@@ -92,6 +92,11 @@ public class EconomyManager : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+        if (IsServer)
+        {
+            ShopProgress.Reset();
+            NetworkManager.OnClientDisconnectCallback += OnShopClientDisconnected;
+        }
 
         goldEntries.OnListChanged -= OnGoldListChanged;
         goldEntries.OnListChanged += OnGoldListChanged;
@@ -112,9 +117,16 @@ public class EconomyManager : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        if (IsServer && NetworkManager != null)
+        {
+            NetworkManager.OnClientDisconnectCallback -= OnShopClientDisconnected;
+            ShopProgress.Reset();
+        }
         goldEntries.OnListChanged -= OnGoldListChanged;
         base.OnNetworkDespawn();
     }
+
+    private void OnShopClientDisconnected(ulong clientId) => ShopProgress.Remove(clientId);
 
     private void OnGoldListChanged(NetworkListEvent<EconomyGold> change)
     {

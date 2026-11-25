@@ -41,7 +41,7 @@ public class DamageReflector : MonoBehaviour
     {
         Health nonPlayer = nextNonPlayerAttacker;
         nextNonPlayerAttacker = null;
-        if (health == null || !health.IsServer)
+        if (health == null || !health.IsServer || health.IsStunned)
             return;
 
         if (damageEvent.Source == DamageSource.Reflect)

@@ -32,6 +32,20 @@ public class Health : NetworkBehaviour
     [SerializeField] private ParticleSystem burnParticlesPrefab;
 
     private readonly NetworkVariable<double> burningUntil = new(0);
+    [SerializeField] private StatusDefinition[] statusDefinitions;
+    [SerializeField] private Transform statusHeadPoint;
+    public Transform StatusHeadPoint => statusHeadPoint;
+    [SerializeField] private Vector3 statusVisualOffset;
+    public Vector3 StatusVisualOffset => statusVisualOffset;
+    private readonly NetworkList<StatusEntry> statuses = new();
+    private readonly NetworkVariable<double> debuffImmuneUntil = new(0);
+    private ScriptableObject immunityVisualSource;
+    private HeroEffectVisuals effectVisuals;
+    [SerializeField] private ItemPopupVisual blockPopupPrefab;
+    private ItemPopupVisual blockPopup;
+    public event System.Action StatusChanged;
+    public bool IsDebuffImmune => IsServer && IsSpawned &&
+        NetworkManager.ServerTime.Time < debuffImmuneUntil.Value;
     private ParticleSystem burnParticles;
     private ParticleSystemRenderer burnRenderer;
     private SpriteRenderer burnAnchor;
@@ -89,6 +103,14 @@ public class Health : NetworkBehaviour
 
     private void Update()
     {
+        if (IsServer && IsSpawned)
+        {
+            double now = NetworkManager.ServerTime.Time;
+            for (int i = statuses.Count - 1; i >= 0; i--)
+                if (statuses[i].endsAt <= now) RemoveStatusAt(i);
+            if (debuffImmuneUntil.Value > 0 && now >= debuffImmuneUntil.Value)
+                EndDebuffImmunity();
+        }
         if (IsServer && IsSpawned && burningUntil.Value > 0)
             UpdateBurning();
 
@@ -145,6 +167,31 @@ public class Health : NetworkBehaviour
             hitPosition,
             damage
         );
+    }
+
+    public bool TryBlockBasicAttack(short attackerTeam, Vector2 position)
+    {
+        if (!IsServer || !IsSpawned || spawnProtection.Value ||
+            GetComponent<Team>() is not Team team || !team.IsEnemyFor(attackerTeam) ||
+            GetComponent<Inventory>() is not Inventory inventory ||
+            !inventory.TryBlockBasicAttack(out int itemIndex)) return false;
+        ShowDamageHit(position, 0);
+        ShowHealthNumberClientRpc(0);
+        BlockedAttackClientRpc(itemIndex);
+        return true;
+    }
+
+    [ClientRpc]
+    private void BlockedAttackClientRpc(int itemIndex)
+    {
+        if (blockPopupPrefab == null) return;
+        Inventory inventory = GetComponent<Inventory>();
+        ItemDefinition item = inventory != null ? inventory.Database?.GetByIndex(itemIndex) : null;
+        WorldItem world = item != null && item.worldPrefab != null
+            ? item.worldPrefab.GetComponent<WorldItem>() : null;
+        if (world == null || world.WorldSprite == null) return;
+        if (blockPopup == null) blockPopup = Instantiate(blockPopupPrefab, transform, false);
+        blockPopup.Play(world.WorldSprite);
     }
 
     [ClientRpc]
@@ -235,6 +282,10 @@ public class Health : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        if (IsClient && GetComponent<StatusVisuals>() == null)
+            gameObject.AddComponent<StatusVisuals>();
+        effectVisuals = GetComponent<HeroEffectVisuals>();
+        statuses.OnListChanged += OnStatusListChanged;
         burningUntil.OnValueChanged += OnBurningChanged;
         OnBurningChanged(0, burningUntil.Value);
         playerNetwork = GetComponent<PlayerNetwork>();
@@ -275,6 +326,7 @@ public class Health : NetworkBehaviour
         SpawnProtectionChanged?.Invoke(
             spawnProtection.Value
         );
+        StatusChanged?.Invoke(); // Reconcile statuses already replicated for late join.
     }
 
     private void OnSpawnProtectionChanged(
@@ -312,6 +364,17 @@ public class Health : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        GetComponent<StatusVisuals>()?.ClearVisuals();
+        statuses.OnListChanged -= OnStatusListChanged;
+        if (IsServer)
+        {
+            for (int i = 0; i < statuses.Count; i++)
+            {
+                StatusDefinition definition = FindStatus(statuses[i].id);
+                if (definition != null) itemStats?.RemoveSource(definition);
+            }
+            EndDebuffImmunity();
+        }
         burningUntil.OnValueChanged -= OnBurningChanged;
         StopBurningVisual();
         ignitedTargets.Clear();
@@ -325,18 +388,154 @@ public class Health : NetworkBehaviour
     }
 
     // Fire is server-owned; particle simulation on a client is only cosmetic.
-    public void Ignite()
+    public void Ignite(bool refreshExisting = true)
     {
-        if (!IsServer || !IsSpawned || !IsAlive() || spawnProtection.Value)
+        if (!IsServer || !IsSpawned || !IsAlive() || spawnProtection.Value || IsDebuffImmune)
             return;
 
         double now = NetworkManager.ServerTime.Time;
+        if (!refreshExisting && burningUntil.Value > now)
+            return;
+
         if (burningUntil.Value >= now + 4d)
             return;
 
         if (burningUntil.Value <= now)
             nextBurnTick = now + 1d;
         burningUntil.Value = now + 5d;
+    }
+
+    public void CleanseAndProtect(ScriptableObject visualSource, float seconds)
+    {
+        if (!IsServer || !IsSpawned || !IsAlive()) return;
+        burningUntil.Value = 0;
+        ignitedTargets.Clear();
+        for (int i = statuses.Count - 1; i >= 0; i--)
+        {
+            StatusDefinition definition = FindStatus(statuses[i].id);
+            if (definition != null && definition.negative && definition.cleansable)
+                RemoveStatusAt(i);
+        }
+        // Refresh a single immunity and its existing visual, never add durations.
+        debuffImmuneUntil.Value = NetworkManager.ServerTime.Time + Mathf.Max(0f, seconds);
+        immunityVisualSource = visualSource;
+        effectVisuals?.SetActive(visualSource, true);
+    }
+
+    private void EndDebuffImmunity()
+    {
+        if (debuffImmuneUntil.Value <= 0) return;
+        debuffImmuneUntil.Value = 0;
+        effectVisuals?.SetActive(immunityVisualSource, false);
+        immunityVisualSource = null;
+    }
+
+    private void OnStatusListChanged(NetworkListEvent<StatusEntry> change) => StatusChanged?.Invoke();
+    public int StatusCount => statuses.Count;
+    public double StatusEndsAt(int index) => index >= 0 && index < statuses.Count
+        ? statuses[index].endsAt : 0;
+    public bool HasSightBlockingStatus
+    {
+        get
+        {
+            for (int i = 0; i < statuses.Count; i++)
+            {
+                StatusDefinition definition = StatusAt(i);
+                if (definition != null && definition.blocksDetection) return true;
+            }
+            return false;
+        }
+    }
+    public bool IsStunned
+    {
+        get
+        {
+            for (int i = 0; i < statuses.Count; i++)
+            {
+                StatusDefinition definition = StatusAt(i);
+                if (definition != null && definition.blocksActions) return true;
+            }
+            return false;
+        }
+    }
+    public StatusDefinition StatusAt(int index) => index >= 0 && index < statuses.Count &&
+        statuses[index].endsAt > (NetworkManager != null ? NetworkManager.ServerTime.Time : 0)
+        ? FindStatus(statuses[index].id) : null;
+
+    private StatusDefinition FindStatus(int id)
+    {
+        if (statusDefinitions == null) return null;
+        foreach (StatusDefinition definition in statusDefinitions)
+            if (definition != null && definition.id == id) return definition;
+        return null;
+    }
+
+    public bool ApplyStatus(StatusDefinition definition, ulong sourceClientId = ulong.MaxValue,
+        float durationOverride = -1f)
+    {
+        if (!IsServer || !IsSpawned || !IsAlive() || definition == null ||
+            FindStatus(definition.id) != definition ||
+            (definition.negative && !definition.bypassImmunity && spawnProtection.Value) ||
+            (definition.negative && !definition.bypassImmunity && IsDebuffImmune)) return false;
+        double end = NetworkManager.ServerTime.Time +
+            (durationOverride >= 0f ? durationOverride : definition.duration);
+        for (int i = 0; i < statuses.Count; i++)
+        {
+            StatusEntry entry = statuses[i];
+            if (entry.id != definition.id) continue;
+            entry.endsAt = end;
+            entry.source = sourceClientId;
+            int oldStacks = entry.stacks;
+            entry.stacks = Mathf.Min(definition.maxStacks, entry.stacks + 1);
+            statuses[i] = entry;
+            if (entry.stacks != oldStacks)
+                ApplyStatusModifiers(definition, entry.stacks);
+            return true;
+        }
+        statuses.Add(new StatusEntry(definition.id, end, sourceClientId, 1));
+        ApplyStatusModifiers(definition, 1);
+        return true;
+    }
+
+    private void ApplyStatusModifiers(StatusDefinition definition, int stacks)
+    {
+        if (itemStats == null || definition.modifiers == null) return;
+        StatModifier[] scaled = new StatModifier[definition.modifiers.Length];
+        for (int i = 0; i < scaled.Length; i++)
+        {
+            scaled[i] = definition.modifiers[i];
+            scaled[i].value *= stacks;
+        }
+        itemStats.AddSource(definition, scaled);
+    }
+
+    private void RemoveStatusAt(int index)
+    {
+        StatusDefinition definition = FindStatus(statuses[index].id);
+        if (definition != null) itemStats?.RemoveSource(definition);
+        statuses.RemoveAt(index);
+    }
+
+    public void RemoveStatus(StatusDefinition definition)
+    {
+        if (!IsServer || definition == null) return;
+        for (int i = statuses.Count - 1; i >= 0; i--)
+            if (statuses[i].id == definition.id) RemoveStatusAt(i);
+    }
+
+    public struct StatusEntry : INetworkSerializable, System.IEquatable<StatusEntry>
+    {
+        public int id;
+        public double endsAt;
+        public ulong source;
+        public int stacks;
+        public StatusEntry(int id, double endsAt, ulong source, int stacks)
+        { this.id = id; this.endsAt = endsAt; this.source = source; this.stacks = stacks; }
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        { serializer.SerializeValue(ref id); serializer.SerializeValue(ref endsAt);
+          serializer.SerializeValue(ref source); serializer.SerializeValue(ref stacks); }
+        public bool Equals(StatusEntry other) => id == other.id && endsAt == other.endsAt &&
+            source == other.source && stacks == other.stacks;
     }
 
     private void OnBurningChanged(double previous, double current)
@@ -410,7 +609,7 @@ public class Health : NetworkBehaviour
                 Health other = hit.GetComponentInParent<Health>();
                 if (other != null && other != this && other.IsAlive() &&
                     ignitedTargets.Add(other))
-                    other.Ignite();
+                    other.Ignite(refreshExisting: false);
             }
         }
     }
@@ -612,6 +811,11 @@ public class Health : NetworkBehaviour
 
     private void Die()
     {
+        if (IsServer)
+        {
+            for (int i = statuses.Count - 1; i >= 0; i--) RemoveStatusAt(i);
+            EndDebuffImmunity();
+        }
         Debug.Log("PLAYER DIED");
         Died?.Invoke();
         if (respawnOnDeath && RespawnManager.Instance != null)

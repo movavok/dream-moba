@@ -130,6 +130,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileNetwork
   ShowTopMostFoldoutHeaderGroup: 1
+  isBasicAttack: 1
+  lighterSettings: {fileID: 11400000, guid: 4ac51000000000000000000000000019, type: 2}
   trail: {fileID: 8289956023670505750}
 --- !u!50 &1629309889450706591
 Rigidbody2D:

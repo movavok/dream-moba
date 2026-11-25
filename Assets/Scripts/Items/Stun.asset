@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ac51000000000000000000000000001, type: 3}
+  m_Name: Stun
+  m_EditorClassIdentifier: Assembly-CSharp::StatusDefinition
+  id: 3
+  negative: 1
+  cleansable: 0
+  bypassImmunity: 1
+  blocksDetection: 0
+  blocksActions: 1
+  duration: 1
+  maxStacks: 1
+  modifiers: []
+  worldOverlay: {fileID: 0}
+  worldEffectPrefab: {fileID: 962248532990280645, guid: c5218e6d79a08c04490f93469baf80fb, type: 3}
+  screenOverlay: {fileID: 0}
+  worldOffset: {x: 0, y: 0, z: 0}
+  screenOpacity: 1
+  screenFadeIn: 0.1
+  screenFadeOut: 0.18

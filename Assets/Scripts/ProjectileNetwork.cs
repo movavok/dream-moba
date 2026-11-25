@@ -3,6 +3,30 @@ using UnityEngine;
 
 public class ProjectileNetwork : NetworkBehaviour
 {
+    [SerializeField] private bool isBasicAttack = true;
+    public bool IsBasicAttack => isBasicAttack;
+    [SerializeField] private LighterAttackConfig lighterSettings;
+    private readonly NetworkVariable<bool> ignites = new(false);
+    private bool pendingIgnition;
+    private ParticleSystem ignitionVisual;
+
+    public void SetIgnition()
+    {
+        if (!isBasicAttack) return;
+        pendingIgnition = true;
+        if (IsServer && IsSpawned) ignites.Value = true;
+    }
+
+    private void OnIgnitionChanged(bool previous, bool current)
+    {
+        if (!current || !IsClient ||
+            lighterSettings == null || lighterSettings.AttackFirePrefab == null)
+            return;
+        if (ignitionVisual != null)
+            return;
+        ignitionVisual = Instantiate(lighterSettings.AttackFirePrefab, transform, false);
+        ignitionVisual.Play();
+    }
     private float speed;
     private int damage;
     private float lifeTime;
@@ -236,6 +260,10 @@ public class ProjectileNetwork : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+        if (IsServer && pendingIgnition) ignites.Value = true;
+        ignites.OnValueChanged += OnIgnitionChanged;
+        OnIgnitionChanged(false, ignites.Value);
+
         networkTrailEnabled.OnValueChanged += OnTrailChanged;
         UpdateTrail(networkTrailEnabled.Value);
 
@@ -345,6 +373,8 @@ public class ProjectileNetwork : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        ignites.OnValueChanged -= OnIgnitionChanged;
+        if (ignitionVisual != null) Destroy(ignitionVisual.gameObject);
         if (attackerTeam != null)
             attackerTeam.TeamId.OnValueChanged -= OnAttackerTeamIdChanged;
 
@@ -458,6 +488,15 @@ public class ProjectileNetwork : NetworkBehaviour
             Vector2 hitPosition =
                 other.ClosestPoint(transform.position);
 
+            // A block is not a successful hit: no damage, on-hit effects,
+            // attack sound or attacker streak.
+            if (isBasicAttack && !health.IsSpawnProtected &&
+                health.TryBlockBasicAttack(teamId, hitPosition))
+            {
+                DestroyProjectile();
+                return;
+            }
+
             bool targetWasProtected =
                 health.IsSpawnProtected;
 
@@ -472,6 +511,9 @@ public class ProjectileNetwork : NetworkBehaviour
                 attackerClientId,
                 DamageSource.Projectile
             );
+
+            if (isBasicAttack && ignites.Value && !targetWasProtected && health.IsAlive())
+                health.Ignite();
 
             PlayHitSoundClientRpc(
                 hitPosition,

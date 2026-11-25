@@ -1,109 +1,30 @@
-using System.Collections.Generic;
 using UnityEngine;
 
+// The aura requests a configured negative status; Health owns immunity, cleansing,
+// modifier lifetime and visual removal. Re-entering after immunity is a new hit.
 [RequireComponent(typeof(WorldItem))]
-public class SlowAura : MonoBehaviour
+public sealed class SlowAura : MonoBehaviour
 {
-    [SerializeField] private float radius = 3f;
-    [Range(0f, 1f)]
-    [SerializeField] private float slowPercent = 0.5f;
-    [SerializeField] private LayerMask heroLayers = ~0;
-
+    [SerializeField, Min(0f)] private float radius = 3f;
+    [SerializeField] private LayerMask heroLayers = 1 << 7;
+    [SerializeField] private StatusDefinition slowStatus;
+    [SerializeField, Min(0.05f)] private float scanInterval = 0.1f;
     private WorldItem worldItem;
-    private StatModifier[] slowModifiers;
+    private float nextScan;
 
-    private readonly HashSet<StatController> affected = new();
-    private readonly List<StatController> inRange = new();
-
-    private void Awake()
-    {
-        worldItem = GetComponent<WorldItem>();
-
-        slowModifiers = new[]
-        {
-            new StatModifier(
-                StatType.MoveSpeed,
-                ModifierOp.Percent,
-                -slowPercent
-            )
-        };
-    }
+    private void Awake() => worldItem = GetComponent<WorldItem>();
 
     private void Update()
     {
-        if (worldItem == null || !worldItem.IsServer)
-            return;
-
-        if (!worldItem.IsLanded)
+        if (worldItem == null || !worldItem.IsServer || !worldItem.IsLanded ||
+            slowStatus == null || Time.time < nextScan) return;
+        nextScan = Time.time + scanInterval;
+        foreach (Collider2D collider in Physics2D.OverlapCircleAll(transform.position, radius, heroLayers))
         {
-            Clear();
-            return;
+            Health health = collider.GetComponentInParent<Health>();
+            if (health != null && health.GetComponent<PlayerNetwork>() != null)
+                health.ApplyStatus(slowStatus);
         }
-
-        CollectInRange();
-
-        for (int i = 0; i < inRange.Count; i++)
-        {
-            StatController controller = inRange[i];
-
-            if (affected.Add(controller))
-                controller.AddSource(this, slowModifiers);
-        }
-
-        RemoveOutOfRange();
-    }
-
-    private void CollectInRange()
-    {
-        inRange.Clear();
-
-        Collider2D[] hits = Physics2D.OverlapCircleAll(
-            transform.position,
-            radius,
-            heroLayers
-        );
-
-        foreach (Collider2D hit in hits)
-        {
-            StatController controller =
-                hit.GetComponentInParent<StatController>();
-
-            if (controller == null || inRange.Contains(controller))
-                continue;
-
-            inRange.Add(controller);
-        }
-    }
-
-    private void RemoveOutOfRange()
-    {
-        affected.RemoveWhere(controller =>
-        {
-            if (controller != null && inRange.Contains(controller))
-                return false;
-
-            controller?.RemoveSource(this);
-            return true;
-        });
-    }
-
-    private void Clear()
-    {
-        if (affected.Count == 0)
-            return;
-
-        foreach (StatController controller in affected)
-        {
-            if (controller != null)
-                controller.RemoveSource(this);
-        }
-
-        affected.Clear();
-    }
-
-    private void OnDisable()
-    {
-        Clear();
     }
 
     private void OnDrawGizmosSelected()

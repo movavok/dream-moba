@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 918bfb4ba2be4bed83f7e354253148c0, type: 3}
   m_Name: EnergyDrinkUse
   m_EditorClassIdentifier: Assembly-CSharp::EnergyDrinkUseAction
-  speedBonus: 0.15
-  duration: 15
+  speedBonus: 0.25
+  duration: 10
   useSounds:
   - {fileID: 8300000, guid: 475f9efb3a76789499df9b161e4a8e76, type: 3}

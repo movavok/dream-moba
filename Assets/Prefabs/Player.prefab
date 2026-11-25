@@ -547,6 +547,37 @@ MonoBehaviour:
   appearDuration: 0.25
   moveDuration: 0.2
   appearOffset: 15
+--- !u!1 &5790747294723260488
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7314878321875101861}
+  m_Layer: 6
+  m_Name: HeadPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7314878321875101861
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5790747294723260488}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.18, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3031778588553509305}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5914568623819287789
 GameObject:
   m_ObjectHideFlags: 0
@@ -741,6 +772,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 7314878321875101861}
   - {fileID: 7257965903156679887}
   m_Father: {fileID: 8561917045426891098}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1422,6 +1454,13 @@ MonoBehaviour:
   respawnOnDeath: 1
   standardRegenEnabled: 1
   burnParticlesPrefab: {fileID: 929596891041536053, guid: 90e8aea4797097545b319bc013158ffd, type: 3}
+  statusDefinitions:
+  - {fileID: 11400000, guid: 4ac51000000000000000000000000007, type: 2}
+  - {fileID: 11400000, guid: 4ac51000000000000000000000000016, type: 2}
+  - {fileID: 11400000, guid: 4ac51000000000000000000000000018, type: 2}
+  statusHeadPoint: {fileID: 7314878321875101861}
+  statusVisualOffset: {x: 0, y: 0, z: 0}
+  blockPopupPrefab: {fileID: 100004, guid: 4ac51000000000000000000000000009, type: 3}
   damageClips: []
   audioGroup: 
 --- !u!114 &6821608293737209610
@@ -1520,9 +1559,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HeroEffectVisuals
   ShowTopMostFoldoutHeaderGroup: 1
   effects:
-  - source: {fileID: 11400000, guid: 3d1f116da6a5427c8f6af65b86cc95a1, type: 2}
+  - source: {fileID: 11400000, guid: 632abbccadde43a780e65bd1f06e43ea, type: 2}
     prefab: {fileID: 5132178953236233099, guid: cf68316e9d95b29499c54728dd50a224, type: 3}
     localOffset: {x: 0, y: 0, z: 0}
+    attachmentPoint: {fileID: 0}
+  - source: {fileID: 11400000, guid: 3d1f116da6a5427c8f6af65b86cc95a1, type: 2}
+    prefab: {fileID: 8022300000000000001, guid: 8905705c5740486bb416d1b246183e71, type: 3}
+    localOffset: {x: 0, y: 0, z: 0}
+    attachmentPoint: {fileID: 7257965903156679887}
 --- !u!114 &9100000000000000701
 MonoBehaviour:
   m_ObjectHideFlags: 0

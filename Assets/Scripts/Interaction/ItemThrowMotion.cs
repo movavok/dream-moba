@@ -35,7 +35,8 @@ public class ItemThrowMotion : MonoBehaviour
         Vector3 origin,
         Vector2 direction,
         float distanceMultiplier,
-        Transform ignoreRoot = null)
+        Transform ignoreRoot = null,
+        IThrownItemImpact impact = null)
     {
         direction = direction.sqrMagnitude > 0.001f
             ? direction.normalized
@@ -73,6 +74,8 @@ public class ItemThrowMotion : MonoBehaviour
             // miss thin or irregular tiles between two rendered frames.
             Vector3 safePosition = GetClampedEnd(
                 transform.position, position, ignoreRoot);
+            if (impact != null && impact.Sweep(transform.position, safePosition))
+                yield break;
             if ((safePosition - position).sqrMagnitude > 0.000001f ||
                 IsOverlappingObstacle(position, ignoreRoot))
             {
@@ -95,6 +98,12 @@ public class ItemThrowMotion : MonoBehaviour
 
         if (!hitObstacle)
             transform.position = end;
+
+        if (impact != null)
+        {
+            impact.Impact(transform.position);
+            yield break;
+        }
 
         end = ResolveOverlapPosition(transform.position, ignoreRoot, start);
         yield return MoveToPosition(end);

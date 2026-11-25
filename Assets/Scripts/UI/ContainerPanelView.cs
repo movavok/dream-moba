@@ -50,9 +50,10 @@ public class ContainerPanelView : MonoBehaviour
             ItemDefinition item = container.Database != null
                 ? container.Database.GetByIndex(content.itemIndex) : null;
             slots[i].SetIcon(item != null ? item.icon : null);
+            slots[i].SetItemCharges(content.charges, item != null ? item.maxCharges : 0);
             slots[i].SetPlaceholder(item != null && item.icon == null &&
                 !string.IsNullOrEmpty(item.id) ? item.id[..1].ToUpperInvariant() : null);
-            slots[i].SetTooltipData(item != null ? item.displayName : null,
+            slots[i].SetTooltipData(item != null ? item.GetTooltipName(content) : null,
                 item != null ? item.description : null);
             slots[i].SetKey("");
             slots[i].SetReady();

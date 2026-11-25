@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 862d7e6094476fc4ab69f2505c69c4ac, type: 3}
+  m_Name: Pillow
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
+  id: pillow
+  displayName: "\u041F\u043E\u0434\u0443\u0448\u043A\u0430"
+  nameColor: {r: 0.41960785, g: 0.81960785, b: 0.4, a: 1}
+  description: "\u0423 \u0432\u0438\u0431\u0440\u0430\u043D\u043E\u043C\u0443 \u0441\u043B\u043E\u0442\u0456
+    \u0431\u043B\u043E\u043A\u0443\u0454 <b>2 \u0431\u0430\u0437\u043E\u0432\u0456
+    \u0430\u0442\u0430\u043A\u0438</b>."
+  icon: {fileID: -791450416185443503, guid: cd0283cf4df87164b96288dc638bbc8d, type: 3}
+  maxStack: 10
+  maxCharges: 2
+  blocksBasicAttacks: 1
+  ignitesBasicAttacks: 0
+  dropOnDeath: 0
+  allowInContainers: 1
+  throwable: 1
+  worldPrefab: {fileID: 1000000000000000000, guid: 4ac51000000000000000000000000015, type: 3}
+  normalThrowMultiplier: 1
+  strongThrowMultiplier: 2
+  canBeCooked: 0
+  cookedResult: {fileID: 0}
+  cookingDuration: 8
+  cookingRawSprite: {fileID: 0}
+  cookingResultSprite: {fileID: 0}
+  useAction: {fileID: 0}
+  useCooldown: 0
+  passiveModifiers: []
+  selectedModifiers: []

@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 862d7e6094476fc4ab69f2505c69c4ac, type: 3}
+  m_Name: BananaPeel
+  m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
+  id: banana_peel
+  displayName: "\u0411\u0430\u043d\u0430\u043d\u043e\u0432\u0430 \u0448\u043a\u0456\u0440\u043a\u0430"
+  nameColor: {r: 1, g: 0.9, b: 0.3, a: 1}
+  description: "\u041a\u0438\u043d\u0443\u0442\u0430 \u043a\u043e\u0436\u0443\u0440\u0430 \u043e\u0433\u043b\u0443\u0448\u0443\u0454 \u043d\u0430 <b>1 \u0441</b> \u0442\u043e\u0433\u043e, \u0445\u0442\u043e \u043d\u0430 \u043d\u0435\u0457 \u043d\u0430\u0441\u0442\u0443\u043f\u0438\u0442\u044c."
+  icon: {fileID: -1946728695950676848, guid: 49e4d8d2514bcc74c8df710ccf8c7681, type: 3}
+  maxStack: 10
+  maxCharges: 0
+  blocksBasicAttacks: 0
+  dropOnDeath: 0
+  allowInContainers: 1
+  throwable: 1
+  worldPrefab: {fileID: 1000000000000000000, guid: 4ac51000000000000000000000000023, type: 3}
+  normalThrowMultiplier: 1
+  strongThrowMultiplier: 2
+  canBeCooked: 0
+  cookedResult: {fileID: 0}
+  cookingDuration: 8
+  cookingRawSprite: {fileID: 0}
+  cookingResultSprite: {fileID: 0}
+  useAction: {fileID: 0}
+  useCooldown: 0
+  passiveModifiers: []
+  selectedModifiers: []

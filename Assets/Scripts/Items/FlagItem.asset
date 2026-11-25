@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemDefinition
   id: flag
   displayName: Прапор
-  description: "Ключовий предмет матчу. Донесіть прапор на протилежний пірс, щоб здобути очко для команди."
+  nameColor: {r: 1, g: 0.83, b: 0.2, a: 1}
+  description: "Доставте прапор на <color=#FFD433>ворожий пірс</color> для <color=#FFD433>очка</color>."
   icon: {fileID: 4679815505131476315, guid: 6c5256ba1982c4f4289b4442677a7bb5, type: 3}
   maxStack: 1
   dropOnDeath: 1

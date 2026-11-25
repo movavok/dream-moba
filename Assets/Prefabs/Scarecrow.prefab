@@ -155,6 +155,12 @@ MonoBehaviour:
   respawnOnDeath: 0
   standardRegenEnabled: 0
   burnParticlesPrefab: {fileID: 929596891041536053, guid: 90e8aea4797097545b319bc013158ffd, type: 3}
+  statusDefinitions:
+  - {fileID: 11400000, guid: 4ac51000000000000000000000000007, type: 2}
+  - {fileID: 11400000, guid: 4ac51000000000000000000000000018, type: 2}
+  statusHeadPoint: {fileID: 3262667773101656943}
+  statusVisualOffset: {x: 0, y: 0.35, z: 0}
+  blockPopupPrefab: {fileID: 0}
   damageClips:
   - {fileID: 8300000, guid: 1c11cf2210751d048aa87c0137861a78, type: 3}
   - {fileID: 8300000, guid: 7a88668dc294c584d8718189426fe32d, type: 3}
@@ -510,6 +516,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7498993074283073008}
+  - {fileID: 3262667773101656943}
   m_Father: {fileID: 1000000000000000001}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &5044272975853767433
@@ -627,6 +634,37 @@ CapsuleCollider2D:
   m_Offset: {x: 0.0032184422, y: -0.08674955}
   m_Size: {x: 0.7447342, y: 1.6962137}
   m_Direction: 0
+--- !u!1 &6152933374632517544
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3262667773101656943}
+  m_Layer: 6
+  m_Name: HeadPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3262667773101656943
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6152933374632517544}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.26, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5539511051014016728}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7520988950328116242
 GameObject:
   m_ObjectHideFlags: 0

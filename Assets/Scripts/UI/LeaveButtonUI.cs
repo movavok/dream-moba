@@ -25,6 +25,9 @@ public class LeaveButtonUI : MonoBehaviour
 
     private void OnEscape(InputAction.CallbackContext context)
     {
+        if (ShopUI.Instance != null && ShopUI.Instance.TryClose())
+            return;
+
         if (ContainerUI.Instance != null && ContainerUI.Instance.TryClose())
             return;
 

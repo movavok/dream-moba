@@ -177,7 +177,8 @@ public class Inventory : NetworkBehaviour
             ItemDefinition item = database != null
                 ? database.GetByIndex(slot.itemIndex) : null;
             slots[i] = item != null && slot.count > 0 &&
-                slot.count <= Mathf.Max(1, item.maxStack)
+                slot.count <= Mathf.Max(1, item.maxStack) &&
+                (item.maxCharges <= 0 || slot.charges > 0 && slot.charges <= item.maxCharges)
                 ? slot : InventorySlot.Empty;
         }
 
@@ -212,7 +213,8 @@ public class Inventory : NetworkBehaviour
             int dropped = WorldItem.DropAndThrow(
                 item,
                 slots[i].count,
-                transform
+                transform,
+                slots[i].charges
             );
 
             if (dropped > 0)
@@ -254,82 +256,89 @@ public class Inventory : NetworkBehaviour
         TryUse(slot);
     }
 
-    public bool TryAdd(ItemDefinition definition, int amount)
+    public bool TryAdd(ItemDefinition definition, int amount, int existingCharges = -1)
     {
-        if (!IsServer || definition == null || amount <= 0)
-            return false;
-
-        if (database == null)
+        if (!CanAdd(definition, amount, existingCharges))
             return false;
 
         int index = database.GetIndex(definition);
+        int charges = definition.maxCharges > 0
+            ? (existingCharges > 0 ? existingCharges : definition.maxCharges) : 0;
+        InventorySlot[] copy = new InventorySlot[slots.Count];
+        for (int i = 0; i < copy.Length; i++) copy[i] = slots[i];
+        if (!TryFit(copy, index, amount, definition, selectedSlot.Value, charges))
+            return false;
+        for (int i = 0; i < copy.Length; i++)
+            if (!slots[i].Equals(copy[i])) slots[i] = copy[i];
+        return true;
+    }
 
-        if (index < 0)
+    public bool CanAdd(ItemDefinition definition, int amount, int existingCharges = -1)
+    {
+        if (!IsServer || definition == null || amount <= 0 || database == null ||
+            slots.Count != SlotCount)
             return false;
 
-        int remaining = amount;
-        int maxStack = Mathf.Max(1, definition.maxStack);
+        int index = database.GetIndex(definition);
+        if (index < 0) return false;
+        InventorySlot[] copy = new InventorySlot[slots.Count];
+        for (int i = 0; i < copy.Length; i++) copy[i] = slots[i];
+        int charges = definition.maxCharges > 0
+            ? (existingCharges > 0 ? existingCharges : definition.maxCharges) : 0;
+        return TryFit(copy, index, amount, definition, selectedSlot.Value, charges);
+    }
 
-        // Reserve the whole pickup before changing any slot. WorldItem remains
-        // in the scene on failure, so a partial addition would duplicate it.
-        long capacity = 0;
-        for (int i = 0; i < slots.Count; i++)
-        {
-            InventorySlot slot = slots[i];
-            if (slot.IsEmpty)
-                capacity += maxStack;
-            else if (slot.itemIndex == index)
-                capacity += Mathf.Max(0, maxStack - slot.count);
-        }
-
-        if (capacity < amount)
+    // Charged stacks store the current item's remaining charges; all units
+    // behind it are full. Never merge two partly used items into one slot.
+    public static bool TryFit(InventorySlot[] target, int itemIndex, int amount,
+        ItemDefinition item, int preferred, int charges)
+    {
+        if (target == null || item == null || amount <= 0 ||
+            item.maxCharges > 0 && (charges <= 0 || charges > item.maxCharges))
             return false;
 
-        // Prefer the player's selected slot, even if earlier slots are empty.
-        int preferred = selectedSlot.Value;
-        if (preferred >= 0 && preferred < slots.Count)
+        if (item.maxCharges > 0 && charges < item.maxCharges)
         {
-            InventorySlot slot = slots[preferred];
-            if (slot.IsEmpty || slot.itemIndex == index)
-            {
-                int currentCount = slot.IsEmpty ? 0 : slot.count;
-                int add = Mathf.Min(Mathf.Max(0, maxStack - currentCount), remaining);
-                if (add > 0)
-                {
-                    slots[preferred] = new InventorySlot(index, currentCount + add);
-                    remaining -= add;
-                }
-            }
+            // Place the one partial unit first, then distribute the fully
+            // charged remainder across every slot (including earlier ones).
+            if (preferred >= 0 && preferred < target.Length)
+                AddTo(preferred, 1);
+            for (int i = 0; i < target.Length && charges < item.maxCharges; i++)
+                if (i != preferred && !target[i].IsEmpty &&
+                    target[i].itemIndex == itemIndex)
+                    AddTo(i, 1);
+            for (int i = 0; i < target.Length && charges < item.maxCharges; i++)
+                if (i != preferred && target[i].IsEmpty)
+                    AddTo(i, 1);
+            if (charges < item.maxCharges) return false;
         }
 
-        for (int i = 0; i < slots.Count && remaining > 0; i++)
+        if (preferred >= 0 && preferred < target.Length) AddTo(preferred, amount);
+        for (int i = 0; i < target.Length && amount > 0; i++)
+            if (i != preferred && !target[i].IsEmpty && target[i].itemIndex == itemIndex)
+                AddTo(i, amount);
+        for (int i = 0; i < target.Length && amount > 0; i++)
+            if (i != preferred && target[i].IsEmpty)
+                AddTo(i, amount);
+        return amount == 0;
+
+        void AddTo(int index, int maximum)
         {
-            InventorySlot slot = slots[i];
+            InventorySlot slot = target[index];
+            if (!slot.IsEmpty && slot.itemIndex != itemIndex) return;
+            if (!slot.IsEmpty && item.maxCharges > 0 &&
+                charges < item.maxCharges && slot.charges < item.maxCharges) return;
 
-            if (slot.itemIndex != index)
-                continue;
-
-            int space = maxStack - slot.count;
-
-            if (space <= 0)
-                continue;
-
-            int add = Mathf.Min(space, remaining);
-            slots[i] = new InventorySlot(index, slot.count + add);
-            remaining -= add;
+            int added = Mathf.Min(Mathf.Min(amount, maximum), Mathf.Max(0,
+                Mathf.Max(1, item.maxStack) - (slot.IsEmpty ? 0 : slot.count)));
+            if (added == 0) return;
+            target[index] = new InventorySlot(itemIndex,
+                (slot.IsEmpty ? 0 : slot.count) + added,
+                item.maxCharges <= 0 ? 0 : slot.IsEmpty || charges < item.maxCharges
+                    ? charges : slot.charges);
+            amount -= added;
+            if (item.maxCharges > 0) charges = item.maxCharges;
         }
-
-        for (int i = 0; i < slots.Count && remaining > 0; i++)
-        {
-            if (!slots[i].IsEmpty)
-                continue;
-
-            int add = Mathf.Min(maxStack, remaining);
-            slots[i] = new InventorySlot(index, add);
-            remaining -= add;
-        }
-
-        return remaining == 0;
     }
 
     public bool TryRemove(int slot, int amount)
@@ -351,8 +360,10 @@ public class Inventory : NetworkBehaviour
         int remove = amount;
         int left = current.count - remove;
 
+        ItemDefinition item = GetItem(slot);
         slots[slot] = left > 0
-            ? new InventorySlot(current.itemIndex, left)
+            ? new InventorySlot(current.itemIndex, left,
+                item != null && item.maxCharges > 0 ? item.maxCharges : current.charges)
             : InventorySlot.Empty;
 
         return true;
@@ -387,7 +398,8 @@ public class Inventory : NetworkBehaviour
             int left = slot.count - remove;
 
             slots[i] = left > 0
-                ? new InventorySlot(index, left)
+                ? new InventorySlot(index, left,
+                    definition.maxCharges > 0 ? definition.maxCharges : slot.charges)
                 : InventorySlot.Empty;
 
             remaining -= remove;
@@ -398,7 +410,7 @@ public class Inventory : NetworkBehaviour
 
     public bool TryUse(int slot)
     {
-        if (!IsServer || health == null || !health.IsAlive())
+        if (!IsServer || health == null || !health.IsAlive() || health.IsStunned)
             return false;
 
         if (slot < 0 || slot >= slots.Count || GetCooldownRemaining(slot) > 0f)
@@ -453,7 +465,7 @@ public class Inventory : NetworkBehaviour
 
     public bool TryThrow(int slot, Vector2 direction, bool strongThrow)
     {
-        if (!IsServer || health == null || !health.IsAlive())
+        if (!IsServer || health == null || !health.IsAlive() || health.IsStunned)
             return false;
 
         ItemDefinition definition = GetItem(slot);
@@ -494,6 +506,9 @@ public class Inventory : NetworkBehaviour
 
         networkObject.Spawn();
 
+        if (definition.maxCharges > 0)
+            worldItem.SetCharges(GetSlot(slot).charges);
+
         if (!TryRemove(slot, 1))
         {
             networkObject.Despawn(true);
@@ -506,6 +521,41 @@ public class Inventory : NetworkBehaviour
 
         worldItem.ThrowFrom(transform, direction, multiplier);
         return true;
+    }
+
+    public bool TryBlockBasicAttack(out int itemIndex)
+    {
+        itemIndex = -1;
+        if (!IsServer || !IsSpawned) return false;
+        int selected = selectedSlot.Value;
+        InventorySlot slot = GetSlot(selected);
+        ItemDefinition item = GetItem(selected);
+        if (item == null || !item.blocksBasicAttacks || item.maxCharges <= 0 ||
+            slot.charges <= 0) return false;
+        itemIndex = slot.itemIndex;
+        ConsumeCharge(selected, slot, item);
+        return true;
+    }
+
+    public bool TryConsumeSelectedIgnition()
+    {
+        if (!IsServer || !IsSpawned) return false;
+        int selected = selectedSlot.Value;
+        InventorySlot slot = GetSlot(selected);
+        ItemDefinition item = GetItem(selected);
+        if (item == null || !item.ignitesBasicAttacks || item.maxCharges <= 0 ||
+            slot.charges <= 0) return false;
+        ConsumeCharge(selected, slot, item);
+        return true;
+    }
+
+    private void ConsumeCharge(int index, InventorySlot slot, ItemDefinition item)
+    {
+        slots[index] = slot.charges > 1
+            ? new InventorySlot(slot.itemIndex, slot.count, slot.charges - 1)
+            : slot.count > 1
+                ? new InventorySlot(slot.itemIndex, slot.count - 1, item.maxCharges)
+                : InventorySlot.Empty;
     }
 
     private void RebuildModifiers()

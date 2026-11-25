@@ -117,10 +117,12 @@ public class InventoryHUD : MonoBehaviour
             bool selected = inventory != null && inventory.SelectedSlot.Value == i;
 
             slot.SetIcon(item != null ? item.icon : null);
+            slot.SetItemCharges(item != null ? inventory.GetSlot(i).charges : 0,
+                item != null ? item.maxCharges : 0);
             slot.SetPlaceholder(item != null && item.icon == null &&
                 !string.IsNullOrEmpty(item.id) ? item.id[..1].ToUpperInvariant() : null);
             slot.SetTooltipData(
-                item != null ? item.displayName : null,
+                item != null ? item.GetTooltipName(inventory.GetSlot(i)) : null,
                 item != null ? item.description : null
             );
             slot.SetFrame(selected && selectedFrame != null

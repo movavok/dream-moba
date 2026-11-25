@@ -36,6 +36,7 @@ public class ContainerUI : MonoBehaviour
             return;
         }
 
+        ShopUI.Instance?.TryClose();
         Close();
         opened = container;
         panel = Instantiate(container.PanelPrefab, transform.parent, false);

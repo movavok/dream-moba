@@ -15,6 +15,7 @@ public class HeroEffectVisuals : NetworkBehaviour
         public ScriptableObject source;
         public GameObject prefab;
         public Vector3 localOffset;
+        public Transform attachmentPoint;
     }
 
     [SerializeField] private EffectVisual[] effects;
@@ -96,9 +97,14 @@ public class HeroEffectVisuals : NetworkBehaviour
                 continue;
 
             // Preserve the authored rotation/scale (including particle emitters).
-            GameObject instance = Instantiate(effects[i].prefab, transform, false);
+            Transform parent = effects[i].attachmentPoint != null
+                ? effects[i].attachmentPoint : transform;
+            GameObject instance = Instantiate(effects[i].prefab, parent, false);
             instance.transform.localPosition += effects[i].localOffset;
             instances.Add(i, instance);
+            PixelLightningVisual lightning = instance.GetComponent<PixelLightningVisual>();
+            if (lightning != null)
+                lightning.Initialize(transform);
             foreach (ParticleSystem particles in instance.GetComponentsInChildren<ParticleSystem>(true))
             {
                 // Play explicitly: buff prefabs may have Play On Awake disabled.

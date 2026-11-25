@@ -102,7 +102,7 @@ public class FlagGameManager : MonoBehaviour
         if (networkManager == null ||
             !networkManager.IsServer ||
             deliveryInProgress ||
-            player == null ||
+            player == null || player.IsStunned ||
             activeFlag == null ||
             !activeFlag.IsSpawned)
         {

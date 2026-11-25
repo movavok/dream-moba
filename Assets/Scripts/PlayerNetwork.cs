@@ -22,6 +22,8 @@ public class PlayerNetwork : NetworkBehaviour
     public HeroDefinition HeroData => heroData;
 
     private Rigidbody2D rb;
+    private Health statusHealth;
+    public bool IsStunned => statusHealth != null && statusHealth.IsStunned;
     private BoarKnockback boarKnockback;
     private PlayerInput playerInput;
     private bool buildingTransitionInProgress;
@@ -85,7 +87,7 @@ public class PlayerNetwork : NetworkBehaviour
     public void RequestInteractionServerRpc(
         NetworkObjectReference targetReference)
     {
-        if (!IsServer || !IsSpawned || !IsAliveForInteraction())
+        if (!IsServer || !IsSpawned || IsStunned || !IsAliveForInteraction())
             return;
 
         if (!targetReference.TryGet(out NetworkObject target))
@@ -128,7 +130,7 @@ public class PlayerNetwork : NetworkBehaviour
     [ServerRpc]
     private void RequestThrowServerRpc(bool strongThrow)
     {
-        if (!IsServer || !IsAliveForInteraction())
+        if (!IsServer || IsStunned || !IsAliveForInteraction())
             return;
 
         Vector2 direction = lastMoveDirection;
@@ -242,7 +244,8 @@ public class PlayerNetwork : NetworkBehaviour
             return;
 
         isAttacking = value.isPressed &&
-            (ContainerUI.Instance == null || !ContainerUI.Instance.IsOpen);
+            (ContainerUI.Instance == null || !ContainerUI.Instance.IsOpen) &&
+            (ShopUI.Instance == null || !ShopUI.Instance.IsOpen);
 
         if (isAttacking)
             SendAimIfChanged(true);
@@ -381,7 +384,7 @@ public class PlayerNetwork : NetworkBehaviour
     {
         moveInput = input;
 
-        if (input.sqrMagnitude > 0.01f)
+        if (!IsStunned && input.sqrMagnitude > 0.01f)
             DisableSpawnProtection();
     }
 
@@ -399,7 +402,7 @@ public class PlayerNetwork : NetworkBehaviour
     [ServerRpc]
     private void SetAttackingServerRpc(bool attacking)
     {
-        isAttacking = attacking;
+        isAttacking = attacking && !IsStunned;
     }
 
     [ServerRpc]
@@ -489,6 +492,13 @@ public class PlayerNetwork : NetworkBehaviour
 
         projectileNetwork.SetDirection(direction);
 
+        // Only this basic-attack spawn consumes a charge. The projectile keeps
+        // its own ignition flag even if this was the hero's final charge.
+        Inventory inventory = GetComponent<Inventory>();
+        if (projectileNetwork.IsBasicAttack && inventory != null &&
+            inventory.TryConsumeSelectedIgnition())
+            projectileNetwork.SetIgnition();
+
         projectile.GetComponent<NetworkObject>().Spawn();
 
         projectileNetwork.InitializeVisual();
@@ -510,6 +520,7 @@ public class PlayerNetwork : NetworkBehaviour
             animator = GetComponentInChildren<Animator>();
 
         rb = GetComponent<Rigidbody2D>();
+        statusHealth = GetComponent<Health>();
         boarKnockback = GetComponent<BoarKnockback>();
 
         statController = GetComponent<StatController>();
@@ -575,8 +586,14 @@ public class PlayerNetwork : NetworkBehaviour
         Vector2 moveDirection = moveInput;
 
         Vector2 velocity = moveDirection * speed;
-        rb.linearVelocity = boarKnockback != null
-            ? boarKnockback.Apply(velocity) : velocity;
+        if (IsStunned)
+        {
+            boarKnockback?.Apply(Vector2.zero); // Let its timer expire during stun.
+            rb.linearVelocity = Vector2.zero;
+        }
+        else
+            rb.linearVelocity = boarKnockback != null
+                ? boarKnockback.Apply(velocity) : velocity;
 
         Vector2 actualMovement =
             rb.position - lastPosition;
@@ -632,7 +649,7 @@ public class PlayerNetwork : NetworkBehaviour
             if (heroData == null)
                 return;
 
-            if (isAttacking && Time.time >= nextAttackTime)
+            if (isAttacking && !IsStunned && Time.time >= nextAttackTime)
             {
                 float cooldown = heroData.attack.cooldown / attackCooldownMultiplier;
                 nextAttackTime = Time.time + cooldown;

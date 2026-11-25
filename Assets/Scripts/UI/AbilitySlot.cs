@@ -104,6 +104,19 @@ public class AbilitySlot : MonoBehaviour, IPointerEnterHandler, IPointerExitHand
         icon.gameObject.SetActive(sprite != null);
     }
 
+    public void SetItemCharges(int current, int maximum)
+    {
+        if (icon == null) return;
+        icon.type = maximum > 0 ? Image.Type.Filled : Image.Type.Simple;
+        if (maximum > 0)
+        {
+            icon.fillMethod = Image.FillMethod.Vertical;
+            icon.fillOrigin = (int)Image.OriginVertical.Bottom;
+            icon.fillAmount = Mathf.Clamp01(current / (float)maximum);
+        }
+        else icon.fillAmount = 1f;
+    }
+
     public void SetPlaceholder(string text)
     {
         if (string.IsNullOrEmpty(text))
