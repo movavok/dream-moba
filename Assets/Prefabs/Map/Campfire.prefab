@@ -546,5 +546,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractionOutline
   highlightAlpha: 0.2
-  bounceHeight: 0.04
-  bounceDuration: 0.25
+  bounceHeight: 0
+  bounceDuration: 0
